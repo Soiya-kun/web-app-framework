@@ -20,6 +20,9 @@ TypeScript で業務 Web アプリを作るための土台を作る。次の3つ
 | R-03 | 基盤 | フロントエンドは React |
 | R-04 | 基盤 | バックエンドは Hono を候補とし、テストの要求（R-30〜R-32）から判断する |
 | R-10 | 設計 | バックエンドは domain・usecase・repository の3層を基本にする |
+| R-11 | 設計 | usecase は関数を呼び、戻り値を次の関数の引数へ渡すだけにする |
+| R-12 | 設計 | usecase ではメソッドチェーンを禁止する |
+| R-13 | 設計 | バックエンドのエラー処理はシンプルにする。業務エラーは例外で投げ、try/catch で受ける |
 | R-20 | 画面 | useEffect は一切禁止 |
 | R-30 | テスト | 画面のボタン押下などの操作から、API 通信を介さずに usecase（またはそれを含む API handler）を呼び出して結合テストする |
 | R-31 | テスト | その結合テストでモックにするのは DB だけ |
@@ -38,8 +41,10 @@ TypeScript で業務 Web アプリを作るための土台を作る。次の3つ
   英語は「動詞→目的語」、日本語は「目的語→動詞」の順なので、各単語に品詞を持たせて並べ替える。動詞は「体言止めの形（登録）」と「する形（登録する）」の2つの訳を持つ。「関数名は動詞で始める」などの命名の文法を lint で強制する。
 - **処理の説明は手書きしない（R-50・R-60）**
   kawakin では処理ごとに `@処理`・`@名称` のコメントを手書きしており、コードとの食い違いを検査で追いかける必要があった。名前から説明を生成すれば、説明とコードはずれない。コメントは名前で表せない「なぜ（目的・根拠）」に絞れる。
-- **usecase は「名前の付いた手順の並び」で書く（R-60〜62）**
-  翻訳結果が処理説明として読めるよう、usecase の本体は1文1手順の関数呼び出しを基本にし、細かな計算・判定は名前を付けて domain の関数へ出す。
+- **usecase は「名前の付いた手順の並び」で書く（R-11・R-12・R-60〜62）**
+  usecase の本体は1文1手順の関数呼び出しだけにし、計算・判定・配列の加工は名前を付けて domain の関数へ出す。書ける形が決まっているので、翻訳も関数名だけで決まる。
+- **差し替えるのは DB だけなので、repository を差し替える仕組みは要らない（R-11・R-31）**
+  usecase が repository を「関数として直接呼ぶ」だけで済む。差し替えは repository の下の DB の接続で行う（Q2 の B が前提）。
 - **バックエンドは画面テストと同じ実行環境で動く必要がある（R-30〜32）**
   Web 標準（Request / Response）だけで動き、DB への依存を外から差し替えられる（依存の注入）こと。
 - **useEffect の禁止はデータ取得の方式を決める（R-20）**
@@ -116,14 +121,56 @@ test('輸送売上を登録できる', async () => {
 
 | 層 | 役割 | 依存してよい先 |
 | --- | --- | --- |
-| domain | エンティティ・値オブジェクト・業務ルール・repository のインターフェース。I/O なし | なし |
-| usecase | 業務の手順。domain の関数と repository のインターフェースを並べる | domain |
-| repository | repository のインターフェースを DB で実装する | domain |
-| handler（3層の外の薄い層） | Hono のルート。入力検証 → usecase の呼び出し → 応答の変換だけ | usecase・domain |
+| domain | エンティティ・値オブジェクト・業務ルール・業務エラーの判定。I/O なし。書き方の制限は通常の lint だけ | なし |
+| usecase | 業務の手順。domain と repository の関数を呼び、戻り値を次の関数の引数へ渡すだけ | domain・repository |
+| repository | DB の読み書きを関数で提供する。DB の接続は context から受け取る | domain |
+| handler（3層の外の薄い層） | Hono のルート。入力検証 → トランザクションを張って usecase を呼ぶ → 応答の変換だけ | usecase・domain |
 
-- 依存は `createApp(dependencies)` に集める。本番は実 DB を、テストはモック DB を渡す。
-- usecase は関数で書き、依存（repository・時刻・ID 採番・トランザクション）を第1引数の context で受け取る。クラスや DI コンテナは使わない。
+- DB の接続・時刻・ID 採番は context に入れ、`createApp(dependencies)` で組み立てる。本番は実 DB を、テストはモック DB を渡す。
+- repository はインターフェースを持たない関数にする（`saveTransportSales(context, transportSales)`）。テストでも repository は本物のコードが動き、その下の DB だけが入れ替わる。
+- クラスや DI コンテナは使わない。
 - 層の依存方向は dependency-cruiser（または eslint-plugin-boundaries）で CI 検査する。
+
+#### usecase の書き方（R-11・R-12）
+
+```ts
+/** 輸送の実績を売上として計上するため。 */
+export async function createNewTransportSales(context: Context, salesRequest: SalesRequest) {
+  const validatedRequest = validateSalesRequest(salesRequest)
+  const now = getNow(context)
+  const transportSales = buildTransportSales(validatedRequest, now)
+  await saveTransportSales(context, transportSales)
+  return transportSales
+}
+```
+
+usecase のファイルでは、次の形だけを書ける。外れたものは lint エラーにする。
+
+| 書けるもの | 書けないもの（domain の関数へ出す） |
+| --- | --- |
+| `const 変数 = 関数(引数…)`（`await` 可） | メソッドチェーン（`list.filter().map()`、`.then()`） |
+| `関数(引数…)` だけの文（`await` 可） | メソッド呼び出し・プロパティ参照（`context.clock`、`repository.save()`）※Q12 |
+| `return 変数` | 演算子・リテラル・三項演算子・関数の中での関数定義 |
+| 引数は変数だけ | `let`・再代入、`for`・`while`、`throw`、`try`/`catch`、`if` ※Q11 |
+
+- 配列を1件ずつ処理したいときは、配列を受け取る関数にする（`saveTransportSalesList(context, transportSalesList)`）。
+- domain・repository ではメソッドチェーンや制御構文を通常どおり使える。
+
+#### エラー処理（R-13）
+
+- 業務エラーは domain の関数が throw する（例: `assertTransportSalesEditable(transportSales)` は、締め済みなら throw する）。usecase は throw も try/catch も書かない。
+- 業務エラーの種類は4つに絞る。どれも共通の `AppError` を継承し、画面に出す文言はメッセージ帳のキーで持つ。
+
+  | エラー | 使う場面 | HTTP |
+  | --- | --- | --- |
+  | `ValidationError` | 入力の不正 | 400 |
+  | `ForbiddenError` | 権限がない | 403 |
+  | `NotFoundError` | 対象がない | 404 |
+  | `ConflictError` | 重複・状態による拒否など、業務上の拒否 | 409 |
+  | それ以外 | 想定外 | 500 |
+
+- try/catch を書くのは Hono の `app.onError` の1か所だけ。ここで `AppError` を HTTP の応答に変換し、ログを出す。DB の一意制約違反もここで 409 に変換する。repository・handler にも try/catch を書かない。
+- トランザクションは、更新系のルートに付けるミドルウェアが張る（1リクエスト1トランザクション）。例外が出たら巻き戻す。usecase はトランザクションを意識しない。
 
 ### 4.4 フロントエンド
 
@@ -214,7 +261,7 @@ export async function createNewTransportSales(context: Context, salesRequest: Sa
 | `return` | 「〜を返す」 | `return transportSales` →「輸送売上を返す」 |
 | `if` / `for` | 「〜の場合」「〜ごとに」で入れ子にする | 要否は Q7 |
 
-PoC で決めること: 前置詞（`findSalesByCustomer` →「顧客で売上を検索する」）、真偽値の関数（`isClosed`）、メソッド呼び出し（`salesRepository.save(sales)` を受け手の名前から「売上を保存する」と訳すか、メソッド名を `saveSales` まで書かせるか）。
+PoC で決めること: 前置詞（`findSalesByCustomer` →「顧客で売上を検索する」）、真偽値の関数（`isClosed`）と `if` の条件の訳し方。usecase でメソッド呼び出しを禁止する場合（Q12 の A）、usecase の訳はすべて関数名だけで決まる。
 
 ### 4.7 コメント
 
@@ -262,20 +309,39 @@ web-app-framework/
   - A. インメモリの偽 repository（配列で動く repository を別に書く）: 最速で、DB 製品に依存しない。repository が2つの実装になり、検索・集計が複雑になるほど二重実装が重い。本物とのずれは、同じテストを両方に流して防ぐ
   - B. PGlite（WASM の PostgreSQL を同じプロセスで動かす）: 本番と同じ repository・SQL・マイグレーションがそのまま動き、二重実装がない。PostgreSQL 限定で、テストファイルごとに起動の時間がかかる（PoC で計測）
 - ORM: Drizzle / Prisma / Kysely
-- 推奨: PostgreSQL + B + Drizzle（DB の定義も TypeScript で書けるので、テーブル名・列名にも単語帳の検査が効く）。DB が MySQL なら A。
+- 推奨: PostgreSQL + B + Drizzle（DB の定義も TypeScript で書けるので、テーブル名・列名にも単語帳の検査が効く）。B なら repository を関数のまま使え、usecase の「関数を呼ぶだけ」（R-11）と相性がよい。A にすると、偽 repository へ差し替えるために usecase から context 経由で repository を呼ぶ形になる。
 
 **Q3. バックエンドの中の分け方**
 
 - A. 層が先: `domain/sales/…`・`usecase/sales/…`・`repository/sales/…`
 - B. 業務のまとまりが先: `sales/domain`・`sales/usecase`・`sales/repository`（まとまりの間は公開した usecase だけで呼び合う）
-- あわせて確認: handler（Hono のルート）は usecase を呼ぶだけの薄い層として3層の外に置く形でよいか。repository のインターフェースは domain に置く形でよいか。
+- あわせて確認: handler（Hono のルート）は usecase を呼ぶだけの薄い層として3層の外に置く形でよいか。
 - 推奨: B。単語帳のドメイン単語・コード・テストが業務のまとまりごとにそろい、大きくなっても境界を保ちやすい。
 
-**Q4. 業務エラーの返し方**
+**Q4. 業務エラーの返し方** → 決定（2026-11-18）: A（例外を throw し、try/catch で受ける）。詳細は 4.3 の「エラー処理」。
 
 - A. 例外: 業務エラーのクラスを throw し、Hono の共通処理で HTTP の応答に変換する
 - B. 戻り値: Result 型（neverthrow など）で返す
-- 推奨: A。usecase が手順の並びのまま書け、翻訳結果がエラー判定の分岐で埋まらない。B はエラーの経路が型で見えるが、手順ごとに分岐が増える。
+
+**Q11. usecase に `if` を書いてよいか**
+
+- A. 完全に禁止: 分岐はすべて domain の関数（`assertTransportSalesEditable` が throw する、など）か、条件付きの関数（`notifyApproverIfRequired`）へ出す。usecase は常に一直線
+- B. 限られた形だけ許す: 条件は変数1つ（演算子なし）、中身は関数呼び出しの文だけ、入れ子なし。翻訳では「〜の場合」として出す
+
+  ```ts
+  const isApprovalRequired = judgeApprovalRequired(transportSales)
+  if (isApprovalRequired) {
+    await notifyApprover(context, transportSales)
+  }
+  ```
+
+- 推奨: B。A だと、I/O を伴う分岐（通知するか、どちらを保存するか）が `〜IfRequired` のような関数の中に隠れ、翻訳から分岐が読めなくなる。
+
+**Q12. usecase でのプロパティ参照・1段のメソッド呼び出し**
+
+- A. 禁止: 呼べるのは import した関数だけ、引数は変数だけ（時刻は `getNow(context)` のように関数で取り出す）
+- B. 1段だけ許す: `context.clock`・`repository.save(x)` は書ける。チェーンは禁止
+- 推奨: A。usecase の見た目がそろい、翻訳が関数名だけで決まる（メソッド呼び出しの訳し方を考えなくてよい）。
 
 **Q5. 単語帳を当てる範囲と厳しさ**
 
