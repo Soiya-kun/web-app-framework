@@ -1,11 +1,11 @@
-# 要求の整理と方針案（ドラフト）
+# 要求と方針
 
-状態: ドラフト（2026-11-18）。[5. 未決事項](#5-未決事項質問) の回答を受けて方針を確定し、この文書を更新する。
-kawakin-core-system は参考資料であり、構成・規約を引き継ぐ前提にしない。
+状態: 方針の大半を確定（2026-11-18）。最小の縦切り（売上登録）を PoC として実装済み。残りは [7. 未決事項](#7-未決事項)。
+kawakin-core-system は参考資料として扱う。domain の作りは強く参考にし、それ以外は引き継ぐ前提にしない。
 
 ## 1. 狙い
 
-TypeScript で業務 Web アプリを作るための土台を作る。次の3つを両立させる。
+TypeScript で業務 Web アプリを作るための土台（フレームワーク兼サンプル実装）を作る。次の3つを両立させる。
 
 1. 画面の操作から、API 通信を介さずにバックエンドの業務処理までを同じプロセスで結合テストできる。差し替えるのは DB だけにする。
 2. 識別子に使う英単語を単語帳で絞り、関数名と処理の並びを日本語に機械翻訳して、処理を日本語で読めるようにする。
@@ -18,72 +18,203 @@ TypeScript で業務 Web アプリを作るための土台を作る。次の3つ
 | R-01 | 基盤 | フロントエンド・バックエンドとも TypeScript で書く |
 | R-02 | 基盤 | pnpm のモノレポにする |
 | R-03 | 基盤 | フロントエンドは React |
-| R-04 | 基盤 | バックエンドは Hono を候補とし、テストの要求（R-30〜R-32）から判断する |
-| R-10 | 設計 | バックエンドは domain・usecase・repository の3層を基本にする |
+| R-04 | 基盤 | バックエンドは Hono を候補とし、テストの要求から判断する（→ Hono に決定） |
+| R-05 | 基盤 | フレームワーク兼サンプル実装にする。サンプルの業務は売上登録から入金管理まで |
+| R-06 | 基盤 | DB の構造は考えうる最小限にする。ログ・監査の列などは持たない（多対多などの関係は必要なら持つ） |
+| R-10 | 設計 | バックエンドは domain・usecase・repository の3層を基本にし、フォルダは層を先に分ける |
 | R-11 | 設計 | usecase は関数を呼び、戻り値を次の関数の引数へ渡すだけにする |
 | R-12 | 設計 | usecase ではメソッドチェーンを禁止する |
-| R-13 | 設計 | バックエンドのエラー処理はシンプルにする。業務エラーは例外で投げ、try/catch で受ける |
+| R-13 | 設計 | エラー処理はシンプルにする。業務エラーは例外で投げ、try/catch で受ける |
+| R-14 | 設計 | usecase に if を書かない。判定は domain へ寄せる |
+| R-15 | 設計 | context（何でも入る部品の袋）は混乱のもとなので禁止する |
+| R-16 | 設計 | domain は kawakin を参考にし、値の型を決め、それがそのまま永続化されるなど、見て物理的に何が起こるか分かる形にする。repository のインターフェースを受け取る domain のサービスは最小限にする |
 | R-20 | 画面 | useEffect は一切禁止 |
 | R-30 | テスト | 画面のボタン押下などの操作から、API 通信を介さずに usecase（またはそれを含む API handler）を呼び出して結合テストする |
 | R-31 | テスト | その結合テストでモックにするのは DB だけ |
-| R-32 | テスト | 画面の操作からバックエンドの処理までを、可能な限り軽く（速く・準備少なく）流す |
-| R-40 | 語彙 | 関数などに使う英単語を単語帳で管理し、単語帳にある単語だけを使う |
+| R-32 | テスト | 画面の操作からバックエンドの処理までを、可能な限り軽く流す。DB が本物に近いとボトルネックになるので、そうならない方式にする |
+| R-33 | テスト | 画面からの結合テストで、境界値などを厚く確かめる。それより細かい単体テストは、狭い範囲のロジックだけに使う（仮説: 画面からの結合テストを厚くすると、全体のテストの量が減る） |
+| R-34 | テスト | 本物の DB を使う結合テストは一部だけ行う |
+| R-35 | テスト | repository のテストで、実行される SQL を構造的に固定し、明確にする（極端な状況の調査に活きる） |
+| R-36 | テスト | 本番向けの大きなテスト（E2E など）は当面持たない |
+| R-40 | 語彙 | 関数などに使う英単語を単語帳で管理し、単語帳にある単語だけを使う。まずは厳しく当てる |
 | R-41 | 語彙 | 単語はシステム向けの単語とドメインの単語に分ける |
-| R-42 | 語彙 | 単語帳の単語を画面でも使う（i18n の仕組みを想定） |
-| R-50 | コメント | 関数の直上に最低限のコメントを置く。書く内容（目的・概要など）は要検討 |
+| R-42 | 語彙 | 単語帳の単語を画面でも使う。画面は多言語になることを想定する |
+| R-50 | コメント | 関数の直上に最低限のコメントを置く。当面は目的だけにする |
 | R-60 | 翻訳 | コードの処理を日本語に翻訳するツールを自作し、処理を明確に読めるようにする |
 | R-61 | 翻訳 | 関数名は体言止めで訳す（`createNewTransportSales` →「新輸送売上の登録」） |
 | R-62 | 翻訳 | 関数の中の処理は番号付きで「〜する」の文体で訳す（`validateSalesRequest` →「1. 売上リクエストをバリデーションする」） |
 
-## 3. 要求から読み取った設計の前提
+## 3. 決定事項
 
-- **翻訳には「名前の文法」が要る（R-40・R-60〜62）**
-  英語は「動詞→目的語」、日本語は「目的語→動詞」の順なので、各単語に品詞を持たせて並べ替える。動詞は「体言止めの形（登録）」と「する形（登録する）」の2つの訳を持つ。「関数名は動詞で始める」などの命名の文法を lint で強制する。
-- **処理の説明は手書きしない（R-50・R-60）**
-  kawakin では処理ごとに `@処理`・`@名称` のコメントを手書きしており、コードとの食い違いを検査で追いかける必要があった。名前から説明を生成すれば、説明とコードはずれない。コメントは名前で表せない「なぜ（目的・根拠）」に絞れる。
-- **usecase は「名前の付いた手順の並び」で書く（R-11・R-12・R-60〜62）**
-  usecase の本体は1文1手順の関数呼び出しだけにし、計算・判定・配列の加工は名前を付けて domain の関数へ出す。書ける形が決まっているので、翻訳も関数名だけで決まる。
-- **差し替えるのは DB だけなので、repository を差し替える仕組みは要らない（R-11・R-31）**
-  usecase が repository を「関数として直接呼ぶ」だけで済む。差し替えは repository の下の DB の接続で行う（Q2 の B が前提）。
-- **バックエンドは画面テストと同じ実行環境で動く必要がある（R-30〜32）**
-  Web 標準（Request / Response）だけで動き、DB への依存を外から差し替えられる（依存の注入）こと。
-- **useEffect の禁止はデータ取得の方式を決める（R-20）**
-  画面を開いたときのデータ取得は、ルーターの loader か Suspense 対応のクエリで行う。
+| 項目 | 決定 | 決めた日 |
+| --- | --- | --- |
+| リポジトリの位置づけ | フレームワーク兼サンプル実装（売上登録〜入金管理） | 2026-11-18 |
+| バックエンド | Hono。画面の結合テストは API クライアントの `fetch` を `app.request` に差し替える | 2026-11-18 |
+| DB | PostgreSQL。画面の結合テストはインメモリのモック DB | 2026-11-18 |
+| バックエンドの分け方 | 層が先（`domain/sales`・`usecase/sales`・`repository/…`） | 2026-11-18 |
+| 業務エラー | 例外で投げ、Hono の共通処理で HTTP の応答に変換する | 2026-11-18 |
+| usecase の if | 書かない。domain に寄せる | 2026-11-18 |
+| 部品の渡し方 | context は禁止。usecase は必要な部品を引数で1つずつ受ける | 2026-11-18 |
+| usecase での呼び出し | 関数と、部品（repository など）のメソッド1段は呼べる。メソッドチェーンは禁止 | 2026-11-18 |
+| 単語帳 | 厳しく当てる（CI でエラー） | 2026-11-18 |
+| 画面の言語 | 多言語を想定（日本語・英語） | 2026-11-18 |
+| 翻訳ツール | usecase・domain を対象に、制御構文も訳し、CLI で Markdown を作る | 2026-11-18 |
+| コメント | 当面は目的だけ（TSDoc の1行） | 2026-11-18 |
+| 大きなテスト | 当面持たない | 2026-11-18 |
 
-## 4. 方針案（仮決め）
+## 4. PoC（売上登録）で作ったもの
 
-### 4.1 バックエンド: Hono を推奨
+### 4.1 構成
 
-画面結合テストでは、フロントエンドの API クライアントが使う `fetch` を、Hono アプリの `app.request` に差し替える。ネットワーク・ソケット・サーバーの起動なしで、ルーティング・ミドルウェア・入力検証・handler・usecase・repository を本番と同じ順に通る。画面側の API 呼び出しのコードは本番とテストで同じになる。
-
-```ts
-// 本番: 実際に HTTP で呼ぶ
-const client = hc<AppType>('/api')
-
-// 画面結合テスト: 同じクライアントの fetch だけを差し替える（通信なし）
-const app = createApp({ database: createMockDatabase() })
-const client = hc<AppType>('http://test/api', {
-  fetch: (input, init) => app.request(input, init),
-})
+```text
+web-app-framework/
+├─ apps/web/                  # React の画面（Vite・TanStack Router・TanStack Query）
+│  ├─ src/sales/              # 売上登録の画面と、その画面の結合テスト
+│  ├─ src/shared/             # API クライアント・ルーター・文言・画面の土台
+│  └─ test/renderScreen.tsx   # 画面の結合テストの道具
+├─ packages/backend/          # Hono の API
+│  └─ src/
+│     ├─ domain/              # 値の型・エンティティ・入力境界・repository のインターフェース
+│     ├─ usecase/             # 業務の手順（関数呼び出しの並びだけ）
+│     ├─ repository/          # DB の読み書き（いまはモック DB だけ）
+│     ├─ handler/             # Hono のルート・エラーの共通処理
+│     └─ testing.ts           # 画面の結合テスト用の部品（モック DB で組み立てる）
+├─ packages/vocabulary/       # 単語帳（YAML）と、そこから作る辞書・文法・画面の文言
+├─ packages/eslint-plugin/    # 単語帳・関数名の文法・usecase の書き方の lint
+├─ packages/translator/       # 日本語翻訳ツール
+└─ docs/generated/backend-process.md   # 翻訳ツールの出力
 ```
 
-| 候補 | 画面テストからの呼び方 | 通る層 | 評価 |
-| --- | --- | --- | --- |
-| **Hono** | `fetch` を `app.request` に差し替え | ルーティング・ミドルウェア・入力検証・handler 以降すべて | ◎ 画面のコードは本番と同じ。Web 標準なので jsdom・ブラウザの中でも動く。起動が軽い |
-| oRPC / tRPC | サーバー側のクライアントで手続きを直接呼ぶ | handler 以降（HTTP の変換は通らない） | ○ さらに軽いが、状態コード・ヘッダ・HTTP のミドルウェアは検証できない。API が RPC 専用の形になる |
-| Fastify | `inject()` | すべて | △ Node 専用で、画面のクライアントと共通にしにくい |
-| NestJS | テスト用モジュール + supertest など | すべて | × 起動が重い。デコレータと DI コンテナが前提 |
-| Express | supertest | すべて | × 実際のソケットが要る |
+コマンド（ルートで実行）:
 
-- API の定義は `@hono/zod-openapi` で zod のスキーマから書き、OpenAPI も出せるようにする。入力スキーマはフロントのフォーム検証でも使い回す。
-- 懸念: Hono RPC（`hc`）の型推論は、ルートが増えると重くなることがある。業務のまとまりごとに子アプリへ分ける、クライアントの型を事前にコンパイルする、で抑える。だめなら OpenAPI からクライアントを生成する方式に切り替える（`fetch` を差し替える方式はそのまま使える）。
+| コマンド | 内容 |
+| --- | --- |
+| `pnpm install` | 依存を入れる |
+| `pnpm check` | 単語帳の生成物・lint・型・テスト・翻訳の生成物をまとめて確かめる |
+| `pnpm test` | テストだけ |
+| `pnpm vocabulary:generate` | 単語帳（YAML）を変えたあとに辞書を作り直す |
+| `pnpm translate` | 処理の日本語訳を作り直す |
 
-### 4.2 画面結合テスト
+### 4.2 確かめたこと
+
+| 確かめたこと | 結果 |
+| --- | --- |
+| 画面の操作から usecase まで、通信なしで流せるか | 流せる。画面のコードは本番と同じで、テストでは `fetch` だけを差し替える |
+| 画面の結合テストの速さ | 18件で約 0.6 秒（1件 約 20ms。最初の1件だけ準備込みで約 120ms）。テスト全体の実行は約 1.3 秒 |
+| バックエンドの処理の速さ | `app.request` 1回あたり約 0.05ms（モック DB）。画面のテストの時間はほぼ画面側 |
+| 境界値を画面から厚く確かめられるか | 売上金額（1・999999999・0・1000000000・-1・1.5・1,000・abc・空・前後の空白）、売上日（うるう年・存在しない日・形の違い・空）、顧客の未選択、複数の項目の同時の誤りを、画面の結合テストだけで確かめた |
+| 単語帳の lint | 単語帳にない単語・使わせない単語（`add`・`init` など）・動詞で始まらない関数名を検出する |
+| usecase の lint | if・for・throw・try・let・メソッドチェーン・リテラルや計算を渡す引数・層の逆向きの import を検出する |
+| useEffect の禁止 | `useEffect`・`useLayoutEffect`・`useInsertionEffect` の import を検出する |
+| 翻訳ツール | usecase は手順の並びとしてそのまま読める（4.3）。domain は訳せない式がコードのまま残る |
+| 画面の本番ビルド | バックエンドのコードは入らない（画面は API の型だけを参照する） |
+
+途中で分かったこと: React 19 は Suspense の待ちを表示に反映するまで約 300ms 待つ。画面を開いてからデータを取ると、テスト1件ごとにこの待ちが入る（最初は1件 約 330ms だった）。画面を開く前にルーターの loader でデータを取っておく形にして、この待ちをなくした。本番の画面でも、データの取得は loader で行う。
+
+### 4.3 翻訳ツールの出力（抜粋）
+
+```ts
+/** 顧客への売上を計上するため。 */
+export async function createSales(
+  salesRepository: SalesRepository,
+  customerRepository: CustomerRepository,
+  idGenerator: IdGenerator,
+  salesRequest: SalesRequest,
+): Promise<SalesId> {
+  const { customerId, salesDate, salesAmount } = interpretSalesRequest(salesRequest)
+  const customer = await customerRepository.findCustomer(customerId)
+  const salesId = assignSalesId(idGenerator)
+  const salesCreate = planSalesCreate(salesId, customer, salesDate, salesAmount)
+  await salesRepository.createSales(salesCreate)
+  return salesId
+}
+```
+
+```text
+### 売上の登録
+
+- 関数: `createSales`
+- 目的: 顧客への売上を計上するため。
+- 引数: 売上リポジトリ、顧客リポジトリ、ID生成器、売上リクエスト
+- 処理:
+   1. 売上リクエストを解釈する
+   2. 顧客を取得する
+   3. 売上IDを割り当てる
+   4. 売上登録を計画する
+   5. 売上を登録する
+   6. 売上IDを返す
+```
+
+全体は [docs/generated/backend-process.md](generated/backend-process.md)。
+
+## 5. 方針
+
+### 5.1 バックエンドの層
+
+| 層 | 役割 | 依存してよい先 |
+| --- | --- | --- |
+| domain | 値の型・エンティティ・入力境界・業務ルール・repository のインターフェース。I/O なし | なし |
+| usecase | 業務の手順。domain の関数と、引数で受けた部品のメソッドを呼ぶだけ | domain |
+| repository | domain の repository のインターフェースを、DB（本番は PostgreSQL、テストはモック DB）で実装する | domain |
+| handler（3層の外の薄い層） | Hono のルート。リクエストの形の検証 → usecase の呼び出し → 応答の変換だけ | usecase・domain |
+
+- 部品（repository・ID の採番など）は `AppDependency` に集め、`prepareApp(dependency)` で API を組み立てる。本番は実 DB の部品を、画面の結合テストはモック DB の部品を渡す。
+- `AppDependency` を見るのは handler と組み立ての場所だけ。handler は usecase に、必要な部品だけを1つずつ渡す。usecase は context を受けない。
+- 層の依存の向きは lint（`no-restricted-imports`）で検査する。
+
+### 5.2 usecase の書き方
+
+usecase のファイルでは次の形だけを書ける。外れたものは lint（`app/flat-steps`）でエラーにする。
+
+| 書けるもの | 書けないもの（domain の関数へ出す） |
+| --- | --- |
+| `const 変数 = 関数(引数…)`（`await` 可） | `if`・`switch`・`for`・`while`・`throw`・`try`/`catch` |
+| `const { a, b } = 関数(引数…)`（分割代入は名前だけ） | メソッドチェーン（`list.filter().map()`、`.then()`） |
+| `部品.メソッド(引数…)`（1段だけ） | `context.x.y()` のような2段以上の参照 |
+| `関数(引数…)` だけの文 | 演算子・リテラル・三項演算子・関数の中での関数定義・`let` |
+| `return 変数` | 式を返す `return`（`return { a }` など） |
+
+- 引数には変数だけを渡せる。値の組み立てや計算は、名前の付いた domain の関数で行う。
+- 配列を1件ずつ処理したいときは、配列を受け取る関数にする。
+
+### 5.3 domain の書き方（kawakin を参考）
+
+| kawakin（Go） | このリポジトリ（TypeScript） | 例 |
+| --- | --- | --- |
+| `value/` の値オブジェクト（`New*` で制約を検証） | `value/` の値の型（`Brand<string, 'SalesDate'>`）と `interpret*`（画面の入力を検証して値にする） | `interpretSalesAmount` |
+| エンティティの末端はすべて値オブジェクト | エンティティの項目はすべて値の型 | `Sales` |
+| `create/` の作成の入力境界（そのまま INSERT される） | `SalesCreate`。この型の項目が、そのまま1行になる | `planSalesCreate` |
+| model の `Entity()` で DB の行から復元 | `restore*` で保存済みの値から組み立てる | `restoreSales` |
+| repository のインターフェースは入力境界の型だけを受ける | 同じ。`createSales(salesCreate: SalesCreate)` | `SalesRepository` |
+| policy・knowledge | 判定の関数。usecase の if を引き受ける | （入金の業務で足す） |
+| `find/`・`update/` の目的別の選択子 | 入金の業務で足す（SQL の固定と合わせて決める。5.7） | — |
+
+- repository のインターフェースを受け取る domain のサービスは最小限にする。いまは `assignSalesId(idGenerator)` だけ。
+- 画面の入力は、まだ検証していない文字列のまま受け取り（`SalesRequest`）、domain の `interpret*` で値の型にする。項目ごとの問題は `interpretFields` がまとめ、画面に一度に返す。
+- 値の型は、型の上では別物になる（`SalesId` に `CustomerId` を渡すと型エラー）。
+
+### 5.4 エラー処理
+
+- 業務エラーは domain の関数が throw する。usecase は throw も try/catch も書かない。
+- 業務エラーの種類は4つ。どれも `AppError` を継承し、画面に出す文はメッセージ帳のキーで持つ。
+
+  | エラー | 使う場面 | HTTP |
+  | --- | --- | --- |
+  | `ValidationError` | 入力の不正（項目ごとの問題を持つ） | 400 |
+  | `ForbiddenError` | 権限がない | 403 |
+  | `NotFoundError` | 対象がない | 404 |
+  | `ConflictError` | 重複・状態による拒否など、業務上の拒否 | 409 |
+  | それ以外 | 想定外 | 500 |
+
+- try/catch を書くのは2か所だけ。Hono の `app.onError` に渡す `respondError`（HTTP の応答への変換とログ）と、domain の `interpretFields`（項目ごとの問題をまとめる）。
+- トランザクションは、PostgreSQL の repository を作るときに、更新系のルートのミドルウェアで張る（1リクエスト1トランザクション）。usecase はトランザクションを意識しない。
+
+### 5.5 画面の結合テスト
 
 ```mermaid
 flowchart LR
   A[画面の操作<br>Testing Library] --> B[API クライアント<br>hc]
-  B -- "fetch = app.request<br>（通信なし）" --> C[Hono<br>ミドルウェア・入力検証]
+  B -- "fetch = app.request<br>（通信なし）" --> C[Hono<br>リクエストの形の検証]
   C --> D[handler]
   D --> E[usecase]
   E --> F[domain]
@@ -91,95 +222,36 @@ flowchart LR
   G --> H[(モック DB)]
 ```
 
-```ts
-test('輸送売上を登録できる', async () => {
-  const database = createMockDatabase() // 差し替えるのは DB だけ
-  const { user, screen } = renderScreen('/transport-sales/new', { database })
+- `renderScreen(path, database)` が、モック DB で組み立てた Hono アプリに `fetch` をつなぎ、画面の loader を済ませてから描画する。
+- テストは、画面の文言を単語帳から引いて要素を探し（`text.label('salesAmount')`）、モック DB の行（`database.sales`）で保存の結果を確かめる。
+- 項目の問題は、入力欄の説明（`aria-describedby`）として確かめる。画面の使いやすさも同時に確かめられる。
+- 速さのための決まり: 画面のデータは loader で先に取る（Suspense の約 300ms の待ちを入れない）。入力操作は待ち時間なし（`userEvent.setup({ delay: null })`）。
 
-  await user.type(screen.getByLabelText(label('amount')), '1000')
-  await user.click(screen.getByRole('button', { name: label('create') }))
+### 5.6 テストの層
 
-  expect(await screen.findByText(message('createCompleted'))).toBeVisible()
-  expect(await database.transportSales.findMany()).toHaveLength(1)
-})
-```
-
-- `renderScreen` は、モック DB を注入した Hono アプリを作り、`fetch` を差し替えた API クライアントをルーターの context に渡して画面を描画する。
-- テストの実行は Vitest。軽さを優先して jsdom（または happy-dom）で動かし、ブラウザでしか再現しないものだけ Vitest Browser Mode を使う。jsdom 上で Hono の Request・AbortSignal が問題なく動くかは PoC で確かめる。
-- 画面の文言はテストでも単語帳から引く（`label('create')`）。単語帳にない文言は画面にもテストにも書けない。
-- 時刻・ID の採番も注入して、テストで固定できるようにする。
-
-| テストの種類 | 対象 | DB | 量 |
+| 種類 | 対象 | DB | 量 |
 | --- | --- | --- | --- |
-| domain 単体 | 業務ルール | なし | 多 |
-| 画面結合（この基盤の主役） | 画面〜repository | モック | 多 |
-| usecase 単体 | 画面のない処理（バッチなど） | モック | 必要なだけ |
-| repository | SQL・DB の制約 | 本物の DB（コンテナ） | 中 |
-| E2E | 本番と同じ構成 | 本物の DB | 少（要否は Q10） |
+| 画面の結合（主役） | 画面〜repository。境界値もここで確かめる | モック DB | 多 |
+| 単体 | 狭い範囲のロジック（計算・判定）と、道具（lint・翻訳） | なし | 必要なだけ |
+| repository | 実行される SQL と DB の制約。モック DB と同じ振る舞いか | 本物の PostgreSQL | 一部（5.7） |
+| E2E | — | — | 当面なし |
 
-### 4.3 バックエンドの層
+### 5.7 SQL の固定（案・未実装）
 
-| 層 | 役割 | 依存してよい先 |
-| --- | --- | --- |
-| domain | エンティティ・値オブジェクト・業務ルール・業務エラーの判定。I/O なし。書き方の制限は通常の lint だけ | なし |
-| usecase | 業務の手順。domain と repository の関数を呼び、戻り値を次の関数の引数へ渡すだけ | domain・repository |
-| repository | DB の読み書きを関数で提供する。DB の接続は context から受け取る | domain |
-| handler（3層の外の薄い層） | Hono のルート。入力検証 → トランザクションを張って usecase を呼ぶ → 応答の変換だけ | usecase・domain |
+- repository の1つの操作（入力境界の型・選択子の型）ごとに、SQL を1文の固定の文字列で書く。条件によって SQL を組み立てない。
+- 全操作の SQL を台帳（生成物）に出し、SQL の変化を差分で見られるようにする。
+- repository のテストは本物の PostgreSQL で行い、同じテストをモック DB にも流して、振る舞いがずれていないことを確かめる。
+- 任意の条件が多い検索だけは、組み立て方を1か所に閉じ込め、出る SQL の型をすべて台帳に出す（扱いは Q-B で決める）。
 
-- DB の接続・時刻・ID 採番は context に入れ、`createApp(dependencies)` で組み立てる。本番は実 DB を、テストはモック DB を渡す。
-- repository はインターフェースを持たない関数にする（`saveTransportSales(context, transportSales)`）。テストでも repository は本物のコードが動き、その下の DB だけが入れ替わる。
-- クラスや DI コンテナは使わない。
-- 層の依存方向は dependency-cruiser（または eslint-plugin-boundaries）で CI 検査する。
+### 5.8 フロントエンド
 
-#### usecase の書き方（R-11・R-12）
-
-```ts
-/** 輸送の実績を売上として計上するため。 */
-export async function createNewTransportSales(context: Context, salesRequest: SalesRequest) {
-  const validatedRequest = validateSalesRequest(salesRequest)
-  const now = getNow(context)
-  const transportSales = buildTransportSales(validatedRequest, now)
-  await saveTransportSales(context, transportSales)
-  return transportSales
-}
-```
-
-usecase のファイルでは、次の形だけを書ける。外れたものは lint エラーにする。
-
-| 書けるもの | 書けないもの（domain の関数へ出す） |
-| --- | --- |
-| `const 変数 = 関数(引数…)`（`await` 可） | メソッドチェーン（`list.filter().map()`、`.then()`） |
-| `関数(引数…)` だけの文（`await` 可） | メソッド呼び出し・プロパティ参照（`context.clock`、`repository.save()`）※Q12 |
-| `return 変数` | 演算子・リテラル・三項演算子・関数の中での関数定義 |
-| 引数は変数だけ | `let`・再代入、`for`・`while`、`throw`、`try`/`catch`、`if` ※Q11 |
-
-- 配列を1件ずつ処理したいときは、配列を受け取る関数にする（`saveTransportSalesList(context, transportSalesList)`）。
-- domain・repository ではメソッドチェーンや制御構文を通常どおり使える。
-
-#### エラー処理（R-13）
-
-- 業務エラーは domain の関数が throw する（例: `assertTransportSalesEditable(transportSales)` は、締め済みなら throw する）。usecase は throw も try/catch も書かない。
-- 業務エラーの種類は4つに絞る。どれも共通の `AppError` を継承し、画面に出す文言はメッセージ帳のキーで持つ。
-
-  | エラー | 使う場面 | HTTP |
-  | --- | --- | --- |
-  | `ValidationError` | 入力の不正 | 400 |
-  | `ForbiddenError` | 権限がない | 403 |
-  | `NotFoundError` | 対象がない | 404 |
-  | `ConflictError` | 重複・状態による拒否など、業務上の拒否 | 409 |
-  | それ以外 | 想定外 | 500 |
-
-- try/catch を書くのは Hono の `app.onError` の1か所だけ。ここで `AppError` を HTTP の応答に変換し、ログを出す。DB の一意制約違反もここで 409 に変換する。repository・handler にも try/catch を書かない。
-- トランザクションは、更新系のルートに付けるミドルウェアが張る（1リクエスト1トランザクション）。例外が出たら巻き戻す。usecase はトランザクションを意識しない。
-
-### 4.4 フロントエンド
-
-- React 19 + Vite の SPA。ルーターは TanStack Router、サーバーの状態は TanStack Query（`useSuspenseQuery`）を仮置きする（Q9）。
-- `useEffect`・`useLayoutEffect`・`useInsertionEffect` をアプリのコードで使うと lint エラーにする。ライブラリ内部での利用は対象外。
+- React 19 + Vite の SPA。ルーターは TanStack Router、サーバーの状態は TanStack Query。
+- 画面を開いたときのデータ取得は、ルーターの loader（`ensureQueryData`）で行い、画面は `useSuspenseQuery` でキャッシュから読む。
+- `useEffect`・`useLayoutEffect`・`useInsertionEffect` は lint でエラーにする。ライブラリ内部での利用は対象外。
 
 | useEffect を使いがちな場面 | 代わりの書き方 |
 | --- | --- |
-| 画面を開いたときのデータ取得 | ルーターの loader / `useSuspenseQuery` |
+| 画面を開いたときのデータ取得 | ルーターの loader + `useSuspenseQuery` |
 | props から値を計算する | 描画中に計算する（必要なら `useMemo`） |
 | props が変わったら状態を初期化する | `key` を変えて作り直す |
 | ボタン押下などに反応する | イベントハンドラに書く |
@@ -187,204 +259,81 @@ usecase のファイルでは、次の形だけを書ける。外れたものは
 | DOM の初期化（フォーカス・計測・外部ウィジェット） | ref コールバック（React 19 で後始末を返せる） |
 | ページタイトル | React 19 の `<title>` |
 
-### 4.5 単語帳
+### 5.9 単語帳
 
-単語を YAML で管理し、そこから lint の辞書・画面の文言・用語集を生成する。
+- 置き場所: `packages/vocabulary/words/system/*.yaml`（システム向け）、`words/domain/*.yaml`（業務）、`phrases.yaml`（組合せで訳が決まらない並び）、`messages.yaml`（画面の文）。
+- 1語の項目: `word`（原形）・`pos`（品詞）・`ja`（体言止めの形）・`jaVerb`（「〜する」の形。動詞だけ）・`en`（画面の英語）・`forms`（複数形など）・`avoid`（同じ意味で使わせない単語）・`role`（repository など受け手の役割の語）・`description`（業務の単語は必須）。
+- 単語帳を変えたら `pnpm vocabulary:generate` で辞書（`src/generated/vocabularyData.ts`）を作り直す。CI は作り直し忘れを検出する。
+- 検査の範囲: アプリのコード（`apps/**`・`packages/backend/**`）で、自分で宣言した名前（関数・変数・引数・型・型の項目・クラス・import の別名）。ライブラリの名前を参照するだけの箇所は対象外。道具（lint・翻訳・単語帳の生成）は対象外。
+- 関数名は動詞で始める（PascalCase のコンポーネント・型は名詞として扱う）。
+- 画面の文言: 見出しは単語の並びから作る（`text.label('salesAmount')` →「売上金額」/ "Sales Amount"）。文は `text.message('invalidRange', { … })` で引く。言語は `TextProvider` の `locale` で切り替える。
+- まだ当てていない範囲: ファイル名・API のパス・DB のテーブル名と列名（次の作業）。
 
-```yaml
-# vocabulary/system/verb.yaml
-- word: create
-  kind: system
-  pos: verb
-  ja: 登録 # 体言止めで使う形
-  jaVerb: 登録する # 「〜する」の形
-  avoid: [add, insert, register] # 同じ意味で使わせない単語
-- word: validate
-  kind: system
-  pos: verb
-  ja: バリデーション
-  jaVerb: バリデーションする
-- word: new
-  kind: system
-  pos: adjective
-  ja: 新
-
-# vocabulary/domain/sales.yaml
-- word: transport
-  kind: domain
-  pos: noun
-  ja: 輸送
-  description: 貨物を運ぶ役務
-- word: sales
-  kind: domain
-  pos: noun
-  ja: 売上
-  description: 役務の提供で計上する収益
-```
-
-- 検査: 自分で宣言した識別子（関数・変数・引数・型・プロパティなど）を camelCase / PascalCase の区切りで単語に分け、単語帳にない単語・`avoid` の単語を lint エラーにする。ライブラリの名前を参照するだけ（`useState`、`onClick` など）は対象外。
-- 名前の文法も lint で強制する: 関数は動詞で始める、真偽値は `is`・`has`・`can` で始める、コンポーネントは名詞で終える、など。
-- 訳が単語の組合せで決まらない複合語（例: `createdAt` →「登録日時」）は、複数の単語からなる見出しとして登録し、長い見出しを優先して当てる。
-- 画面の文言: 単語帳から型付きの文言関数を生成する（`label('transportSales')` →「輸送売上」）。単語の並びから文言を組み立て（`transportSalesList` →「輸送売上一覧」）、不自然なものだけ上書きを登録する。エラーメッセージなどの文はメッセージ帳に登録し、キーにも単語帳の単語だけを使う。
-- 単語帳の `description` から用語集（ユビキタス言語の一覧）を生成する。
-
-### 4.6 日本語翻訳ツール
-
-TypeScript Compiler API で関数を読み、名前と本体の文を単語帳で訳す。
-
-```ts
-/** 輸送の実績を売上として計上するため。 */
-export async function createNewTransportSales(context: Context, salesRequest: SalesRequest) {
-  const validatedRequest = validateSalesRequest(salesRequest)
-  const transportSales = buildTransportSales(validatedRequest)
-  await saveTransportSales(context, transportSales)
-  return transportSales
-}
-```
-
-```text
-関数: 新輸送売上の登録
-目的: 輸送の実績を売上として計上するため。
-処理:
-  1. 売上リクエストをバリデーションする
-  2. 輸送売上を組み立てる
-  3. 輸送売上を保存する
-  4. 輸送売上を返す
-```
-
-訳し方の規則（たたき台）:
+### 5.10 日本語翻訳ツール
 
 | 対象 | 規則 | 例 |
 | --- | --- | --- |
 | 関数名 | `動詞 + 残り` →「残りの訳」+「の」+「動詞の体言止めの形」 | `createNewTransportSales` →「新輸送売上の登録」 |
-| 処理の1文 | 呼び出し先の名前 →「残りの訳」+「を」+「動詞のする形」 | `validateSalesRequest(...)` →「売上リクエストをバリデーションする」 |
-| `return` | 「〜を返す」 | `return transportSales` →「輸送売上を返す」 |
-| `if` / `for` | 「〜の場合」「〜ごとに」で入れ子にする | 要否は Q7 |
+| 手順 | 呼び出し先の名前 →「残りの訳」+「を」+「動詞のする形」 | `validateSalesRequest(…)` →「売上リクエストをバリデーションする」 |
+| メソッドの呼び出し | メソッド名で訳す。動詞だけのときは、受け手の名前から役割の語を除いて目的語にする | `salesRepository.create(x)` →「売上を登録する」 |
+| 前置詞 | 単語帳の型で並べ替える | `findCustomerById` →「IDで顧客を取得する」 |
+| `return` | 「〜を返す」 | `return salesId` →「売上IDを返す」 |
+| `if` | 「〜場合」の下に入れ子にする | `if (text === '')` →「テキストが空である場合」 |
+| `throw` | メッセージ帳の文で「エラー「…」で止める」 | `throw rejectValue('inputRequired')` |
+| 訳せない式 | コードのまま `…` で示す | `` `Number(trimmedText)` `` |
 
-PoC で決めること: 前置詞（`findSalesByCustomer` →「顧客で売上を検索する」）、真偽値の関数（`isClosed`）と `if` の条件の訳し方。usecase でメソッド呼び出しを禁止する場合（Q12 の A）、usecase の訳はすべて関数名だけで決まる。
+### 5.11 コメント
 
-### 4.7 コメント
+- export する usecase・domain の関数には、目的（なぜこの処理があるか）を TSDoc の1行目に書く。翻訳ツールが「目的」として出す。
+- 処理の手順・引数の説明は書かない（名前と型で表し、翻訳ツールが作る）。
 
-「何をするか」は名前から翻訳ツールが作るので、コメントには名前で表せないことだけを書く。たたき台:
+## 6. サンプル業務の範囲と DB（案）
 
-- export する usecase・domain の関数には、目的（なぜこの処理があるか）を TSDoc の1行目に日本語で必須にする。
-- 業務ルールの根拠（要件 ID など）は任意のタグで書く。
-- 処理の手順・引数の説明は書かない（名前と型で表す）。
+売上登録から入金管理までを、次の4つのテーブルで表す案。ログ・作成日時・更新者などの列は持たない。
 
-### 4.8 モノレポ構成案
+| テーブル | 列 | 意味 |
+| --- | --- | --- |
+| `customer` | `customer_id`・`customer_name` | 顧客 |
+| `sales` | `sales_id`・`customer_id`・`sales_date`・`sales_amount` | 売上（実装済み） |
+| `payment` | `payment_id`・`customer_id`・`payment_date`・`payment_amount` | 入金 |
+| `payment_allocation` | `payment_id`・`sales_id`・`allocation_amount` | 消込（入金をどの売上に充てたか。入金と売上の多対多） |
 
-```text
-web-app-framework/
-├─ apps/
-│  ├─ web/              # React の画面
-│  └─ server/           # 本番の起動口（Hono を起動し、実 DB を注入するだけ）
-├─ packages/
-│  ├─ backend/          # domain / usecase / repository / handler と createApp()
-│  ├─ vocabulary/       # 単語帳（YAML）と、そこから生成する辞書・画面の文言・用語集
-│  ├─ eslint-plugin/    # 単語帳・命名の文法・useEffect 禁止の lint
-│  ├─ translator/       # 日本語翻訳ツール
-│  ├─ test-kit/         # 画面結合テストの道具（renderScreen・モック DB）
-│  └─ config/           # tsconfig・ESLint などの共有設定
-└─ docs/
-```
+- 売上の入金状況（未入金・一部入金・入金済み）は列に持たず、消込の合計から求める。
+- 画面の案: 顧客一覧、売上の登録・一覧、入金の登録・一覧、消込（入金を売上に充てる）、売上ごとの入金状況。
 
-- backend の中の分け方（層が先か、業務のまとまりが先か）は Q3 で決める。
-- 道具: pnpm workspaces、TypeScript の project references、ESLint（独自ルールを書くため）、整形は Prettier か Biome、Vitest、dependency-cruiser、GitHub Actions。
+## 7. 未決事項
 
-## 5. 未決事項（質問）
+**Q-A. サンプル業務の範囲**（6章の案でよいか）
 
-### 先に決めたいこと
+- 請求（請求書の発行・締め）を入れるか。入れない案を推奨（最小にするため。売上に直接入金を充てる）。
+- 消込の単位: 入金1件を複数の売上に分けて充てられる（多対多）案を推奨。
 
-**Q1. このリポジトリの位置づけ**
+**Q-B. SQL の固定の方式**
 
-- A. テンプレート: 案件ごとにコピーして使う（tsumiki と同じ使い方）。サンプル業務を同梱する
-- B. フレームワーク: lint・翻訳ツール・テストの道具をパッケージとして公開し、各案件のリポジトリから依存する
-- C. 特定の1つのアプリを作るためのリポジトリ
-- 推奨: A。ただし道具は `packages/` に分けて置き、後で B のように公開できる形にする。システム単語は土台側、ドメイン単語は案件側で持つ。
+- A. 1操作1文の固定の SQL を手で書き、台帳に出す（推奨。実行される SQL がコードの上でそのまま見える）。ORM は使わず、薄いドライバで実行する。
+- B. Drizzle などのクエリビルダで書き、出力される SQL をスナップショットで固定する。
+- 推奨: A。以前「DB は Drizzle」を推奨したが、SQL を構造的に固定する要求（R-35）には A が合う。マイグレーションも SQL のファイルで持つ。
 
-**Q2. DB とモックの方式**
+**Q-C. 本物の DB を使うテストの DB**
 
-- DB 製品: PostgreSQL / MySQL / その他
-- モックの方式:
-  - A. インメモリの偽 repository（配列で動く repository を別に書く）: 最速で、DB 製品に依存しない。repository が2つの実装になり、検索・集計が複雑になるほど二重実装が重い。本物とのずれは、同じテストを両方に流して防ぐ
-  - B. PGlite（WASM の PostgreSQL を同じプロセスで動かす）: 本番と同じ repository・SQL・マイグレーションがそのまま動き、二重実装がない。PostgreSQL 限定で、テストファイルごとに起動の時間がかかる（PoC で計測）
-- ORM: Drizzle / Prisma / Kysely
-- 推奨: PostgreSQL + B + Drizzle（DB の定義も TypeScript で書けるので、テーブル名・列名にも単語帳の検査が効く）。B なら repository を関数のまま使え、usecase の「関数を呼ぶだけ」（R-11）と相性がよい。A にすると、偽 repository へ差し替えるために usecase から context 経由で repository を呼ぶ形になる。
+- A. Docker の PostgreSQL（本番と同じ。Docker が要る）
+- B. PGlite（WASM の PostgreSQL。Docker が要らない。細かな挙動が本番と違うことがある）
+- 推奨: A。SQL の実体を確かめるテストなので、本番と同じ PostgreSQL で動かす。
 
-**Q3. バックエンドの中の分け方**
+**Q-D. 部品の渡し方の確認**
 
-- A. 層が先: `domain/sales/…`・`usecase/sales/…`・`repository/sales/…`
-- B. 業務のまとまりが先: `sales/domain`・`sales/usecase`・`sales/repository`（まとまりの間は公開した usecase だけで呼び合う）
-- あわせて確認: handler（Hono のルート）は usecase を呼ぶだけの薄い層として3層の外に置く形でよいか。
-- 推奨: B。単語帳のドメイン単語・コード・テストが業務のまとまりごとにそろい、大きくなっても境界を保ちやすい。
+- usecase は必要な部品を引数で1つずつ受ける形にした（4.3 の `createSales`）。この具体例で問題ないか。
+- 部品が多い usecase では引数が長くなる。その場合も1つずつ受ける（推奨。何に触る処理かが引数で分かる）。
 
-**Q4. 業務エラーの返し方** → 決定（2026-11-18）: A（例外を throw し、try/catch で受ける）。詳細は 4.3 の「エラー処理」。
+**Q-E. 前回からの残り**
 
-- A. 例外: 業務エラーのクラスを throw し、Hono の共通処理で HTTP の応答に変換する
-- B. 戻り値: Result 型（neverthrow など）で返す
+- 画面の UI ライブラリ（shadcn/ui + Tailwind / MUI / Mantine / 未定）
+- 本番の実行環境（Node（Cloud Run・ECS など）/ Cloudflare Workers / 未定）
 
-**Q11. usecase に `if` を書いてよいか**
+## 8. 次の作業
 
-- A. 完全に禁止: 分岐はすべて domain の関数（`assertTransportSalesEditable` が throw する、など）か、条件付きの関数（`notifyApproverIfRequired`）へ出す。usecase は常に一直線
-- B. 限られた形だけ許す: 条件は変数1つ（演算子なし）、中身は関数呼び出しの文だけ、入れ子なし。翻訳では「〜の場合」として出す
-
-  ```ts
-  const isApprovalRequired = judgeApprovalRequired(transportSales)
-  if (isApprovalRequired) {
-    await notifyApprover(context, transportSales)
-  }
-  ```
-
-- 推奨: B。A だと、I/O を伴う分岐（通知するか、どちらを保存するか）が `〜IfRequired` のような関数の中に隠れ、翻訳から分岐が読めなくなる。
-
-**Q12. usecase でのプロパティ参照・1段のメソッド呼び出し**
-
-- A. 禁止: 呼べるのは import した関数だけ、引数は変数だけ（時刻は `getNow(context)` のように関数で取り出す）
-- B. 1段だけ許す: `context.clock`・`repository.save(x)` は書ける。チェーンは禁止
-- 推奨: A。usecase の見た目がそろい、翻訳が関数名だけで決まる（メソッド呼び出しの訳し方を考えなくてよい）。
-
-**Q5. 単語帳を当てる範囲と厳しさ**
-
-- 範囲（複数可）: 関数・メソッド名 / 変数・引数 / 型・クラス / プロパティ（API の項目を含む） / DB のテーブル・列名 / API のパス / ファイル・フォルダ名 / テスト名
-- 違反の扱い: CI でエラー / 警告だけ
-- 活用形（`orders`・`createdAt` など）: 活用形も単語帳に明示して登録 / 規則で原形に戻して照合
-- 推奨: 自分で宣言する名前はすべて（テスト名の文章は除く）＋ API のパス・DB 名・ファイル名。CI でエラー。活用形は明示して登録（一番厳密で、翻訳も確実になる）。
-
-### 後で決めてもよいこと（推奨のまま PoC を進められる）
-
-**Q6. 画面の言語**
-
-- A. 日本語だけ（i18n は単語帳から文言を引く仕組みとして使う） / B. 多言語
-- 推奨: A。単語帳に英語の表示名を足せば B に広げられる形にする。
-
-**Q7. 翻訳ツールの対象・深さ・出力先**
-
-- 対象: backend の usecase・domain だけ / backend 全体 / 画面も含む全体
-- 深さ: 関数呼び出しだけ / `if`・`for`・`return`・`throw` も訳す
-- 出力先: CLI で Markdown を生成 / 設計Viewer のような Web 画面 / エディタのホバー表示 / PR に差分をコメント
-- 推奨: まず backend の usecase・domain、制御構文も訳す、CLI で Markdown。Web 画面・エディタ表示は後から足す。
-
-**Q8. コメントに書く内容**
-
-- A. 目的だけ1行必須 / B. 目的＋概要 / C. 目的＋入力・出力・エラー（kawakin の `@backend-design` に近い）
-- 推奨: A（4.7 の案）。
-
-**Q9. 画面まわりのライブラリ**
-
-- ルーター: TanStack Router / React Router v7
-- フォーム: React Hook Form / TanStack Form / React 19 の form action
-- UI: shadcn/ui + Tailwind / MUI / Mantine / 未定
-- SPA か SSR か
-- 推奨: TanStack Router + TanStack Query、フォームは PoC で比較、SPA。
-
-**Q10. 動かす環境と E2E**
-
-- 本番の実行環境: Node（Cloud Run・ECS など） / Cloudflare Workers / 未定
-- E2E（本物のサーバー・DB を通す Playwright のテスト）: 少数のスモークだけ持つ / 持たない
-- 推奨: Node + 少数のスモーク。
-
-## 6. 次の進め方
-
-1. 未決事項の回答で、この文書の方針を確定する。
-2. PoC（最小の縦切り）: 1画面・1 API で「ボタン押下 → usecase → モック DB」の結合テストを1本通す。あわせて単語帳の lint と翻訳ツールの最小版を作り、4.6 の例が訳せることを確かめる。
-3. PoC の結果で、lint・CI・テストの道具・ディレクトリを整える。
+1. 入金・消込の業務を足す（domain の判定・目的別の選択子もここで作る）。
+2. PostgreSQL の repository、SQL の固定と台帳、本物の DB での repository のテスト、トランザクション。
+3. 単語帳をファイル名・API のパス・DB のテーブル名と列名にも当てる。
+4. CI（GitHub Actions で `pnpm check`）。
+5. 画面を手元で動かす口（開発用の API サーバーと Vite の開発サーバー）。

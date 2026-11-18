@@ -1,0 +1,40 @@
+# 画面に出す文。{field} は項目の見出し、そのほかの {…} は値で埋める。
+- key: invalidInput
+  ja: 入力に問題があります。
+  en: Some input is invalid.
+- key: inputRequired
+  ja: '{field}を入力してください。'
+  en: 'Enter {field}.'
+- key: selectionRequired
+  ja: '{field}を選んでください。'
+  en: 'Select {field}.'
+- key: integerRequired
+  ja: '{field}は整数で入力してください。'
+  en: 'Enter {field} as a whole number.'
+- key: invalidRange
+  ja: '{field}は{minimum}から{maximum}までで入力してください。'
+  en: 'Enter {field} between {minimum} and {maximum}.'
+- key: invalidDate
+  ja: '{field}は実在する日付を YYYY-MM-DD の形で入力してください。'
+  en: 'Enter {field} as a valid date in YYYY-MM-DD.'
+- key: invalidRequest
+  ja: リクエストの形が正しくありません。
+  en: The request is malformed.
+- key: missingTarget
+  ja: 対象が見つかりません。
+  en: The target was not found.
+- key: duplicateTarget
+  ja: 同じ対象がすでにあります。
+  en: The target already exists.
+- key: unexpectedError
+  ja: 予期しないエラーが起きました。
+  en: An unexpected error occurred.
+- key: createCompleted
+  ja: 登録しました。
+  en: Created.
+- key: loading
+  ja: 読み込んでいます…
+  en: Loading…
+- key: selectionPrompt
+  ja: 選んでください
+  en: Select…

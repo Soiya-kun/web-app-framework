@@ -1,0 +1,20 @@
+# システム向けの形容詞・分詞。名詞の前に付く（new + sales →「新売上」）。
+- { word: completed, pos: adjective, ja: 完了 }
+- { word: duplicate, pos: adjective, ja: 重複した }
+- { word: forbidden, pos: adjective, ja: 禁止 }
+- { word: found, pos: adjective, ja: 検出 }
+- { word: general, pos: adjective, ja: 全般の }
+- { word: invalid, pos: adjective, ja: 不正な }
+- { word: matched, pos: adjective, ja: 一致した }
+- { word: maximum, pos: adjective, ja: 最大 }
+- { word: minimum, pos: adjective, ja: 最小 }
+- { word: missing, pos: adjective, ja: 見つからない }
+- { word: new, pos: adjective, ja: 新 }
+- { word: not, pos: adjective, ja: 未 }
+- { word: random, pos: adjective, ja: ランダムな }
+- { word: required, pos: adjective, ja: 必須の }
+- { word: sample, pos: adjective, ja: 見本の }
+- { word: saved, pos: adjective, ja: 保存済みの }
+- { word: trimmed, pos: adjective, ja: 前後の空白を除いた }
+- { word: unexpected, pos: adjective, ja: 予期しない }
+- { word: valid, pos: adjective, ja: 有効な }

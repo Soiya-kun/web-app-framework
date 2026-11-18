@@ -1,0 +1,3 @@
+# 単語の組合せでは訳が決まらない並び。長い並びを優先して当てる。
+- { words: sales date, ja: 売上日, en: Sales Date }
+- { words: customer name, ja: 顧客名, en: Customer Name }

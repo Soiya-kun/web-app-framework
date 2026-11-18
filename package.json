@@ -1,0 +1,28 @@
+{
+  "name": "web-app-framework",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "vocabulary:generate": "pnpm --filter @app/vocabulary generate",
+    "vocabulary:check": "pnpm --filter @app/vocabulary check",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "translate": "pnpm --filter @app/translator translate",
+    "check": "pnpm vocabulary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm translate:check",
+    "translate:check": "pnpm --filter @app/translator translate --check"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "eslint": "^10.15.0",
+    "jiti": "^2.7.0",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^5.1.0"
+  }
+}
