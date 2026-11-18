@@ -23,5 +23,5 @@ export async function renderScreen(path: string, database: MemoryDatabase) {
   await router.load()
   const user = userEvent.setup({ delay: null })
   render(<AppRoot apiClient={apiClient} queryClient={queryClient} router={router} locale="ja" />)
-  return { user }
+  return { user, router }
 }

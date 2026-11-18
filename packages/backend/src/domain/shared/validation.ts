@@ -6,6 +6,11 @@ export function rejectValue(messageKey: MessageKey, params: MessageParams = {}):
   return new ValidationError([{ field: '', messageKey, params }])
 }
 
+/** 値そのものは正しいが、ほかの値との組合せで受け付けない項目を表すため。 */
+export function rejectField(field: string, messageKey: MessageKey, params: MessageParams = {}): ValidationError {
+  return new ValidationError([{ field, messageKey, params }])
+}
+
 type Interpreters<Result> = { readonly [Field in keyof Result]: () => Result[Field] }
 
 /** 項目ごとの解釈をすべて行い、受け付けない項目をまとめて画面へ返すため。 */

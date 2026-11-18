@@ -1,11 +1,12 @@
 // database/migration の SQL を、まだ当てていないものだけ名前の順に当てる。当てた名前は schema_migration に残す。
 import { readdirSync, readFileSync } from 'node:fs'
 import pg from 'pg'
+import { prepareConnectionSetting, type DatabaseConnection } from '../src/repository/postgres/postgresDatabase'
 
 const migrationDirectory = new URL('./migration/', import.meta.url)
 
-export async function applyMigrations(connectionText: string): Promise<readonly string[]> {
-  const client = new pg.Client({ connectionString: connectionText })
+export async function applyMigrations(connection: DatabaseConnection): Promise<readonly string[]> {
+  const client = new pg.Client(prepareConnectionSetting(connection))
   await client.connect()
   try {
     await client.query('CREATE TABLE IF NOT EXISTS schema_migration (migration_name text PRIMARY KEY)')

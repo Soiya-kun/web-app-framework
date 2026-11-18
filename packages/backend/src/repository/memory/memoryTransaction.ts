@@ -1,5 +1,6 @@
 import type { RepositorySet, RunTransaction } from '../../domain/repositorySet'
 import { prepareCustomerMemoryRepository } from './customerMemoryRepository'
+import { prepareInvoiceMemoryRepository } from './invoiceMemoryRepository'
 import { copyMemoryDatabase, restoreMemoryDatabase, type MemoryDatabase } from './memoryDatabase'
 import { prepareSalesMemoryRepository } from './salesMemoryRepository'
 
@@ -7,6 +8,7 @@ export function prepareMemoryRepositories(database: MemoryDatabase): RepositoryS
   return {
     customerRepository: prepareCustomerMemoryRepository(database),
     salesRepository: prepareSalesMemoryRepository(database),
+    invoiceRepository: prepareInvoiceMemoryRepository(database),
   }
 }
 

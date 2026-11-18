@@ -73,6 +73,7 @@ describe('売上登録の画面', () => {
         itemName: '運賃',
         salesAmount: 1000,
         taxRate: 10,
+        invoiceId: null,
       },
     ])
   })

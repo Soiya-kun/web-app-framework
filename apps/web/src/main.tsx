@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { prepareApiClient } from './shared/apiClient'
 import { AppRoot } from './shared/appRoot'
 import { prepareRouter } from './shared/router'
+import './style.css'
 
 const rootElement = document.getElementById('root')
 if (rootElement === null) {

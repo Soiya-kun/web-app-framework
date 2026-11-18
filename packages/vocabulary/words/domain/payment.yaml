@@ -1,5 +1,6 @@
 - word: payment
   pos: noun
+  forms: [payments]
   ja: 入金
   description: 顧客から受け取ったお金。振込人を特定できていない入金（仮受）もある。
 - word: payer
@@ -24,6 +25,7 @@
   description: 消込の中で、どの入金のいくらを、どの請求へ充てたか。
 - word: adjustment
   pos: noun
+  forms: [adjustments]
   ja: 調整
   description: 入金が請求に足りない分を、当社の負担として請求から差し引くこと（振込手数料・端数）。
 - word: fee
@@ -36,5 +38,14 @@
   description: small difference（端数差額）で使う。請求と入金の少額の差。
 - word: refund
   pos: noun
+  forms: [refunds]
   ja: 返金
   description: 請求に充てない入金（過入金・二重入金・他社宛の誤入金）を、振込人へ返すこと。
+- word: carried
+  pos: adjective
+  ja: 繰越
+  description: carried amount（繰越額）で使う。前回請求額から今回入金額と調整額を引いた残り。負は前受。
+- word: correction
+  pos: noun
+  ja: 訂正
+  description: 調整の区分の1つ。発行した請求に載せた入金などの誤りを、次の請求で直す（正負どちらも）。

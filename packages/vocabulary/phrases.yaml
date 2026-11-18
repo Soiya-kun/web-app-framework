@@ -18,3 +18,16 @@
 - { words: taxable amount, ja: 課税対象額, en: Taxable Amount }
 - { words: reconciliation date, ja: 消込日, en: Reconciliation Date }
 - { words: refund date, ja: 返金日, en: Refund Date }
+- { words: month end, ja: 月末, en: Month End }
+- { words: invoice amount, ja: 請求額, en: Invoice Amount }
+- { words: payment amount, ja: 入金額, en: Payment Amount }
+- { words: refund amount, ja: 返金額, en: Refund Amount }
+- { words: adjustment amount, ja: 調整額, en: Adjustment Amount }
+- { words: carried amount, ja: 繰越額, en: Carried Amount }
+- { words: tax amount, ja: 消費税額, en: Tax }
+- { words: invoice number, ja: 請求番号, en: Invoice Number }
+- { words: invoice list, ja: 請求一覧, en: Invoices }
+- { words: adjustment kind, ja: 調整区分, en: Adjustment Kind }
+- { words: closing cancel, ja: 締めの取消, en: Cancel Closing }
+- { words: tax breakdown, ja: 税率ごとの内訳, en: Tax Breakdown }
+- { words: invoice breakdown, ja: 請求の内訳, en: Invoice Breakdown }

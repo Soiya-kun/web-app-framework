@@ -19,7 +19,9 @@
     "database:down": "docker compose down",
     "test:database": "pnpm database:up && pnpm --filter @app/backend test:database",
     "sql:ledger": "pnpm --filter @app/translator sql:ledger",
-    "sql:ledger:check": "pnpm --filter @app/translator sql:ledger --check"
+    "sql:ledger:check": "pnpm --filter @app/translator sql:ledger --check",
+    "dev:api": "pnpm --filter @app/server dev",
+    "dev:web": "pnpm --filter @app/web dev"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

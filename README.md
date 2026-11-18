@@ -1,6 +1,6 @@
 # web-app-framework
 
-TypeScript（React + Hono）で業務 Web アプリを作るための土台（フレームワーク兼サンプル実装）。
+TypeScript（React + Hono）で業務 Web アプリを作るための土台（フレームワーク兼サンプル実装）。サンプルの業務は、売上の登録から、残高を繰り越す請求書の締め・発行、入金管理まで。
 
 - 画面の操作から、API 通信を介さずにバックエンドの業務処理までを同じプロセスで結合テストする。差し替えるのは DB だけ。
 - 識別子の英単語を単語帳で絞り、処理を日本語に機械翻訳して読めるようにする。
@@ -21,13 +21,17 @@ Node.js（`.node-version`）と pnpm（`package.json` の `packageManager`）を
 | `pnpm vocabulary:generate` | 単語帳（`packages/vocabulary/words` など）を変えたあとに辞書を作り直す |
 | `pnpm translate` | 処理の日本語訳を作り直す |
 | `pnpm sql:ledger` | SQL の台帳を作り直す |
+| `pnpm dev:api` / `pnpm dev:web` | 手元で API サーバー（環境変数 `DATABASE_URL` が要る）と画面を動かす |
+| `pnpm --filter @app/infra synth` | AWS の CloudFormation のテンプレートを作る（`-c stage=dev` などで環境を選ぶ） |
 
 ## 構成
 
 | 場所 | 内容 |
 | --- | --- |
 | `apps/web` | React の画面と、画面の結合テスト |
+| `apps/server` | 本番の API サーバーとマイグレーションの実行（Dockerfile） |
 | `packages/backend` | Hono の API（domain・usecase・repository・handler） |
 | `packages/vocabulary` | 単語帳と、そこから作る辞書・文法・画面の文言 |
 | `packages/eslint-plugin` | 単語帳・関数名の文法・usecase の書き方の lint |
 | `packages/translator` | 日本語翻訳ツールと SQL の台帳の生成 |
+| `infra` | AWS の CDK |

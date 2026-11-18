@@ -1,6 +1,7 @@
 import pg from 'pg'
 import type { RepositorySet, RunTransaction } from '../../domain/repositorySet'
 import { prepareCustomerPostgresRepository } from './customerPostgresRepository'
+import { prepareInvoicePostgresRepository } from './invoicePostgresRepository'
 import { prepareSalesPostgresRepository } from './salesPostgresRepository'
 import { defineStatement, type Executor } from './statement'
 
@@ -33,8 +34,21 @@ const typeParsers = {
   }) as pg.CustomTypesConfig['getTypeParser'],
 }
 
-export function preparePostgresPool(connectionText: string): pg.Pool {
-  return new pg.Pool({ connectionString: connectionText, types: typeParsers })
+/** DB への接続先。certificateText を渡すと、その証明書で DB のサーバーを確かめる TLS で接続する（本番の RDS）。 */
+export type DatabaseConnection = {
+  readonly connectionText: string
+  readonly certificateText?: string | undefined
+}
+
+/** pg の接続の設定にする。 */
+export function prepareConnectionSetting(connection: DatabaseConnection): pg.ClientConfig {
+  return connection.certificateText === undefined
+    ? { connectionString: connection.connectionText }
+    : { connectionString: connection.connectionText, ssl: { ca: connection.certificateText, rejectUnauthorized: true } }
+}
+
+export function preparePostgresPool(connection: DatabaseConnection): pg.Pool {
+  return new pg.Pool({ ...prepareConnectionSetting(connection), types: typeParsers })
 }
 
 export function prepareClientExecutor(client: pg.ClientBase | pg.Pool): Executor {
@@ -50,6 +64,7 @@ export function preparePostgresRepositories(executor: Executor): RepositorySet {
   return {
     customerRepository: prepareCustomerPostgresRepository(executor),
     salesRepository: prepareSalesPostgresRepository(executor),
+    invoiceRepository: prepareInvoicePostgresRepository(executor),
   }
 }
 

@@ -36,3 +36,9 @@
   jaVerb: '{object}付きの{head}を{verb}'
   jaName: '{object}付きの{head}の{verb}'
   en: with
+- word: on
+  pos: preposition
+  ja: '{object}での{head}'
+  jaVerb: '{object}で{head}を{verb}'
+  jaName: '{object}での{head}の{verb}'
+  en: on

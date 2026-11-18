@@ -23,8 +23,15 @@ export const knownWords = createRule({
   create(context) {
     const reported = new Set<TSESTree.Node>()
 
+    /** declare module 'ライブラリ' の中は、ライブラリの型を広げる宣言で、名前はライブラリが決める。 */
+    function isInsideModuleAugmentation(node: TSESTree.Node): boolean {
+      return context.sourceCode
+        .getAncestors(node)
+        .some((ancestor) => ancestor.type === AST_NODE_TYPES.TSModuleDeclaration && ancestor.id.type === AST_NODE_TYPES.Literal)
+    }
+
     function checkName(node: TSESTree.Node, name: string): void {
-      if (reported.has(node)) {
+      if (reported.has(node) || isInsideModuleAugmentation(node)) {
         return
       }
       reported.add(node)

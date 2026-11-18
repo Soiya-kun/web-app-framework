@@ -17,6 +17,7 @@ ruleTester.run('known-words', knownWords, {
     "import { useState } from 'react'",
     'const salesRow = { queryKey: [], refetchOnWindowFocus: false }',
     'type SalesRow = { readonly salesId: string }',
+    "declare module 'library' { interface Register { router: string } }",
   ],
   invalid: [
     { code: 'function addSales(): void {}', errors: [{ messageId: 'avoidedWord' }] },

@@ -1,0 +1,21 @@
+{
+  "name": "@app/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node script/build.mjs",
+    "start": "node dist/server.mjs",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx watch src/server.ts"
+  },
+  "dependencies": {
+    "@app/backend": "workspace:*",
+    "@hono/node-server": "^2.1.9"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "~6.0.3",
+    "tsx": "^4.23.15"
+  }
+}

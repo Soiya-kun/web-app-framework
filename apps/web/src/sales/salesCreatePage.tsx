@@ -1,9 +1,13 @@
 import type { SalesRequest } from '@app/backend'
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
-import type { FormEvent, ReactNode } from 'react'
-import { ApiError, useApiClient } from '../shared/apiClient'
+import type { FormEvent } from 'react'
+import { useApiClient } from '../shared/apiClient'
+import { Button } from '../shared/component/button'
+import { FormField, SelectInput, TextInput } from '../shared/component/formField'
+import { AlertMessage, PageTitle, Section, StatusMessage } from '../shared/component/page'
+import { prepareFormFeedback, readField } from '../shared/formFeedback'
 import { useText } from '../shared/text'
-import { prepareCustomerListQuery, postSales } from './salesApi'
+import { postSales, prepareCustomerListQuery } from './salesApi'
 
 type SalesField = keyof SalesRequest
 
@@ -23,22 +27,6 @@ const salesKindOptions = ['normal', 'return', 'discount'] as const
 /** 税率の選択肢（%）。 */
 const taxRateOptions = ['10', '8'] as const
 
-function readField(formData: FormData, field: SalesField): string {
-  const value = formData.get(field)
-  return typeof value === 'string' ? value : ''
-}
-
-function FieldRow({ field, problemText, children }: { field: SalesField; problemText: string | undefined; children: ReactNode }) {
-  const text = useText()
-  return (
-    <div>
-      <label htmlFor={field}>{text.label(fieldLabelNames[field])}</label>
-      {children}
-      {problemText === undefined ? null : <p id={`${field}-problem`}>{problemText}</p>}
-    </div>
-  )
-}
-
 export function SalesCreatePage() {
   const text = useText()
   const apiClient = useApiClient()
@@ -46,6 +34,7 @@ export function SalesCreatePage() {
   const salesMutation = useMutation({
     mutationFn: (salesRequest: SalesRequest) => postSales(apiClient, salesRequest),
   })
+  const feedback = prepareFormFeedback(text, salesMutation.error, fieldLabelNames)
 
   function submitSales(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -60,71 +49,57 @@ export function SalesCreatePage() {
     })
   }
 
-  const failure = salesMutation.error instanceof ApiError ? salesMutation.error.detail : undefined
-  function describeProblem(field: SalesField): string | undefined {
-    const problem = failure?.problems.find((item) => item.field === field)
-    return problem === undefined
-      ? undefined
-      : text.message(problem.messageKey, { ...problem.params, field: text.label(fieldLabelNames[field]) })
-  }
-  function describeField(field: SalesField) {
-    const problemText = describeProblem(field)
-    return {
-      id: field,
-      name: field,
-      'aria-invalid': problemText !== undefined,
-      'aria-describedby': problemText === undefined ? undefined : `${field}-problem`,
-    }
-  }
-  const generalFailure = failure !== undefined && failure.problems.length === 0 ? text.message(failure.messageKey, failure.params) : undefined
-
   return (
-    <main>
-      <h1>{text.label('salesCreate')}</h1>
-      <form onSubmit={submitSales} noValidate>
-        <FieldRow field="customerId" problemText={describeProblem('customerId')}>
-          <select {...describeField('customerId')} defaultValue="">
-            <option value="">{text.message('selectionPrompt')}</option>
-            {customers.map((customer) => (
-              <option key={customer.customerId} value={customer.customerId}>
-                {customer.customerName}
-              </option>
-            ))}
-          </select>
-        </FieldRow>
-        <FieldRow field="salesDate" problemText={describeProblem('salesDate')}>
-          <input {...describeField('salesDate')} type="text" inputMode="numeric" placeholder="YYYY-MM-DD" />
-        </FieldRow>
-        <FieldRow field="salesKind" problemText={describeProblem('salesKind')}>
-          <select {...describeField('salesKind')} defaultValue="normal">
-            {salesKindOptions.map((salesKind) => (
-              <option key={salesKind} value={salesKind}>
-                {text.label(salesKind)}
-              </option>
-            ))}
-          </select>
-        </FieldRow>
-        <FieldRow field="itemName" problemText={describeProblem('itemName')}>
-          <input {...describeField('itemName')} type="text" />
-        </FieldRow>
-        <FieldRow field="salesAmount" problemText={describeProblem('salesAmount')}>
-          <input {...describeField('salesAmount')} type="text" inputMode="numeric" />
-        </FieldRow>
-        <FieldRow field="taxRate" problemText={describeProblem('taxRate')}>
-          <select {...describeField('taxRate')} defaultValue="10">
-            {taxRateOptions.map((taxRate) => (
-              <option key={taxRate} value={taxRate}>
-                {taxRate === '8' ? `8%（${text.label('reduced')}）` : `${taxRate}%`}
-              </option>
-            ))}
-          </select>
-        </FieldRow>
-        <button type="submit" disabled={salesMutation.isPending}>
-          {text.label('create')}
-        </button>
-      </form>
-      {salesMutation.isSuccess ? <p role="status">{text.message('createCompleted')}</p> : null}
-      {generalFailure === undefined ? null : <p role="alert">{generalFailure}</p>}
-    </main>
+    <>
+      <PageTitle>{text.label('salesCreate')}</PageTitle>
+      <Section>
+        <form onSubmit={submitSales} noValidate className="grid gap-4 sm:grid-cols-2">
+          <FormField field="customerId" label={text.label('customer')} problemText={feedback.describeProblem('customerId')}>
+            <SelectInput {...feedback.describeField('customerId')} defaultValue="">
+              <option value="">{text.message('selectionPrompt')}</option>
+              {customers.map((customer) => (
+                <option key={customer.customerId} value={customer.customerId}>
+                  {customer.customerName}
+                </option>
+              ))}
+            </SelectInput>
+          </FormField>
+          <FormField field="salesDate" label={text.label('salesDate')} problemText={feedback.describeProblem('salesDate')}>
+            <TextInput {...feedback.describeField('salesDate')} inputMode="numeric" placeholder="YYYY-MM-DD" />
+          </FormField>
+          <FormField field="salesKind" label={text.label('salesKind')} problemText={feedback.describeProblem('salesKind')}>
+            <SelectInput {...feedback.describeField('salesKind')} defaultValue="normal">
+              {salesKindOptions.map((salesKind) => (
+                <option key={salesKind} value={salesKind}>
+                  {text.label(salesKind)}
+                </option>
+              ))}
+            </SelectInput>
+          </FormField>
+          <FormField field="itemName" label={text.label('itemName')} problemText={feedback.describeProblem('itemName')}>
+            <TextInput {...feedback.describeField('itemName')} />
+          </FormField>
+          <FormField field="salesAmount" label={text.label('salesAmount')} problemText={feedback.describeProblem('salesAmount')}>
+            <TextInput {...feedback.describeField('salesAmount')} inputMode="numeric" />
+          </FormField>
+          <FormField field="taxRate" label={text.label('taxRate')} problemText={feedback.describeProblem('taxRate')}>
+            <SelectInput {...feedback.describeField('taxRate')} defaultValue="10">
+              {taxRateOptions.map((taxRate) => (
+                <option key={taxRate} value={taxRate}>
+                  {taxRate === '8' ? `8%（${text.label('reduced')}）` : `${taxRate}%`}
+                </option>
+              ))}
+            </SelectInput>
+          </FormField>
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={salesMutation.isPending}>
+              {text.label('create')}
+            </Button>
+          </div>
+        </form>
+      </Section>
+      {salesMutation.isSuccess ? <StatusMessage>{text.message('createCompleted')}</StatusMessage> : null}
+      {feedback.generalFailure === undefined ? null : <AlertMessage>{feedback.generalFailure}</AlertMessage>}
+    </>
   )
 }

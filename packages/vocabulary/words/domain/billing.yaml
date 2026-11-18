@@ -1,5 +1,6 @@
 - word: invoice
   pos: noun
+  forms: [invoices]
   ja: 請求
   description: 請求先ごと・締め日ごとに売上をまとめ、消費税を計算して請求する単位。発行すると変えない。
 - word: billing
@@ -16,6 +17,7 @@
   description: 請求した代金を受け取ること。回収月・回収日から入金期日を決める。
 - word: tax
   pos: noun
+  forms: [taxes]
   ja: 税
   description: 消費税。請求ごと・税率ごとに、税抜の合計から計算する（1円未満は切り捨て）。
 - word: taxable

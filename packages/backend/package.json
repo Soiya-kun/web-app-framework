@@ -4,7 +4,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./testing": "./src/testing.ts"
+    "./testing": "./src/testing.ts",
+    "./production": "./src/production.ts",
+    "./migration": "./database/applyMigrations.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

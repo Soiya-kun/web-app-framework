@@ -7,11 +7,18 @@ describeRepositoryContract('モック DB', async () => {
   return {
     repositories: prepareMemoryRepositories(database),
     runTransaction: prepareMemoryTransaction(database),
-    async seedCustomers(customers) {
-      database.customer.push(...customers)
+    async seedTables(seed) {
+      database.customer.push(...(seed.customer ?? []))
+      database.invoice.push(...(seed.invoice ?? []))
+      database.invoiceTax.push(...(seed.invoiceTax ?? []))
+      database.invoiceCounter.push(...(seed.invoiceCounter ?? []))
+      database.sales.push(...(seed.sales ?? []))
+      database.payment.push(...(seed.payment ?? []))
+      database.refund.push(...(seed.refund ?? []))
+      database.adjustment.push(...(seed.adjustment ?? []))
     },
-    async readSales() {
-      return database.sales
+    async readTables() {
+      return prepareMemoryDatabase(database)
     },
   }
 })

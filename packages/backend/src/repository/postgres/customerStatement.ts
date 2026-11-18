@@ -29,3 +29,18 @@ FROM customer
 ORDER BY customer_id
 `,
 )
+
+export const lockCustomerStatement = defineStatement<[customerId: string], Stored<Customer>>(
+  'lockCustomer',
+  `
+SELECT customer_id AS "customerId",
+       customer_name AS "customerName",
+       billing_customer_id AS "billingCustomerId",
+       closing_day AS "closingDay",
+       collection_month_offset AS "collectionMonthOffset",
+       collection_day AS "collectionDay"
+FROM customer
+WHERE customer_id = $1
+FOR UPDATE
+`,
+)

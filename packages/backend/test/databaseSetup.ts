@@ -9,5 +9,5 @@ export default async function prepareTestDatabase(): Promise<void> {
   await client.query('DROP SCHEMA public CASCADE')
   await client.query('CREATE SCHEMA public')
   await client.end()
-  await applyMigrations(testDatabaseUrl)
+  await applyMigrations({ connectionText: testDatabaseUrl })
 }
