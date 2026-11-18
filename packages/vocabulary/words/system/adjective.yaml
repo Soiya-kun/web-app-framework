@@ -18,3 +18,17 @@
 - { word: trimmed, pos: adjective, ja: 前後の空白を除いた }
 - { word: unexpected, pos: adjective, ja: 予期しない }
 - { word: valid, pos: adjective, ja: 有効な }
+- { word: applied, pos: adjective, ja: 適用済みの }
+- { word: last, pos: adjective, ja: 最終 }
+- { word: left, pos: adjective, ja: 左の }
+- { word: long, pos: adjective, ja: 長すぎる }
+- { word: normal, pos: adjective, ja: 通常 }
+- { word: other, pos: adjective, ja: その他 }
+- { word: plain, pos: adjective, ja: 素の }
+- { word: recording, pos: adjective, ja: 記録する }
+- { word: reduced, pos: adjective, ja: 軽減 }
+- { word: right, pos: adjective, ja: 右の }
+- { word: safe, pos: adjective, ja: 安全な }
+- { word: small, pos: adjective, ja: 少額の }
+- { word: stored, pos: adjective, ja: 保存形の }
+- { word: unique, pos: adjective, ja: 一意の }

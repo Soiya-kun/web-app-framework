@@ -1,0 +1,17 @@
+# テスト用の PostgreSQL。データはメモリ（tmpfs）に置き、止めると消える。
+services:
+  test-database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    ports:
+      - '55433:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U app -d app']
+      interval: 1s
+      timeout: 3s
+      retries: 30

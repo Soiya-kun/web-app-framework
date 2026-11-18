@@ -11,21 +11,30 @@ type SalesField = keyof SalesRequest
 const fieldLabelNames = {
   customerId: 'customer',
   salesDate: 'salesDate',
+  salesKind: 'salesKind',
+  itemName: 'itemName',
   salesAmount: 'salesAmount',
+  taxRate: 'taxRate',
 } as const satisfies Record<SalesField, string>
+
+/** 売上区分の選択肢。返品・値引も金額は正で入力し、保存のときに負にする。 */
+const salesKindOptions = ['normal', 'return', 'discount'] as const
+
+/** 税率の選択肢（%）。 */
+const taxRateOptions = ['10', '8'] as const
 
 function readField(formData: FormData, field: SalesField): string {
   const value = formData.get(field)
   return typeof value === 'string' ? value : ''
 }
 
-function FieldRow({ field, issueText, children }: { field: SalesField; issueText: string | undefined; children: ReactNode }) {
+function FieldRow({ field, problemText, children }: { field: SalesField; problemText: string | undefined; children: ReactNode }) {
   const text = useText()
   return (
     <div>
       <label htmlFor={field}>{text.label(fieldLabelNames[field])}</label>
       {children}
-      {issueText === undefined ? null : <p id={`${field}-issue`}>{issueText}</p>}
+      {problemText === undefined ? null : <p id={`${field}-problem`}>{problemText}</p>}
     </div>
   )
 }
@@ -44,33 +53,36 @@ export function SalesCreatePage() {
     salesMutation.mutate({
       customerId: readField(formData, 'customerId'),
       salesDate: readField(formData, 'salesDate'),
+      salesKind: readField(formData, 'salesKind'),
+      itemName: readField(formData, 'itemName'),
       salesAmount: readField(formData, 'salesAmount'),
+      taxRate: readField(formData, 'taxRate'),
     })
   }
 
   const failure = salesMutation.error instanceof ApiError ? salesMutation.error.detail : undefined
-  function describeIssue(field: SalesField): string | undefined {
-    const issue = failure?.issues.find((item) => item.field === field)
-    return issue === undefined
+  function describeProblem(field: SalesField): string | undefined {
+    const problem = failure?.problems.find((item) => item.field === field)
+    return problem === undefined
       ? undefined
-      : text.message(issue.messageKey, { ...issue.params, field: text.label(fieldLabelNames[field]) })
+      : text.message(problem.messageKey, { ...problem.params, field: text.label(fieldLabelNames[field]) })
   }
   function describeField(field: SalesField) {
-    const issueText = describeIssue(field)
+    const problemText = describeProblem(field)
     return {
       id: field,
       name: field,
-      'aria-invalid': issueText !== undefined,
-      'aria-describedby': issueText === undefined ? undefined : `${field}-issue`,
+      'aria-invalid': problemText !== undefined,
+      'aria-describedby': problemText === undefined ? undefined : `${field}-problem`,
     }
   }
-  const generalFailure = failure !== undefined && failure.issues.length === 0 ? text.message(failure.messageKey, failure.params) : undefined
+  const generalFailure = failure !== undefined && failure.problems.length === 0 ? text.message(failure.messageKey, failure.params) : undefined
 
   return (
     <main>
       <h1>{text.label('salesCreate')}</h1>
       <form onSubmit={submitSales} noValidate>
-        <FieldRow field="customerId" issueText={describeIssue('customerId')}>
+        <FieldRow field="customerId" problemText={describeProblem('customerId')}>
           <select {...describeField('customerId')} defaultValue="">
             <option value="">{text.message('selectionPrompt')}</option>
             {customers.map((customer) => (
@@ -80,11 +92,32 @@ export function SalesCreatePage() {
             ))}
           </select>
         </FieldRow>
-        <FieldRow field="salesDate" issueText={describeIssue('salesDate')}>
+        <FieldRow field="salesDate" problemText={describeProblem('salesDate')}>
           <input {...describeField('salesDate')} type="text" inputMode="numeric" placeholder="YYYY-MM-DD" />
         </FieldRow>
-        <FieldRow field="salesAmount" issueText={describeIssue('salesAmount')}>
+        <FieldRow field="salesKind" problemText={describeProblem('salesKind')}>
+          <select {...describeField('salesKind')} defaultValue="normal">
+            {salesKindOptions.map((salesKind) => (
+              <option key={salesKind} value={salesKind}>
+                {text.label(salesKind)}
+              </option>
+            ))}
+          </select>
+        </FieldRow>
+        <FieldRow field="itemName" problemText={describeProblem('itemName')}>
+          <input {...describeField('itemName')} type="text" />
+        </FieldRow>
+        <FieldRow field="salesAmount" problemText={describeProblem('salesAmount')}>
           <input {...describeField('salesAmount')} type="text" inputMode="numeric" />
+        </FieldRow>
+        <FieldRow field="taxRate" problemText={describeProblem('taxRate')}>
+          <select {...describeField('taxRate')} defaultValue="10">
+            {taxRateOptions.map((taxRate) => (
+              <option key={taxRate} value={taxRate}>
+                {taxRate === '8' ? `8%（${text.label('reduced')}）` : `${taxRate}%`}
+              </option>
+            ))}
+          </select>
         </FieldRow>
         <button type="submit" disabled={salesMutation.isPending}>
           {text.label('create')}

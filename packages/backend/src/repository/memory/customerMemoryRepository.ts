@@ -10,10 +10,12 @@ export function prepareCustomerMemoryRepository(database: MemoryDatabase): Custo
       if (row === undefined) {
         throw new NotFoundError('missingTarget')
       }
-      return restoreCustomer(row.customerId, row.customerName)
+      return restoreCustomer(row)
     },
     async listCustomers() {
-      return database.customer.map((row) => restoreCustomer(row.customerId, row.customerName))
+      return database.customer
+        .toSorted((left, right) => left.customerId.localeCompare(right.customerId))
+        .map(restoreCustomer)
     },
   }
 }

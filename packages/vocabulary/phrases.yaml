@@ -1,3 +1,20 @@
 # 単語の組合せでは訳が決まらない並び。長い並びを優先して当てる。
 - { words: sales date, ja: 売上日, en: Sales Date }
+- { words: sales kind, ja: 売上区分, en: Sales Kind }
 - { words: customer name, ja: 顧客名, en: Customer Name }
+- { words: item name, ja: 品名, en: Item }
+- { words: billing customer, ja: 請求先, en: Billing Customer }
+- { words: closing day, ja: 締日, en: Closing Day }
+- { words: closing date, ja: 請求締め日, en: Closing Date }
+- { words: collection month offset, ja: 回収月, en: Collection Month }
+- { words: collection day, ja: 回収日, en: Collection Day }
+- { words: due date, ja: 入金期日, en: Due Date }
+- { words: payment date, ja: 入金日, en: Payment Date }
+- { words: payment method, ja: 入金方法, en: Payment Method }
+- { words: issue date, ja: 発行日, en: Issue Date }
+- { words: payer name, ja: 振込依頼人名, en: Payer Name }
+- { words: transfer fee, ja: 振込手数料, en: Transfer Fee }
+- { words: small difference, ja: 端数差額, en: Small Difference }
+- { words: taxable amount, ja: 課税対象額, en: Taxable Amount }
+- { words: reconciliation date, ja: 消込日, en: Reconciliation Date }
+- { words: refund date, ja: 返金日, en: Refund Date }

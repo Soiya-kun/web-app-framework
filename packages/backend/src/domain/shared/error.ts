@@ -4,7 +4,7 @@ import type { MessageKey, MessageParams } from '@app/vocabulary'
 export type ErrorKind = 'validation' | 'forbidden' | 'notFound' | 'conflict'
 
 /** 項目ごとの入力の問題。field は API の項目名。 */
-export type FieldIssue = {
+export type FieldProblem = {
   readonly field: string
   readonly messageKey: MessageKey
   readonly params: MessageParams
@@ -26,11 +26,11 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  readonly issues: readonly FieldIssue[]
+  readonly problems: readonly FieldProblem[]
 
-  constructor(issues: readonly FieldIssue[]) {
+  constructor(problems: readonly FieldProblem[]) {
     super('validation', 'invalidInput')
-    this.issues = issues
+    this.problems = problems
   }
 }
 

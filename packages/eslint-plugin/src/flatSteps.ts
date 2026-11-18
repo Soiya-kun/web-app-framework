@@ -1,5 +1,6 @@
 // usecase は「関数を呼び、戻り値を次の関数の引数へ渡す」だけにする。
-// 判定・計算・繰り返し・エラーの送出は domain の関数へ出す。repository などの部品のメソッドは1段だけ呼べる。
+// 判定・計算・繰り返し・エラーの送出は domain の関数へ出す。
+// 部品の渡し方は縛らない（a.b.c() のようにプロパティをたどって呼べる）。呼び出しの結果をさらに呼ぶメソッドチェーンは禁止する。
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils'
 import { createRule } from './createRule'
 
@@ -25,16 +26,38 @@ export const flatSteps = createRule<[], MessageId>({
     messages: {
       statementNotAllowed: 'usecase に {{statement}} は書けません。判定・繰り返し・エラーは domain の関数へ出します。',
       methodChain: 'usecase ではメソッドチェーンを使えません。',
-      calleeNotAllowed: 'usecase で呼べるのは、関数か部品（repository など）のメソッド1段だけです。',
-      argumentNotAllowed: 'usecase の引数には変数だけを渡せます（値の組み立て・リテラル・計算は domain の関数へ出します）。',
+      calleeNotAllowed: 'usecase で呼べるのは、関数か、プロパティをたどった先のメソッド（a.b.c()）だけです。',
+      argumentNotAllowed: 'usecase の引数には変数かプロパティ（a.b）だけを渡せます（値の組み立て・リテラル・計算は domain の関数へ出します）。',
       callRequired: 'usecase の手順は、関数呼び出し（await 可）にします。',
-      returnNotAllowed: 'usecase は変数だけを返せます。',
+      returnNotAllowed: 'usecase は変数かプロパティ（a.b）だけを返せます。',
       declarationNotAllowed: 'usecase の変数は const で1つずつ宣言し、名前か分割代入で受けます。',
     },
     schema: [],
   },
   defaultOptions: [],
   create(context) {
+    /** 呼び出しを含まないプロパティの参照（a、a.b、a.b.c）かどうか。 */
+    function isPropertyPath(node: TSESTree.Node): boolean {
+      if (node.type === AST_NODE_TYPES.Identifier) {
+        return true
+      }
+      return (
+        node.type === AST_NODE_TYPES.MemberExpression &&
+        !node.computed &&
+        !node.optional &&
+        node.property.type === AST_NODE_TYPES.Identifier &&
+        isPropertyPath(node.object)
+      )
+    }
+
+    /** a.b().c のように、参照の途中に呼び出しがあるかどうか。 */
+    function containsCall(node: TSESTree.Node): boolean {
+      if (node.type === AST_NODE_TYPES.CallExpression) {
+        return true
+      }
+      return node.type === AST_NODE_TYPES.MemberExpression && containsCall(node.object)
+    }
+
     function checkCall(expression: TSESTree.Expression): void {
       const call = expression.type === AST_NODE_TYPES.AwaitExpression ? expression.argument : expression
       if (call.type !== AST_NODE_TYPES.CallExpression) {
@@ -42,17 +65,13 @@ export const flatSteps = createRule<[], MessageId>({
         return
       }
       const callee = call.callee
-      if (callee.type === AST_NODE_TYPES.MemberExpression) {
-        if (callee.object.type === AST_NODE_TYPES.CallExpression || callee.object.type === AST_NODE_TYPES.MemberExpression) {
-          context.report({ node: callee, messageId: 'methodChain' })
-        } else if (callee.object.type !== AST_NODE_TYPES.Identifier || callee.computed || callee.optional) {
-          context.report({ node: callee, messageId: 'calleeNotAllowed' })
-        }
-      } else if (callee.type !== AST_NODE_TYPES.Identifier) {
+      if (callee.type === AST_NODE_TYPES.MemberExpression && containsCall(callee.object)) {
+        context.report({ node: callee, messageId: 'methodChain' })
+      } else if (!isPropertyPath(callee)) {
         context.report({ node: callee, messageId: 'calleeNotAllowed' })
       }
       for (const argument of call.arguments) {
-        if (argument.type !== AST_NODE_TYPES.Identifier) {
+        if (!isPropertyPath(argument)) {
           context.report({ node: argument, messageId: 'argumentNotAllowed' })
         }
       }
@@ -90,7 +109,7 @@ export const flatSteps = createRule<[], MessageId>({
           checkCall(statement.expression)
           return
         case AST_NODE_TYPES.ReturnStatement:
-          if (statement.argument !== null && statement.argument.type !== AST_NODE_TYPES.Identifier) {
+          if (statement.argument !== null && !isPropertyPath(statement.argument)) {
             context.report({ node: statement.argument, messageId: 'returnNotAllowed' })
           }
           return

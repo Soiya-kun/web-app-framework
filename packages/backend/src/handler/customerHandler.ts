@@ -4,7 +4,7 @@ import type { AppDependency } from './dependency'
 
 export function prepareCustomerHandler(dependency: AppDependency) {
   return new Hono().get('/', async (context) => {
-    const customers = await listCustomers(dependency.customerRepository)
+    const customers = await dependency.runTransaction((repositories) => listCustomers(repositories.customerRepository))
     return context.json({ customers }, 200)
   })
 }

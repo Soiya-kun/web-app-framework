@@ -9,12 +9,7 @@ export function prepareSalesMemoryRepository(database: MemoryDatabase): SalesRep
       if (database.sales.some((row) => row.salesId === salesCreate.salesId)) {
         throw new ConflictError('duplicateTarget')
       }
-      database.sales.push({
-        salesId: salesCreate.salesId,
-        customerId: salesCreate.customerId,
-        salesDate: salesCreate.salesDate,
-        salesAmount: salesCreate.salesAmount,
-      })
+      database.sales.push({ ...salesCreate })
     },
   }
 }

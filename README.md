@@ -6,19 +6,21 @@ TypeScript（React + Hono）で業務 Web アプリを作るための土台（�
 - 識別子の英単語を単語帳で絞り、処理を日本語に機械翻訳して読めるようにする。
 - 単語帳の単語を画面の文言にも使う。
 
-要求と方針は [docs/requirements.md](docs/requirements.md)、処理の日本語訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)。
+要求と方針は [docs/requirements.md](docs/requirements.md)、業務の作りは [docs/domain-model.md](docs/domain-model.md)、処理の日本語訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)、SQL の台帳は [docs/generated/sql-ledger.md](docs/generated/sql-ledger.md)。
 
 ## 使い方
 
-Node.js（`.node-version`）と pnpm（`package.json` の `packageManager`）を用意し、ルートで実行する。
+Node.js（`.node-version`）と pnpm（`package.json` の `packageManager`）を用意し、ルートで実行する。DB を使うテストには Docker が要る。
 
 | コマンド | 内容 |
 | --- | --- |
 | `pnpm install` | 依存を入れる |
 | `pnpm check` | 単語帳の生成物・lint・型・テスト・翻訳の生成物をまとめて確かめる |
-| `pnpm test` | テストだけ |
+| `pnpm test` | テストだけ（Docker は要らない） |
+| `pnpm test:database` | Docker の PostgreSQL を起動し、repository のテストを流す |
 | `pnpm vocabulary:generate` | 単語帳（`packages/vocabulary/words` など）を変えたあとに辞書を作り直す |
 | `pnpm translate` | 処理の日本語訳を作り直す |
+| `pnpm sql:ledger` | SQL の台帳を作り直す |
 
 ## 構成
 
@@ -28,4 +30,4 @@ Node.js（`.node-version`）と pnpm（`package.json` の `packageManager`）を
 | `packages/backend` | Hono の API（domain・usecase・repository・handler） |
 | `packages/vocabulary` | 単語帳と、そこから作る辞書・文法・画面の文言 |
 | `packages/eslint-plugin` | 単語帳・関数名の文法・usecase の書き方の lint |
-| `packages/translator` | 日本語翻訳ツール |
+| `packages/translator` | 日本語翻訳ツールと SQL の台帳の生成 |

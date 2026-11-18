@@ -1,5 +1,5 @@
 import type { MessageKey, MessageParams } from '@app/vocabulary'
-import { ValidationError, type FieldIssue } from './error'
+import { ValidationError, type FieldProblem } from './error'
 
 /** 1つの値を受け付けないことを表すため。項目名は interpretFields が付ける。 */
 export function rejectValue(messageKey: MessageKey, params: MessageParams = {}): ValidationError {
@@ -11,7 +11,7 @@ type Interpreters<Result> = { readonly [Field in keyof Result]: () => Result[Fie
 /** 項目ごとの解釈をすべて行い、受け付けない項目をまとめて画面へ返すため。 */
 export function interpretFields<Result extends object>(interpreters: Interpreters<Result>): Result {
   const result: Partial<Result> = {}
-  const issues: FieldIssue[] = []
+  const problems: FieldProblem[] = []
   for (const field of Object.keys(interpreters) as (keyof Result & string)[]) {
     try {
       result[field] = interpreters[field]()
@@ -19,11 +19,11 @@ export function interpretFields<Result extends object>(interpreters: Interpreter
       if (!(error instanceof ValidationError)) {
         throw error
       }
-      issues.push(...error.issues.map((issue) => ({ ...issue, field: issue.field === '' ? field : `${field}.${issue.field}` })))
+      problems.push(...error.problems.map((problem) => ({ ...problem, field: problem.field === '' ? field : `${field}.${problem.field}` })))
     }
   }
-  if (issues.length > 0) {
-    throw new ValidationError(issues)
+  if (problems.length > 0) {
+    throw new ValidationError(problems)
   }
   return result as Result
 }

@@ -13,8 +13,13 @@
     "typecheck": "pnpm -r typecheck",
     "test": "vitest run",
     "translate": "pnpm --filter @app/translator translate",
-    "check": "pnpm vocabulary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm translate:check",
-    "translate:check": "pnpm --filter @app/translator translate --check"
+    "check": "pnpm vocabulary:check && pnpm lint && pnpm typecheck && pnpm test && pnpm translate:check && pnpm sql:ledger:check",
+    "translate:check": "pnpm --filter @app/translator translate --check",
+    "database:up": "docker compose up -d --wait test-database",
+    "database:down": "docker compose down",
+    "test:database": "pnpm database:up && pnpm --filter @app/backend test:database",
+    "sql:ledger": "pnpm --filter @app/translator sql:ledger",
+    "sql:ledger:check": "pnpm --filter @app/translator sql:ledger --check"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

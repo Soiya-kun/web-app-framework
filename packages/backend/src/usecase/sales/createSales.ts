@@ -12,10 +12,10 @@ export async function createSales(
   idGenerator: IdGenerator,
   salesRequest: SalesRequest,
 ): Promise<SalesId> {
-  const { customerId, salesDate, salesAmount } = interpretSalesRequest(salesRequest)
-  const customer = await customerRepository.findCustomer(customerId)
+  const salesInput = interpretSalesRequest(salesRequest)
+  const customer = await customerRepository.findCustomer(salesInput.customerId)
   const salesId = assignSalesId(idGenerator)
-  const salesCreate = planSalesCreate(salesId, customer, salesDate, salesAmount)
+  const salesCreate = planSalesCreate(salesId, customer, salesInput)
   await salesRepository.createSales(salesCreate)
   return salesId
 }

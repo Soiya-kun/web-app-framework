@@ -35,11 +35,11 @@
 ### 顧客の復元
 
 - 関数: `restoreCustomer`
-- 目的: 保存済みの値から顧客を組み立てるため。保存済みの値は検証済みとして扱う。
-- 引数: 顧客ID、顧客名
+- 目的: 保存済みの値から顧客を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。
+- 引数: 保存形の
 - 処理:
 
-   1. `{ customerId: customerId as CustomerId, customerName: customerName as CustomerName }`を返す
+   1. 保存形のを返す
 
 ## domain/customer/value/customerId.ts
 
@@ -59,22 +59,23 @@
 ### 売上の復元
 
 - 関数: `restoreSales`
-- 目的: 保存済みの値から売上を組み立てるため。保存済みの値は検証済みとして扱う。
-- 引数: 売上ID、顧客ID、売上日、売上金額
+- 目的: 保存済みの値から売上を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。
+- 引数: 保存形の
 - 処理:
 
-   1. `{ salesId: salesId as SalesId, customerId: customerId as CustomerId, salesDate: salesDate as SalesDate, salesAmount: salesAmount as SalesAmount, }`を返す
+   1. 保存形のを返す
 
 ## domain/sales/salesCreate.ts
 
 ### 売上登録の計画
 
 - 関数: `planSalesCreate`
-- 目的: 検証済みの入力と確かめた顧客から、保存する売上を決めるため。
-- 引数: 売上ID、顧客、売上日、売上金額
+- 目的: 検証済みの入力と確かめた顧客から、保存する売上を決めるため。返品・値引は金額を負にする。
+- 引数: 売上ID、顧客、売上入力
 - 処理:
 
-   1. `{ salesId, customerId: customer.customerId, salesDate, salesAmount }`を返す
+   1. 売上金額を`salesInput.salesKind === 'normal' ? salesInput.salesAmount : (-salesInput.salesAmount as SalesAmount)`にする
+   2. `{ salesId, customerId: customer.customerId, salesDate: salesInput.salesDate, salesKind: salesInput.salesKind, itemName: salesInput.itemName, salesAmount, taxRate: salesInput.taxRate, }`を返す
 
 ## domain/sales/salesRequest.ts
 
@@ -87,12 +88,28 @@
 
    1. 項目を解釈する（その結果を返す）
 
+## domain/sales/value/itemName.ts
+
+### 品名の解釈
+
+- 関数: `interpretItemName`
+- 目的: 画面から入力された品名を受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. 前後の空白を除いたテキストを`text.trim()`で求める
+   2. 前後の空白を除いたテキストが空である場合
+      1. エラー「{field}を入力してください。」で止める
+   3. `[...trimmedText]`の長さが最大品名長さより大きい場合
+      1. エラー「{field}は{maximum}文字以内で入力してください。」で止める
+   4. 前後の空白を除いたテキストを返す
+
 ## domain/sales/value/salesAmount.ts
 
 ### 売上金額の解釈
 
 - 関数: `interpretSalesAmount`
-- 目的: 画面から入力された金額を、売上金額として受け付けるため。
+- 目的: 画面から入力された金額（返品・値引も正で入力する）を、売上の金額として受け付けるため。
 - 引数: テキスト
 - 処理:
 
@@ -133,6 +150,34 @@
 
    1. IDを生成する（その結果を返す）
 
+## domain/sales/value/salesKind.ts
+
+### 売上区分の解釈
+
+- 関数: `interpretSalesKind`
+- 目的: 画面で選んだ区分を、売上区分として受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. 売上区分を取得する
+   2. 売上区分が空である場合
+      1. エラー「{field}を選んでください。」で止める
+   3. 売上区分を返す
+
+## domain/sales/value/taxRate.ts
+
+### 税率の解釈
+
+- 関数: `interpretTaxRate`
+- 目的: 画面で選んだ税率を受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. 税率を取得する
+   2. 税率が空である場合
+      1. エラー「{field}を選んでください。」で止める
+   3. 税率を返す
+
 ## domain/shared/calendar.ts
 
 ### 暦日付の判定
@@ -172,7 +217,7 @@
    1. 結果を`{}`にする
    2. 問題を`[]`にする
    3. `Object.keys(interpreters)`の1件ごとに
-      1. `try { result[field] = interpreters[field]() } catch (error) { if (!(error instanceof ValidationError)) { throw error } issues.push(...error.issues.map((issue) => ({ ...issue, field: issue.field === '' ? field : `${field}.${issue.field}` }))) }`
+      1. `try { result[field] = interpreters[field]() } catch (error) { if (!(error instanceof ValidationError)) { throw error } problems.push(...error.problems.map((problem) => ({ ...problem, field: problem.field === '' ? field : `${field}.${problem.field}` }))) }`
    4. 問題の長さが0より大きい場合
-      1. エラー（`new ValidationError(issues)`）で止める
+      1. エラー（`new ValidationError(problems)`）で止める
    5. 結果を返す

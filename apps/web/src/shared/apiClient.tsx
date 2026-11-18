@@ -9,7 +9,7 @@ export function prepareApiClient(baseUrl: string, fetchFunction?: typeof fetch):
   return hc<AppType>(baseUrl, fetchFunction === undefined ? {} : { fetch: fetchFunction })
 }
 
-/** API がエラーを返したことを表す。画面は issues から項目ごとの文を出す。 */
+/** API がエラーを返したことを表す。画面は problems から項目ごとの文を出す。 */
 export class ApiError extends Error {
   readonly detail: ErrorResponse['error']
 

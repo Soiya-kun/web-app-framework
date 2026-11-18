@@ -97,3 +97,43 @@
   ja: 読み込み
   jaVerb: 読み込む
   forms: [loading]
+- word: issue
+  pos: verb
+  ja: 発行
+  jaVerb: 発行する
+- word: define
+  pos: verb
+  ja: 定義
+  jaVerb: 定義する
+- word: execute
+  pos: verb
+  ja: 実行
+  jaVerb: 実行する
+- word: run
+  pos: verb
+  ja: 実行
+  jaVerb: 実行する
+- word: begin
+  pos: verb
+  ja: 開始
+  jaVerb: 開始する
+- word: commit
+  pos: verb
+  ja: 確定
+  jaVerb: 確定する
+- word: rollback
+  pos: verb
+  ja: 取り消し
+  jaVerb: 取り消す
+- word: apply
+  pos: verb
+  ja: 適用
+  jaVerb: 適用する
+- word: copy
+  pos: verb
+  ja: 写し取り
+  jaVerb: 写し取る
+- word: seed
+  pos: verb
+  ja: 投入
+  jaVerb: 投入する

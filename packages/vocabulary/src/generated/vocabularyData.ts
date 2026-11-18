@@ -250,6 +250,188 @@ export const wordList: readonly WordEntry[] = [
     "description": ""
   },
   {
+    "word": "applied",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "適用済みの",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Applied",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "last",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "最終",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Last",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "left",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "左の",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Left",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "long",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "長すぎる",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Long",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "normal",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "通常",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Normal",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "other",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "その他",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Other",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "plain",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "素の",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Plain",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "recording",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "記録する",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Recording",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "reduced",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "軽減",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Reduced",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "right",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "右の",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Right",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "safe",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "安全な",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Safe",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "small",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "少額の",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Small",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "stored",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "保存形の",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Stored",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "unique",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "一意の",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Unique",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
     "word": "amount",
     "kind": "system",
     "pos": "noun",
@@ -347,7 +529,7 @@ export const wordList: readonly WordEntry[] = [
     "forms": [
       "children"
     ],
-    "ja": "子要素",
+    "ja": "子",
     "jaVerb": "",
     "jaName": "",
     "en": "Child",
@@ -496,6 +678,19 @@ export const wordList: readonly WordEntry[] = [
     "jaVerb": "",
     "jaName": "",
     "en": "Element",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "entity",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "エンティティ",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Entity",
     "role": false,
     "avoid": [],
     "description": ""
@@ -687,16 +882,16 @@ export const wordList: readonly WordEntry[] = [
     "description": ""
   },
   {
-    "word": "issue",
+    "word": "problem",
     "kind": "system",
     "pos": "noun",
     "forms": [
-      "issues"
+      "problems"
     ],
     "ja": "問題",
     "jaVerb": "",
     "jaName": "",
-    "en": "Issue",
+    "en": "Problem",
     "role": false,
     "avoid": [],
     "description": ""
@@ -706,7 +901,7 @@ export const wordList: readonly WordEntry[] = [
     "kind": "system",
     "pos": "noun",
     "forms": [],
-    "ja": "要素",
+    "ja": "品目",
     "jaVerb": "",
     "jaName": "",
     "en": "Item",
@@ -731,8 +926,10 @@ export const wordList: readonly WordEntry[] = [
     "word": "kind",
     "kind": "system",
     "pos": "noun",
-    "forms": [],
-    "ja": "種類",
+    "forms": [
+      "kinds"
+    ],
+    "ja": "区分",
     "jaVerb": "",
     "jaName": "",
     "en": "Kind",
@@ -851,7 +1048,7 @@ export const wordList: readonly WordEntry[] = [
     "forms": [
       "names"
     ],
-    "ja": "名前",
+    "ja": "名",
     "jaVerb": "",
     "jaName": "",
     "en": "Name",
@@ -984,7 +1181,9 @@ export const wordList: readonly WordEntry[] = [
     "word": "repository",
     "kind": "system",
     "pos": "noun",
-    "forms": [],
+    "forms": [
+      "repositories"
+    ],
     "ja": "リポジトリ",
     "jaVerb": "",
     "jaName": "",
@@ -1075,7 +1274,9 @@ export const wordList: readonly WordEntry[] = [
     "word": "row",
     "kind": "system",
     "pos": "noun",
-    "forms": [],
+    "forms": [
+      "rows"
+    ],
     "ja": "行",
     "jaVerb": "",
     "jaName": "",
@@ -1106,19 +1307,6 @@ export const wordList: readonly WordEntry[] = [
     "jaVerb": "",
     "jaName": "",
     "en": "Screen",
-    "role": false,
-    "avoid": [],
-    "description": ""
-  },
-  {
-    "word": "seed",
-    "kind": "system",
-    "pos": "noun",
-    "forms": [],
-    "ja": "初期データ",
-    "jaVerb": "",
-    "jaName": "",
-    "en": "Seed",
     "role": false,
     "avoid": [],
     "description": ""
@@ -1283,7 +1471,9 @@ export const wordList: readonly WordEntry[] = [
     "word": "value",
     "kind": "system",
     "pos": "noun",
-    "forms": [],
+    "forms": [
+      "values"
+    ],
     "ja": "値",
     "jaVerb": "",
     "jaName": "",
@@ -1301,6 +1491,300 @@ export const wordList: readonly WordEntry[] = [
     "jaVerb": "",
     "jaName": "",
     "en": "Year",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "connection",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "接続",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Connection",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "contract",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "契約",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Contract",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "counter",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "採番",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Counter",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "directory",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "フォルダ",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Directory",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "executor",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "実行器",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Executor",
+    "role": true,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "file",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "ファイル",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "File",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "format",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "形式",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Format",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "method",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "方法",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Method",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "migration",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [
+      "migrations"
+    ],
+    "ja": "マイグレーション",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Migration",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "number",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "番号",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Number",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "parent",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "親",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Parent",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "parser",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [
+      "parsers"
+    ],
+    "ja": "読み取り器",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Parser",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "pool",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "接続プール",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Pool",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "postgres",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "PostgreSQL",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "PostgreSQL",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "production",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "本番",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Production",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "rate",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [
+      "rates"
+    ],
+    "ja": "率",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Rate",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "set",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "組",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Set",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "statement",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [
+      "statements"
+    ],
+    "ja": "SQL",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Statement",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "test",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "テスト",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Test",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "transaction",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "トランザクション",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Transaction",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "violation",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "違反",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Violation",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "work",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [],
+    "ja": "処理",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Work",
     "role": false,
     "avoid": [],
     "description": ""
@@ -1698,6 +2182,266 @@ export const wordList: readonly WordEntry[] = [
     "description": ""
   },
   {
+    "word": "issue",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "発行",
+    "jaVerb": "発行する",
+    "jaName": "",
+    "en": "Issue",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "define",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "定義",
+    "jaVerb": "定義する",
+    "jaName": "",
+    "en": "Define",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "execute",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "実行",
+    "jaVerb": "実行する",
+    "jaName": "",
+    "en": "Execute",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "run",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "実行",
+    "jaVerb": "実行する",
+    "jaName": "",
+    "en": "Run",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "begin",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "開始",
+    "jaVerb": "開始する",
+    "jaName": "",
+    "en": "Begin",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "commit",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "確定",
+    "jaVerb": "確定する",
+    "jaName": "",
+    "en": "Commit",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "rollback",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "取り消し",
+    "jaVerb": "取り消す",
+    "jaName": "",
+    "en": "Rollback",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "apply",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "適用",
+    "jaVerb": "適用する",
+    "jaName": "",
+    "en": "Apply",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "copy",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "写し取り",
+    "jaVerb": "写し取る",
+    "jaName": "",
+    "en": "Copy",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "seed",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "投入",
+    "jaVerb": "投入する",
+    "jaName": "",
+    "en": "Seed",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "invoice",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "請求",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Invoice",
+    "role": false,
+    "avoid": [],
+    "description": "請求先ごと・締め日ごとに売上をまとめ、消費税を計算して請求する単位。発行すると変えない。"
+  },
+  {
+    "word": "billing",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "請求",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Billing",
+    "role": false,
+    "avoid": [],
+    "description": "billing customer（請求先）で使う。請求書を受け取り、入金する顧客。"
+  },
+  {
+    "word": "closing",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "締め",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Closing",
+    "role": false,
+    "avoid": [],
+    "description": "請求に入れる売上の区切り。締め日までの、まだ請求に入っていない売上を請求にまとめる。"
+  },
+  {
+    "word": "collection",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "回収",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Collection",
+    "role": false,
+    "avoid": [],
+    "description": "請求した代金を受け取ること。回収月・回収日から入金期日を決める。"
+  },
+  {
+    "word": "tax",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "税",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Tax",
+    "role": false,
+    "avoid": [],
+    "description": "消費税。請求ごと・税率ごとに、税抜の合計から計算する（1円未満は切り捨て）。"
+  },
+  {
+    "word": "taxable",
+    "kind": "domain",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "課税対象の",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Taxable",
+    "role": false,
+    "avoid": [],
+    "description": "消費税をかける対象の（税抜の金額）。"
+  },
+  {
+    "word": "due",
+    "kind": "domain",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "期日の",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Due",
+    "role": false,
+    "avoid": [],
+    "description": "due date（入金期日）で使う。"
+  },
+  {
+    "word": "offset",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "月数",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Offset",
+    "role": false,
+    "avoid": [],
+    "description": "collection month offset（回収月）で使う。締め日から何か月後に回収するか。"
+  },
+  {
+    "word": "return",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "返品",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Return",
+    "role": false,
+    "avoid": [],
+    "description": "売上区分の1つ。売った品の返品。負の金額で持つ。"
+  },
+  {
+    "word": "discount",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "値引",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Discount",
+    "role": false,
+    "avoid": [],
+    "description": "売上区分の1つ。売った後の値引き。負の金額で持つ。"
+  },
+  {
     "word": "customer",
     "kind": "domain",
     "pos": "noun",
@@ -1711,6 +2455,136 @@ export const wordList: readonly WordEntry[] = [
     "role": false,
     "avoid": [],
     "description": "売上を計上する相手。"
+  },
+  {
+    "word": "payment",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "入金",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Payment",
+    "role": false,
+    "avoid": [],
+    "description": "顧客から受け取ったお金。振込人を特定できていない入金（仮受）もある。"
+  },
+  {
+    "word": "payer",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "振込依頼人",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Payer",
+    "role": false,
+    "avoid": [],
+    "description": "入金の振込をした人の名前（銀行の明細に出る名前）。顧客の名前と違うことがある。"
+  },
+  {
+    "word": "transfer",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "振込",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Transfer",
+    "role": false,
+    "avoid": [],
+    "description": "入金方法の1つ。銀行振込。"
+  },
+  {
+    "word": "cash",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "現金",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Cash",
+    "role": false,
+    "avoid": [],
+    "description": "入金方法の1つ。"
+  },
+  {
+    "word": "reconciliation",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "消込",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Reconciliation",
+    "role": false,
+    "avoid": [],
+    "description": "入金を請求に充てる作業。1回の消込で、同じ請求先の入金と請求を複数まとめて扱える。"
+  },
+  {
+    "word": "allocation",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "充当",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Allocation",
+    "role": false,
+    "avoid": [],
+    "description": "消込の中で、どの入金のいくらを、どの請求へ充てたか。"
+  },
+  {
+    "word": "adjustment",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "調整",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Adjustment",
+    "role": false,
+    "avoid": [],
+    "description": "入金が請求に足りない分を、当社の負担として請求から差し引くこと（振込手数料・端数）。"
+  },
+  {
+    "word": "fee",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "手数料",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Fee",
+    "role": false,
+    "avoid": [],
+    "description": "transfer fee（振込手数料）で使う。顧客が入金額から差し引いた振込の手数料。"
+  },
+  {
+    "word": "difference",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "差額",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Difference",
+    "role": false,
+    "avoid": [],
+    "description": "small difference（端数差額）で使う。請求と入金の少額の差。"
+  },
+  {
+    "word": "refund",
+    "kind": "domain",
+    "pos": "noun",
+    "forms": [],
+    "ja": "返金",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Refund",
+    "role": false,
+    "avoid": [],
+    "description": "請求に充てない入金（過入金・二重入金・他社宛の誤入金）を、振込人へ返すこと。"
   },
   {
     "word": "sales",
@@ -1751,11 +2625,148 @@ export const phraseList: readonly PhraseEntry[] = [
   },
   {
     "words": [
+      "sales",
+      "kind"
+    ],
+    "ja": "売上区分",
+    "en": "Sales Kind"
+  },
+  {
+    "words": [
       "customer",
       "name"
     ],
     "ja": "顧客名",
     "en": "Customer Name"
+  },
+  {
+    "words": [
+      "item",
+      "name"
+    ],
+    "ja": "品名",
+    "en": "Item"
+  },
+  {
+    "words": [
+      "billing",
+      "customer"
+    ],
+    "ja": "請求先",
+    "en": "Billing Customer"
+  },
+  {
+    "words": [
+      "closing",
+      "day"
+    ],
+    "ja": "締日",
+    "en": "Closing Day"
+  },
+  {
+    "words": [
+      "closing",
+      "date"
+    ],
+    "ja": "請求締め日",
+    "en": "Closing Date"
+  },
+  {
+    "words": [
+      "collection",
+      "month",
+      "offset"
+    ],
+    "ja": "回収月",
+    "en": "Collection Month"
+  },
+  {
+    "words": [
+      "collection",
+      "day"
+    ],
+    "ja": "回収日",
+    "en": "Collection Day"
+  },
+  {
+    "words": [
+      "due",
+      "date"
+    ],
+    "ja": "入金期日",
+    "en": "Due Date"
+  },
+  {
+    "words": [
+      "payment",
+      "date"
+    ],
+    "ja": "入金日",
+    "en": "Payment Date"
+  },
+  {
+    "words": [
+      "payment",
+      "method"
+    ],
+    "ja": "入金方法",
+    "en": "Payment Method"
+  },
+  {
+    "words": [
+      "issue",
+      "date"
+    ],
+    "ja": "発行日",
+    "en": "Issue Date"
+  },
+  {
+    "words": [
+      "payer",
+      "name"
+    ],
+    "ja": "振込依頼人名",
+    "en": "Payer Name"
+  },
+  {
+    "words": [
+      "transfer",
+      "fee"
+    ],
+    "ja": "振込手数料",
+    "en": "Transfer Fee"
+  },
+  {
+    "words": [
+      "small",
+      "difference"
+    ],
+    "ja": "端数差額",
+    "en": "Small Difference"
+  },
+  {
+    "words": [
+      "taxable",
+      "amount"
+    ],
+    "ja": "課税対象額",
+    "en": "Taxable Amount"
+  },
+  {
+    "words": [
+      "reconciliation",
+      "date"
+    ],
+    "ja": "消込日",
+    "en": "Reconciliation Date"
+  },
+  {
+    "words": [
+      "refund",
+      "date"
+    ],
+    "ja": "返金日",
+    "en": "Refund Date"
   }
 ]
 
@@ -1824,6 +2835,11 @@ export const messageList = [
     "key": "selectionPrompt",
     "ja": "選んでください",
     "en": "Select…"
+  },
+  {
+    "key": "longText",
+    "ja": "{field}は{maximum}文字以内で入力してください。",
+    "en": "Enter {field} in {maximum} characters or fewer."
   }
 ] as const satisfies readonly MessageEntry[]
 

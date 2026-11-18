@@ -38,3 +38,6 @@
 - key: selectionPrompt
   ja: 選んでください
   en: Select…
+- key: longText
+  ja: '{field}は{maximum}文字以内で入力してください。'
+  en: 'Enter {field} in {maximum} characters or fewer.'

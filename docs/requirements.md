@@ -1,6 +1,6 @@
 # 要求と方針
 
-状態: 方針の大半を確定（2026-11-18）。最小の縦切り（売上登録）を PoC として実装済み。残りは [7. 未決事項](#7-未決事項)。
+状態: 方針の大半を確定（2026-11-18）。売上登録の縦切り、全テーブルのスキーマ、手書き SQL の repository と DB のテストまで実装済み。業務の作りは [業務の作り](domain-model.md)、残りは [7. 未決事項](#7-未決事項)。
 kawakin-core-system は参考資料として扱う。domain の作りは強く参考にし、それ以外は引き継ぐ前提にしない。
 
 ## 1. 狙い
@@ -20,20 +20,24 @@ TypeScript で業務 Web アプリを作るための土台（フレームワー�
 | R-03 | 基盤 | フロントエンドは React |
 | R-04 | 基盤 | バックエンドは Hono を候補とし、テストの要求から判断する（→ Hono に決定） |
 | R-05 | 基盤 | フレームワーク兼サンプル実装にする。サンプルの業務は売上登録から入金管理まで |
-| R-06 | 基盤 | DB の構造は考えうる最小限にする。ログ・監査の列などは持たない（多対多などの関係は必要なら持つ） |
+| R-06 | 基盤 | DB の構造は最小限にする。ログ・監査の列などは持たない。ただし業務の場面を表すのに要るテーブルは持つ |
+| R-07 | 業務 | 請求（売上をまとめるもの）の概念を持つ |
+| R-08 | 業務 | 分割入金・一括入金・間違い入金など、普段ありうる場面を反映する |
+| R-09 | 基盤 | 本番は AWS。インフラは CDK で書く |
 | R-10 | 設計 | バックエンドは domain・usecase・repository の3層を基本にし、フォルダは層を先に分ける |
 | R-11 | 設計 | usecase は関数を呼び、戻り値を次の関数の引数へ渡すだけにする |
 | R-12 | 設計 | usecase ではメソッドチェーンを禁止する |
 | R-13 | 設計 | エラー処理はシンプルにする。業務エラーは例外で投げ、try/catch で受ける |
 | R-14 | 設計 | usecase に if を書かない。判定は domain へ寄せる |
-| R-15 | 設計 | context（何でも入る部品の袋）は混乱のもとなので禁止する |
+| R-15 | 設計 | 部品の渡し方は縛らない（縛りすぎると分かりにくくなる） |
 | R-16 | 設計 | domain は kawakin を参考にし、値の型を決め、それがそのまま永続化されるなど、見て物理的に何が起こるか分かる形にする。repository のインターフェースを受け取る domain のサービスは最小限にする |
+| R-17 | 設計 | SQL は手で書く |
 | R-20 | 画面 | useEffect は一切禁止 |
 | R-30 | テスト | 画面のボタン押下などの操作から、API 通信を介さずに usecase（またはそれを含む API handler）を呼び出して結合テストする |
 | R-31 | テスト | その結合テストでモックにするのは DB だけ |
 | R-32 | テスト | 画面の操作からバックエンドの処理までを、可能な限り軽く流す。DB が本物に近いとボトルネックになるので、そうならない方式にする |
 | R-33 | テスト | 画面からの結合テストで、境界値などを厚く確かめる。それより細かい単体テストは、狭い範囲のロジックだけに使う（仮説: 画面からの結合テストを厚くすると、全体のテストの量が減る） |
-| R-34 | テスト | 本物の DB を使う結合テストは一部だけ行う |
+| R-34 | テスト | 本物の DB を使う結合テストは一部だけ行う。DB が要るテストは Docker で動かす |
 | R-35 | テスト | repository のテストで、実行される SQL を構造的に固定し、明確にする（極端な状況の調査に活きる） |
 | R-36 | テスト | 本番向けの大きなテスト（E2E など）は当面持たない |
 | R-40 | 語彙 | 関数などに使う英単語を単語帳で管理し、単語帳にある単語だけを使う。まずは厳しく当てる |
@@ -49,20 +53,23 @@ TypeScript で業務 Web アプリを作るための土台（フレームワー�
 | 項目 | 決定 | 決めた日 |
 | --- | --- | --- |
 | リポジトリの位置づけ | フレームワーク兼サンプル実装（売上登録〜入金管理） | 2026-11-18 |
+| 業務の範囲 | 顧客・売上・請求・入金・消込・調整・返金（[業務の作り](domain-model.md)） | 2026-11-18 |
 | バックエンド | Hono。画面の結合テストは API クライアントの `fetch` を `app.request` に差し替える | 2026-11-18 |
-| DB | PostgreSQL。画面の結合テストはインメモリのモック DB | 2026-11-18 |
+| DB | PostgreSQL。SQL は手で書く。画面の結合テストはインメモリのモック DB | 2026-11-18 |
+| DB が要るテスト | Docker の PostgreSQL（`docker compose`） | 2026-11-18 |
+| 本番 | AWS。インフラは CDK（構成は Q-C） | 2026-11-18 |
 | バックエンドの分け方 | 層が先（`domain/sales`・`usecase/sales`・`repository/…`） | 2026-11-18 |
 | 業務エラー | 例外で投げ、Hono の共通処理で HTTP の応答に変換する | 2026-11-18 |
 | usecase の if | 書かない。domain に寄せる | 2026-11-18 |
-| 部品の渡し方 | context は禁止。usecase は必要な部品を引数で1つずつ受ける | 2026-11-18 |
-| usecase での呼び出し | 関数と、部品（repository など）のメソッド1段は呼べる。メソッドチェーンは禁止 | 2026-11-18 |
-| 単語帳 | 厳しく当てる（CI でエラー） | 2026-11-18 |
+| 部品の渡し方 | 縛らない。引数で1つずつ渡しても、まとめて渡してもよい | 2026-11-18 |
+| usecase での呼び出し | 関数と、プロパティをたどった先のメソッド（`a.b.c()`）は呼べる。メソッドチェーン（呼び出しの結果をさらに呼ぶ）は禁止 | 2026-11-18 |
+| 単語帳 | 厳しく当てる（CI でエラー）。DB のテーブル名・列名・区分値にも当てる | 2026-11-18 |
 | 画面の言語 | 多言語を想定（日本語・英語） | 2026-11-18 |
 | 翻訳ツール | usecase・domain を対象に、制御構文も訳し、CLI で Markdown を作る | 2026-11-18 |
 | コメント | 当面は目的だけ（TSDoc の1行） | 2026-11-18 |
 | 大きなテスト | 当面持たない | 2026-11-18 |
 
-## 4. PoC（売上登録）で作ったもの
+## 4. 実装したもの
 
 ### 4.1 構成
 
@@ -73,16 +80,21 @@ web-app-framework/
 │  ├─ src/shared/             # API クライアント・ルーター・文言・画面の土台
 │  └─ test/renderScreen.tsx   # 画面の結合テストの道具
 ├─ packages/backend/          # Hono の API
-│  └─ src/
-│     ├─ domain/              # 値の型・エンティティ・入力境界・repository のインターフェース
-│     ├─ usecase/             # 業務の手順（関数呼び出しの並びだけ）
-│     ├─ repository/          # DB の読み書き（いまはモック DB だけ）
-│     ├─ handler/             # Hono のルート・エラーの共通処理
-│     └─ testing.ts           # 画面の結合テスト用の部品（モック DB で組み立てる）
+│  ├─ database/migration/     # スキーマ（手書きの SQL のマイグレーション）
+│  ├─ src/
+│  │  ├─ domain/              # 値の型・エンティティ・入力境界・repository のインターフェース
+│  │  ├─ usecase/             # 業務の手順（関数呼び出しの並びだけ）
+│  │  ├─ repository/memory/   # モック DB の repository（画面の結合テスト用）
+│  │  ├─ repository/postgres/ # PostgreSQL の repository と、手書きの SQL（*Statement.ts）
+│  │  ├─ handler/             # Hono のルート・エラーの共通処理
+│  │  ├─ testing.ts           # 画面の結合テスト用の部品（モック DB で組み立てる）
+│  │  └─ production.ts        # 本番の部品（PostgreSQL で組み立てる）
+│  └─ test/repository/        # repository の契約のテスト（モック DB と PostgreSQL に同じテストを流す）
 ├─ packages/vocabulary/       # 単語帳（YAML）と、そこから作る辞書・文法・画面の文言
 ├─ packages/eslint-plugin/    # 単語帳・関数名の文法・usecase の書き方の lint
-├─ packages/translator/       # 日本語翻訳ツール
-└─ docs/generated/backend-process.md   # 翻訳ツールの出力
+├─ packages/translator/       # 日本語翻訳ツールと SQL の台帳の生成
+├─ docs/generated/            # 翻訳ツールの出力・SQL の台帳
+└─ docker-compose.yaml        # テスト用の PostgreSQL
 ```
 
 コマンド（ルートで実行）:
@@ -90,20 +102,25 @@ web-app-framework/
 | コマンド | 内容 |
 | --- | --- |
 | `pnpm install` | 依存を入れる |
-| `pnpm check` | 単語帳の生成物・lint・型・テスト・翻訳の生成物をまとめて確かめる |
-| `pnpm test` | テストだけ |
+| `pnpm check` | 単語帳の生成物・lint・型・テスト・翻訳と SQL の台帳の生成物をまとめて確かめる（Docker は要らない） |
+| `pnpm test` | テストだけ（Docker は要らない） |
+| `pnpm test:database` | Docker の PostgreSQL を起動し、repository のテストを流す |
+| `pnpm database:down` | テスト用の PostgreSQL を止める |
 | `pnpm vocabulary:generate` | 単語帳（YAML）を変えたあとに辞書を作り直す |
 | `pnpm translate` | 処理の日本語訳を作り直す |
+| `pnpm sql:ledger` | SQL の台帳を作り直す（DB の名前の単語帳の検査も行う） |
 
 ### 4.2 確かめたこと
 
 | 確かめたこと | 結果 |
 | --- | --- |
 | 画面の操作から usecase まで、通信なしで流せるか | 流せる。画面のコードは本番と同じで、テストでは `fetch` だけを差し替える |
-| 画面の結合テストの速さ | 18件で約 0.6 秒（1件 約 20ms。最初の1件だけ準備込みで約 120ms）。テスト全体の実行は約 1.3 秒 |
+| 画面の結合テストの速さ | 1件 約 20ms（最初の1件だけ準備込みで約 120ms）。Docker なしのテスト全体（56件）は約 2.4 秒 |
 | バックエンドの処理の速さ | `app.request` 1回あたり約 0.05ms（モック DB）。画面のテストの時間はほぼ画面側 |
-| 境界値を画面から厚く確かめられるか | 売上金額（1・999999999・0・1000000000・-1・1.5・1,000・abc・空・前後の空白）、売上日（うるう年・存在しない日・形の違い・空）、顧客の未選択、複数の項目の同時の誤りを、画面の結合テストだけで確かめた |
-| 単語帳の lint | 単語帳にない単語・使わせない単語（`add`・`init` など）・動詞で始まらない関数名を検出する |
+| 境界値を画面から厚く確かめられるか | 売上金額・売上日・品名の境界、返品・値引の符号、軽減税率、顧客の未選択、複数の項目の同時の誤りを、画面の結合テストだけで確かめた |
+| モック DB と PostgreSQL の振る舞いがずれないか | 同じ契約のテストを両方に流して確かめる（取得・一覧・保存・重複・トランザクションの取り消し）。PostgreSQL のテスト9件は約 0.4 秒 |
+| 実行される SQL | repository が実行できるのは `defineStatement` で定義した固定の SQL だけ（型で縛る）。全文は [SQL の台帳](generated/sql-ledger.md) に出し、テストで「どの SQL が流れたか」を確かめる |
+| 単語帳の lint | 単語帳にない単語・使わせない単語（`add`・`init`・`parse`・`insert`・`setup` など）・動詞で始まらない関数名を検出する。DB のテーブル名・列名・索引名・区分値も単語帳で検査する |
 | usecase の lint | if・for・throw・try・let・メソッドチェーン・リテラルや計算を渡す引数・層の逆向きの import を検出する |
 | useEffect の禁止 | `useEffect`・`useLayoutEffect`・`useInsertionEffect` の import を検出する |
 | 翻訳ツール | usecase は手順の並びとしてそのまま読める（4.3）。domain は訳せない式がコードのまま残る |
@@ -121,10 +138,10 @@ export async function createSales(
   idGenerator: IdGenerator,
   salesRequest: SalesRequest,
 ): Promise<SalesId> {
-  const { customerId, salesDate, salesAmount } = interpretSalesRequest(salesRequest)
-  const customer = await customerRepository.findCustomer(customerId)
+  const salesInput = interpretSalesRequest(salesRequest)
+  const customer = await customerRepository.findCustomer(salesInput.customerId)
   const salesId = assignSalesId(idGenerator)
-  const salesCreate = planSalesCreate(salesId, customer, salesDate, salesAmount)
+  const salesCreate = planSalesCreate(salesId, customer, salesInput)
   await salesRepository.createSales(salesCreate)
   return salesId
 }
@@ -154,12 +171,12 @@ export async function createSales(
 | 層 | 役割 | 依存してよい先 |
 | --- | --- | --- |
 | domain | 値の型・エンティティ・入力境界・業務ルール・repository のインターフェース。I/O なし | なし |
-| usecase | 業務の手順。domain の関数と、引数で受けた部品のメソッドを呼ぶだけ | domain |
+| usecase | 業務の手順。domain の関数と、受け取った部品のメソッドを呼ぶだけ | domain |
 | repository | domain の repository のインターフェースを、DB（本番は PostgreSQL、テストはモック DB）で実装する | domain |
-| handler（3層の外の薄い層） | Hono のルート。リクエストの形の検証 → usecase の呼び出し → 応答の変換だけ | usecase・domain |
+| handler（3層の外の薄い層） | Hono のルート。リクエストの形の検証 → トランザクションを張って usecase を呼ぶ → 応答の変換だけ | usecase・domain |
 
-- 部品（repository・ID の採番など）は `AppDependency` に集め、`prepareApp(dependency)` で API を組み立てる。本番は実 DB の部品を、画面の結合テストはモック DB の部品を渡す。
-- `AppDependency` を見るのは handler と組み立ての場所だけ。handler は usecase に、必要な部品だけを1つずつ渡す。usecase は context を受けない。
+- 部品は `AppDependency`（`runTransaction`・`idGenerator`）に集め、`prepareApp(dependency)` で API を組み立てる。本番は `prepareProductionDependency`（PostgreSQL）、画面の結合テストは `prepareMemoryDependency`（モック DB）で組み立てる。
+- handler は `dependency.runTransaction((repositories) => usecase(…))` で、1リクエストを1トランザクションで行う。repository はトランザクションの中で受け取る。
 - 層の依存の向きは lint（`no-restricted-imports`）で検査する。
 
 ### 5.2 usecase の書き方
@@ -169,29 +186,30 @@ usecase のファイルでは次の形だけを書ける。外れたものは li
 | 書けるもの | 書けないもの（domain の関数へ出す） |
 | --- | --- |
 | `const 変数 = 関数(引数…)`（`await` 可） | `if`・`switch`・`for`・`while`・`throw`・`try`/`catch` |
-| `const { a, b } = 関数(引数…)`（分割代入は名前だけ） | メソッドチェーン（`list.filter().map()`、`.then()`） |
-| `部品.メソッド(引数…)`（1段だけ） | `context.x.y()` のような2段以上の参照 |
-| `関数(引数…)` だけの文 | 演算子・リテラル・三項演算子・関数の中での関数定義・`let` |
-| `return 変数` | 式を返す `return`（`return { a }` など） |
+| `const { a, b } = 関数(引数…)`（分割代入は名前だけ） | メソッドチェーン（`list.filter().map()`、`repository.listSales().all()`、`.then()`） |
+| `a.b.c(引数…)`（プロパティをたどった先のメソッド） | 演算子・リテラル・三項演算子・関数の中での関数定義・`let` |
+| `関数(引数…)` だけの文 | 式を返す `return`（`return { a }` など） |
+| `return 変数`・`return a.b` | |
 
-- 引数には変数だけを渡せる。値の組み立てや計算は、名前の付いた domain の関数で行う。
-- 配列を1件ずつ処理したいときは、配列を受け取る関数にする。
+- 引数には変数かプロパティ（`salesInput.customerId`）だけを渡せる。値の組み立てや計算は、名前の付いた domain の関数で行う。
+- 部品の渡し方は縛らない。サンプルは引数で1つずつ受けている（何に触る処理かが引数で分かるため）が、まとめて受けてもよい。
 
 ### 5.3 domain の書き方（kawakin を参考）
 
 | kawakin（Go） | このリポジトリ（TypeScript） | 例 |
 | --- | --- | --- |
 | `value/` の値オブジェクト（`New*` で制約を検証） | `value/` の値の型（`Brand<string, 'SalesDate'>`）と `interpret*`（画面の入力を検証して値にする） | `interpretSalesAmount` |
-| エンティティの末端はすべて値オブジェクト | エンティティの項目はすべて値の型 | `Sales` |
+| エンティティの末端はすべて値オブジェクト | エンティティの項目はすべて値の型。項目はテーブルの列と同じ | `Sales` |
 | `create/` の作成の入力境界（そのまま INSERT される） | `SalesCreate`。この型の項目が、そのまま1行になる | `planSalesCreate` |
-| model の `Entity()` で DB の行から復元 | `restore*` で保存済みの値から組み立てる | `restoreSales` |
+| model の `Entity()` で DB の行から復元 | `Stored<Sales>`（値の印を外した保存の形）から `restoreSales` で組み立てる | `restoreSales` |
 | repository のインターフェースは入力境界の型だけを受ける | 同じ。`createSales(salesCreate: SalesCreate)` | `SalesRepository` |
-| policy・knowledge | 判定の関数。usecase の if を引き受ける | （入金の業務で足す） |
-| `find/`・`update/` の目的別の選択子 | 入金の業務で足す（SQL の固定と合わせて決める。5.7） | — |
+| policy・knowledge | 判定の関数。usecase の if を引き受ける | （請求・消込で足す） |
+| `find/`・`update/` の目的別の選択子 | 請求・消込で足す | — |
 
 - repository のインターフェースを受け取る domain のサービスは最小限にする。いまは `assignSalesId(idGenerator)` だけ。
 - 画面の入力は、まだ検証していない文字列のまま受け取り（`SalesRequest`）、domain の `interpret*` で値の型にする。項目ごとの問題は `interpretFields` がまとめ、画面に一度に返す。
 - 値の型は、型の上では別物になる（`SalesId` に `CustomerId` を渡すと型エラー）。
+- 保存の形（`Stored<Entity>`）はエンティティから機械的に作るので、エンティティ・モック DB の行・SQL の結果の列名（`AS "salesAmount"`）が同じ形にそろう。
 
 ### 5.4 エラー処理
 
@@ -203,11 +221,10 @@ usecase のファイルでは次の形だけを書ける。外れたものは li
   | `ValidationError` | 入力の不正（項目ごとの問題を持つ） | 400 |
   | `ForbiddenError` | 権限がない | 403 |
   | `NotFoundError` | 対象がない | 404 |
-  | `ConflictError` | 重複・状態による拒否など、業務上の拒否 | 409 |
+  | `ConflictError` | 重複・状態による拒否など、業務上の拒否。DB の一意制約の違反もこれにする | 409 |
   | それ以外 | 想定外 | 500 |
 
-- try/catch を書くのは2か所だけ。Hono の `app.onError` に渡す `respondError`（HTTP の応答への変換とログ）と、domain の `interpretFields`（項目ごとの問題をまとめる）。
-- トランザクションは、PostgreSQL の repository を作るときに、更新系のルートのミドルウェアで張る（1リクエスト1トランザクション）。usecase はトランザクションを意識しない。
+- try/catch を書くのは3か所だけ。Hono の `app.onError` に渡す `respondError`（HTTP の応答への変換とログ）、domain の `interpretFields`（項目ごとの問題をまとめる）、トランザクションの境界（例外なら ROLLBACK）。
 
 ### 5.5 画面の結合テスト
 
@@ -226,6 +243,7 @@ flowchart LR
 - テストは、画面の文言を単語帳から引いて要素を探し（`text.label('salesAmount')`）、モック DB の行（`database.sales`）で保存の結果を確かめる。
 - 項目の問題は、入力欄の説明（`aria-describedby`）として確かめる。画面の使いやすさも同時に確かめられる。
 - 速さのための決まり: 画面のデータは loader で先に取る（Suspense の約 300ms の待ちを入れない）。入力操作は待ち時間なし（`userEvent.setup({ delay: null })`）。
+- モック DB も、本物の DB と同じく処理が例外で終わったら書いた内容を取り消す。
 
 ### 5.6 テストの層
 
@@ -233,15 +251,17 @@ flowchart LR
 | --- | --- | --- | --- |
 | 画面の結合（主役） | 画面〜repository。境界値もここで確かめる | モック DB | 多 |
 | 単体 | 狭い範囲のロジック（計算・判定）と、道具（lint・翻訳） | なし | 必要なだけ |
-| repository | 実行される SQL と DB の制約。モック DB と同じ振る舞いか | 本物の PostgreSQL | 一部（5.7） |
+| repository の契約 | モック DB と PostgreSQL が同じ振る舞いか。実行された SQL | モック DB・Docker の PostgreSQL | 中 |
 | E2E | — | — | 当面なし |
 
-### 5.7 SQL の固定（案・未実装）
+### 5.7 SQL の固定
 
-- repository の1つの操作（入力境界の型・選択子の型）ごとに、SQL を1文の固定の文字列で書く。条件によって SQL を組み立てない。
-- 全操作の SQL を台帳（生成物）に出し、SQL の変化を差分で見られるようにする。
-- repository のテストは本物の PostgreSQL で行い、同じテストをモック DB にも流して、振る舞いがずれていないことを確かめる。
-- 任意の条件が多い検索だけは、組み立て方を1か所に閉じ込め、出る SQL の型をすべて台帳に出す（扱いは Q-B で決める）。
+- SQL は `*Statement.ts` に `defineStatement('名前', '本文')` で1文ずつ書く。本文は式を埋め込まない固定の文字列にし、値は `$1`・`$2`… で渡す。条件によって SQL を組み立てない。
+- repository が DB を触る口（`Executor`）は、`defineStatement` で定義した SQL しか受け付けない。組み立てた文字列の SQL は型の上で実行できない。
+- `pnpm sql:ledger` が全文を [SQL の台帳](generated/sql-ledger.md) に出す。本文に式を埋め込んでいたら止める。SQL の変化は台帳の差分で見る。
+- PostgreSQL の repository のテストは、実行した SQL の名前を記録し、「この操作はこの SQL だけを流す」を確かめる。
+- DB の値の読み方をそろえる: bigint は number、date は `YYYY-MM-DD` の文字列のまま（タイムゾーンでずらさない）。
+- 任意の条件が多い検索が出てきたら、扱いを決める（Q-D）。
 
 ### 5.8 フロントエンド
 
@@ -263,11 +283,12 @@ flowchart LR
 
 - 置き場所: `packages/vocabulary/words/system/*.yaml`（システム向け）、`words/domain/*.yaml`（業務）、`phrases.yaml`（組合せで訳が決まらない並び）、`messages.yaml`（画面の文）。
 - 1語の項目: `word`（原形）・`pos`（品詞）・`ja`（体言止めの形）・`jaVerb`（「〜する」の形。動詞だけ）・`en`（画面の英語）・`forms`（複数形など）・`avoid`（同じ意味で使わせない単語）・`role`（repository など受け手の役割の語）・`description`（業務の単語は必須）。
-- 単語帳を変えたら `pnpm vocabulary:generate` で辞書（`src/generated/vocabularyData.ts`）を作り直す。CI は作り直し忘れを検出する。
-- 検査の範囲: アプリのコード（`apps/**`・`packages/backend/**`）で、自分で宣言した名前（関数・変数・引数・型・型の項目・クラス・import の別名）。ライブラリの名前を参照するだけの箇所は対象外。道具（lint・翻訳・単語帳の生成）は対象外。
+- 1つの単語は1つの意味だけにする（例: `issue` は請求の「発行」に使うので、入力の「問題」は `problem` にした）。
+- 単語帳を変えたら `pnpm vocabulary:generate` で辞書を作り直す。CI は作り直し忘れを検出する。
+- 検査の範囲: アプリのコード（`apps/**`・`packages/backend/**`）で自分で宣言した名前（関数・変数・引数・型・型の項目・クラス・import の別名）と、DB のテーブル名・列名・索引名・区分値。ライブラリの名前を参照するだけの箇所と、道具（lint・翻訳・単語帳の生成）は対象外。
 - 関数名は動詞で始める（PascalCase のコンポーネント・型は名詞として扱う）。
 - 画面の文言: 見出しは単語の並びから作る（`text.label('salesAmount')` →「売上金額」/ "Sales Amount"）。文は `text.message('invalidRange', { … })` で引く。言語は `TextProvider` の `locale` で切り替える。
-- まだ当てていない範囲: ファイル名・API のパス・DB のテーブル名と列名（次の作業）。
+- まだ当てていない範囲: ファイル名・API のパス。
 
 ### 5.10 日本語翻訳ツール
 
@@ -287,53 +308,50 @@ flowchart LR
 - export する usecase・domain の関数には、目的（なぜこの処理があるか）を TSDoc の1行目に書く。翻訳ツールが「目的」として出す。
 - 処理の手順・引数の説明は書かない（名前と型で表し、翻訳ツールが作る）。
 
-## 6. サンプル業務の範囲と DB（案）
+## 6. 業務の作り
 
-売上登録から入金管理までを、次の4つのテーブルで表す案。ログ・作成日時・更新者などの列は持たない。
+[業務の作り](domain-model.md) にまとめた。要点:
 
-| テーブル | 列 | 意味 |
-| --- | --- | --- |
-| `customer` | `customer_id`・`customer_name` | 顧客 |
-| `sales` | `sales_id`・`customer_id`・`sales_date`・`sales_amount` | 売上（実装済み） |
-| `payment` | `payment_id`・`customer_id`・`payment_date`・`payment_amount` | 入金 |
-| `payment_allocation` | `payment_id`・`sales_id`・`allocation_amount` | 消込（入金をどの売上に充てたか。入金と売上の多対多） |
-
-- 売上の入金状況（未入金・一部入金・入金済み）は列に持たず、消込の合計から求める。
-- 画面の案: 顧客一覧、売上の登録・一覧、入金の登録・一覧、消込（入金を売上に充てる）、売上ごとの入金状況。
+- テーブルは12個（顧客・振込依頼人名・売上・請求・請求の売上・請求の税率ごとの合計・請求番号の採番・入金・消込・充当・調整・返金）。
+- 請求は請求先ごと・締め日ごとに売上をまとめ、税率ごとに消費税を計算する。発行前は締め直せ、発行後は変えない（訂正は次の請求の返品・値引）。
+- 入金と請求は「充当」で多対多につなぐ。これで分割入金・一括入金・複数の入金のまとめての消込を表す。
+- 振込手数料・端数は「調整」、過入金・二重入金・他社宛の誤入金は「未消込のまま置く／返金」、振込人不明は「顧客なしの入金（仮受）」で表す。
+- 状態（未入金・一部入金・期日超過など）は列に持たず、行から求める。
 
 ## 7. 未決事項
 
-**Q-A. サンプル業務の範囲**（6章の案でよいか）
+**Q-A. 請求書の形**
 
-- 請求（請求書の発行・締め）を入れるか。入れない案を推奨（最小にするため。売上に直接入金を充てる）。
-- 消込の単位: 入金1件を複数の売上に分けて充てられる（多対多）案を推奨。
+- A. 請求ごとに消込する（推奨。いまの設計）。請求書には今回の売上と消費税だけを載せる。
+- B. 残高を繰り越す請求書（前回請求額・今回入金額・繰越額・今回お買上額を載せる）。消込は請求ごとでなく、請求先の残高に対して行う。
+- 推奨: A。どの入金がどの請求に充たったかが行で見え、分割入金・一括入金・調整を素直に表せる。
 
-**Q-B. SQL の固定の方式**
+**Q-B. 発行後の請求の訂正**
 
-- A. 1操作1文の固定の SQL を手で書き、台帳に出す（推奨。実行される SQL がコードの上でそのまま見える）。ORM は使わず、薄いドライバで実行する。
-- B. Drizzle などのクエリビルダで書き、出力される SQL をスナップショットで固定する。
-- 推奨: A。以前「DB は Drizzle」を推奨したが、SQL を構造的に固定する要求（R-35）には A が合う。マイグレーションも SQL のファイルで持つ。
+- A. 発行した請求は変えず、返品・値引の売上を登録して次の請求で精算する（推奨。いまの設計）。
+- B. 発行した請求を取り消して、再発行できるようにする（取消の状態の列と、取り消した請求の売上の扱いが増える）。
 
-**Q-C. 本物の DB を使うテストの DB**
+**Q-C. AWS の構成（CDK）**
 
-- A. Docker の PostgreSQL（本番と同じ。Docker が要る）
-- B. PGlite（WASM の PostgreSQL。Docker が要らない。細かな挙動が本番と違うことがある）
-- 推奨: A。SQL の実体を確かめるテストなので、本番と同じ PostgreSQL で動かす。
+- 推奨: ECS Fargate（Hono を Node で常駐）＋ ALB、RDS for PostgreSQL、S3 ＋ CloudFront（画面。`/api/*` は ALB へ振り分けて同じドメインにする）、DB の接続情報は Secrets Manager、マイグレーションは ECS の単発のタスク。
+- もう1つの案: Lambda ＋ API Gateway（`hono/aws-lambda`）、RDS Proxy。使った分だけの料金になるが、DB の接続の扱いとコールドスタートに気を使う。
+- あわせて確認: 環境の数（dev・stg・prod など）と、DB を Aurora（Serverless v2）にするか。
 
-**Q-D. 部品の渡し方の確認**
+**Q-D. 任意の条件が多い検索の SQL**
 
-- usecase は必要な部品を引数で1つずつ受ける形にした（4.3 の `createSales`）。この具体例で問題ないか。
-- 部品が多い usecase では引数が長くなる。その場合も1つずつ受ける（推奨。何に触る処理かが引数で分かる）。
+- 一覧画面の検索（顧客・期間・状態などの任意の組合せ）は、条件の数だけ SQL を組み立てたくなる。
+- 推奨: 1つの固定の SQL に `($1::text IS NULL OR customer_id = $1)` の形で全条件を書く。ただし実行計画が悪くなる検索が出たら、その検索だけ目的別の SQL に分ける（台帳に名前で並ぶ）。
 
 **Q-E. 前回からの残り**
 
 - 画面の UI ライブラリ（shadcn/ui + Tailwind / MUI / Mantine / 未定）
-- 本番の実行環境（Node（Cloud Run・ECS など）/ Cloudflare Workers / 未定）
 
 ## 8. 次の作業
 
-1. 入金・消込の業務を足す（domain の判定・目的別の選択子もここで作る）。
-2. PostgreSQL の repository、SQL の固定と台帳、本物の DB での repository のテスト、トランザクション。
-3. 単語帳をファイル名・API のパス・DB のテーブル名と列名にも当てる。
-4. CI（GitHub Actions で `pnpm check`）。
-5. 画面を手元で動かす口（開発用の API サーバーと Vite の開発サーバー）。
+1. 請求の締め・締めの解除・発行（画面・usecase・SQL・画面の結合テスト）。
+2. 入金の登録（振込依頼人名から顧客の特定・仮受）と、仮受の顧客の特定。
+3. 消込（充当・調整）と、その取消。返金。
+4. 顧客の一覧・登録と、売掛金の残高。
+5. CDK（Q-C の回答のあと）と、画面を手元で動かす口（開発用の API サーバーと Vite の開発サーバー）。
+6. CI（GitHub Actions で `pnpm check` と `pnpm test:database`）。
+7. 単語帳をファイル名・API のパスにも当てる。

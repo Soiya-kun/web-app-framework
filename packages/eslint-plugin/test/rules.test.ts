@@ -46,6 +46,11 @@ ruleTester.run('flat-steps', flatSteps, {
       await salesRepository.createSales(salesCreate)
       return salesId
     }`,
+    `export async function createSales(dependency, salesRequest) {
+      const salesInput = interpretSalesRequest(salesRequest)
+      const customer = await dependency.customerRepository.findCustomer(salesInput.customerId)
+      return customer.customerId
+    }`,
   ],
   invalid: [
     {
@@ -54,6 +59,10 @@ ruleTester.run('flat-steps', flatSteps, {
     },
     {
       code: 'export function listSales(salesList) { const amounts = salesList.filter(isValid).map(readAmount); return amounts }',
+      errors: [{ messageId: 'methodChain' }],
+    },
+    {
+      code: 'export function listSales(salesRepository) { const salesList = salesRepository.listSales().all(); return salesList }',
       errors: [{ messageId: 'methodChain' }],
     },
     {
