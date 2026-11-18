@@ -1,0 +1,82 @@
+# 画面に出す文。{field} は項目の見出し、そのほかの {…} は値で埋める。
+- key: invalidInput
+  ja: 入力に問題があります。
+  en: Some input is invalid.
+- key: inputRequired
+  ja: '{field}を入力してください。'
+  en: 'Enter {field}.'
+- key: selectionRequired
+  ja: '{field}を選んでください。'
+  en: 'Select {field}.'
+- key: integerRequired
+  ja: '{field}は整数で入力してください。'
+  en: 'Enter {field} as a whole number.'
+- key: invalidRange
+  ja: '{field}は{minimum}から{maximum}までで入力してください。'
+  en: 'Enter {field} between {minimum} and {maximum}.'
+- key: invalidDate
+  ja: '{field}は実在する日付を YYYY-MM-DD の形で入力してください。'
+  en: 'Enter {field} as a valid date in YYYY-MM-DD.'
+- key: invalidRequest
+  ja: リクエストの形が正しくありません。
+  en: The request is malformed.
+- key: missingTarget
+  ja: 対象が見つかりません。
+  en: The target was not found.
+- key: duplicateTarget
+  ja: 同じ対象がすでにあります。
+  en: The target already exists.
+- key: unexpectedError
+  ja: 予期しないエラーが起きました。
+  en: An unexpected error occurred.
+- key: createCompleted
+  ja: 登録しました。
+  en: Created.
+- key: loading
+  ja: 読み込んでいます…
+  en: Loading…
+- key: selectionPrompt
+  ja: 選んでください
+  en: Select…
+- key: longText
+  ja: '{field}は{maximum}文字以内で入力してください。'
+  en: 'Enter {field} in {maximum} characters or fewer.'
+- key: changedTarget
+  ja: 対象がほかの操作で変わりました。もう一度やり直してください。
+  en: The target was changed by another operation. Please try again.
+- key: billingCustomerRequired
+  ja: '{field}は請求先（自分自身が請求先の顧客）を選んでください。'
+  en: 'Select a billing customer for {field}.'
+- key: monthEndRequired
+  ja: '{field}は請求先の締日に合わせて月末の日にしてください。'
+  en: 'Set {field} to the end of a month to match the closing day.'
+- key: closingDayRequired
+  ja: '{field}は請求先の締日に合わせて{closingDay}日にしてください。'
+  en: 'Set {field} to day {closingDay} to match the closing day.'
+- key: earlyClosingDate
+  ja: '{field}は前回の請求締め日（{previousDate}）より後にしてください。'
+  en: 'Set {field} after the previous closing date ({previousDate}).'
+- key: unissuedInvoice
+  ja: 前回の請求がまだ発行されていません。発行してから締めてください。
+  en: The previous invoice has not been issued yet. Issue it before closing.
+- key: emptyClosing
+  ja: 締める対象（前回からの残高・売上・入金・返金・調整）がありません。
+  en: There is nothing to close (no balance, sales, payments, refunds, or adjustments).
+- key: issuedInvoice
+  ja: この請求はすでに発行されています。発行した請求は変えず、訂正は次の請求で行ってください。
+  en: This invoice has already been issued. Make corrections on the next invoice.
+- key: earlyIssueDate
+  ja: '{field}は請求締め日（{closingDate}）以後にしてください。'
+  en: 'Set {field} on or after the closing date ({closingDate}).'
+- key: closeCompleted
+  ja: 締めました。
+  en: Closed.
+- key: issueCompleted
+  ja: 発行しました。
+  en: Issued.
+- key: cancelCompleted
+  ja: 取り消しました。
+  en: Canceled.
+- key: unissuedState
+  ja: 未発行
+  en: Not issued

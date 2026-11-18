@@ -1,0 +1,136 @@
+# システム向けの名詞。role: true は受け手の役割を表す語で、翻訳では目的語から外す（salesRepository.create →「売上を登録する」）。
+- { word: amount, pos: noun, ja: 金額, forms: [amounts] }
+- { word: api, pos: noun, ja: API, en: API }
+- { word: app, pos: noun, ja: アプリ }
+- { word: base, pos: noun, ja: 元 }
+- { word: body, pos: noun, ja: 本文 }
+- { word: brand, pos: noun, ja: 印 }
+- { word: calendar, pos: noun, ja: 暦 }
+- { word: child, pos: noun, ja: 子, forms: [children] }
+- { word: client, pos: noun, ja: クライアント, role: true }
+- { word: conflict, pos: noun, ja: 競合 }
+- { word: context, pos: noun, ja: 文脈, description: HTTP の要求の文脈（handler だけで使う） }
+- { word: count, pos: noun, ja: 件数 }
+- { word: data, pos: noun, ja: データ }
+- { word: database, pos: noun, ja: DB, en: Database }
+- { word: date, pos: noun, ja: 日付 }
+- { word: day, pos: noun, ja: 日 }
+- { word: dependency, pos: noun, ja: 部品, forms: [dependencies] }
+- { word: detail, pos: noun, ja: 詳細 }
+- { word: element, pos: noun, ja: 要素 }
+- { word: entity, pos: noun, ja: エンティティ }
+- { word: error, pos: noun, ja: エラー }
+- { word: event, pos: noun, ja: イベント }
+- { word: failure, pos: noun, ja: 失敗 }
+- { word: fetch, pos: noun, ja: fetch, en: Fetch }
+- { word: field, pos: noun, ja: 項目, forms: [fields] }
+- { word: form, pos: noun, ja: フォーム }
+- { word: function, pos: noun, ja: 関数 }
+- { word: generator, pos: noun, ja: 生成器, role: true }
+- { word: handler, pos: noun, ja: ハンドラー, role: true }
+- { word: history, pos: noun, ja: 履歴 }
+- { word: id, pos: noun, ja: ID, en: ID, forms: [ids] }
+- { word: input, pos: noun, ja: 入力 }
+- { word: integer, pos: noun, ja: 整数 }
+- { word: interpreter, pos: noun, ja: 解釈器, forms: [interpreters] }
+- { word: problem, pos: noun, ja: 問題, forms: [problems] }
+- { word: item, pos: noun, ja: 品目 }
+- { word: key, pos: noun, ja: キー }
+- { word: kind, pos: noun, ja: 区分, forms: [kinds] }
+- { word: label, pos: noun, ja: 見出し, forms: [labels] }
+- { word: layout, pos: noun, ja: レイアウト }
+- { word: length, pos: noun, ja: 長さ }
+- { word: locale, pos: noun, ja: 言語 }
+- { word: memory, pos: noun, ja: メモリ }
+- { word: message, pos: noun, ja: メッセージ }
+- { word: month, pos: noun, ja: 月 }
+- { word: mutation, pos: noun, ja: 更新処理 }
+- { word: name, pos: noun, ja: 名, forms: [names] }
+- { word: option, pos: noun, ja: 指定, forms: [options] }
+- { word: page, pos: noun, ja: 画面 }
+- { word: path, pos: noun, ja: パス }
+- { word: param, pos: noun, ja: 値, forms: [params] }
+- { word: prompt, pos: noun, ja: 促し }
+- { word: props, pos: noun, ja: 属性 }
+- { word: provider, pos: noun, ja: 提供部品 }
+- { word: query, pos: noun, ja: 問い合わせ }
+- { word: range, pos: noun, ja: 範囲 }
+- { word: repository, pos: noun, ja: リポジトリ, role: true, forms: [repositories] }
+- { word: request, pos: noun, ja: リクエスト }
+- { word: response, pos: noun, ja: 応答 }
+- { word: result, pos: noun, ja: 結果, forms: [results] }
+- { word: root, pos: noun, ja: 土台 }
+- { word: route, pos: noun, ja: 道筋 }
+- { word: row, pos: noun, ja: 行, forms: [rows] }
+- { word: schema, pos: noun, ja: スキーマ }
+- { word: screen, pos: noun, ja: 画面 }
+- { word: selection, pos: noun, ja: 選択 }
+- { word: sequence, pos: noun, ja: 連番 }
+- { word: status, pos: noun, ja: 状態 }
+- { word: success, pos: noun, ja: 成功 }
+- { word: table, pos: noun, ja: テーブル, forms: [tables] }
+- { word: target, pos: noun, ja: 対象 }
+- { word: text, pos: noun, ja: テキスト, forms: [texts] }
+- { word: tree, pos: noun, ja: 木 }
+- { word: type, pos: noun, ja: 型 }
+- { word: url, pos: noun, ja: URL, en: URL }
+- { word: user, pos: noun, ja: 利用者 }
+- { word: validation, pos: noun, ja: 入力検証 }
+- { word: value, pos: noun, ja: 値, forms: [values] }
+- { word: year, pos: noun, ja: 年 }
+- { word: connection, pos: noun, ja: 接続 }
+- { word: contract, pos: noun, ja: 契約 }
+- { word: counter, pos: noun, ja: 採番 }
+- { word: directory, pos: noun, ja: フォルダ }
+- { word: executor, pos: noun, ja: 実行器, role: true }
+- { word: file, pos: noun, ja: ファイル }
+- { word: format, pos: noun, ja: 形式, forms: [formats] }
+- { word: method, pos: noun, ja: 方法 }
+- { word: migration, pos: noun, ja: マイグレーション, forms: [migrations] }
+- { word: number, pos: noun, ja: 番号 }
+- { word: parent, pos: noun, ja: 親 }
+- { word: parser, pos: noun, ja: 読み取り器, forms: [parsers] }
+- { word: pool, pos: noun, ja: 接続プール }
+- { word: postgres, pos: noun, ja: PostgreSQL, en: PostgreSQL }
+- { word: production, pos: noun, ja: 本番 }
+- { word: rate, pos: noun, ja: 率, forms: [rates] }
+- { word: set, pos: noun, ja: 組 }
+- { word: statement, pos: noun, ja: SQL, en: Statement, forms: [statements] }
+- { word: test, pos: noun, ja: テスト }
+- { word: transaction, pos: noun, ja: トランザクション }
+- { word: violation, pos: noun, ja: 違反 }
+- { word: work, pos: noun, ja: 処理 }
+- { word: end, pos: noun, ja: 末 }
+- { word: entry, pos: noun, ja: 明細, forms: [entries] }
+- { word: index, pos: noun, ja: 位置 }
+- { word: member, pos: noun, ja: 所属, forms: [members] }
+- { word: part, pos: noun, ja: 部分, forms: [parts] }
+- { word: state, pos: noun, ja: 状態 }
+- { word: total, pos: noun, ja: 合計 }
+- { word: breakdown, pos: noun, ja: 内訳 }
+- { word: button, pos: noun, ja: ボタン }
+- { word: caption, pos: noun, ja: 表題 }
+- { word: cell, pos: noun, ja: セル }
+- { word: class, pos: noun, ja: クラス, forms: [classes] }
+- { word: column, pos: noun, ja: 列, forms: [columns] }
+- { word: control, pos: noun, ja: 入力欄 }
+- { word: feedback, pos: noun, ja: 知らせ }
+- { word: header, pos: noun, ja: 見出し行, forms: [headers] }
+- { word: link, pos: noun, ja: リンク, forms: [links] }
+- { word: navigation, pos: noun, ja: ナビゲーション }
+- { word: section, pos: noun, ja: 区画 }
+- { word: variant, pos: noun, ja: 種類 }
+- { word: alert, pos: noun, ja: 警告 }
+- { word: align, pos: noun, ja: 揃え }
+- { word: today, pos: noun, ja: 今日 }
+- { word: yen, pos: noun, ja: 円 }
+- { word: router, pos: noun, ja: ルーター }
+- { word: title, pos: noun, ja: 表題 }
+- { word: october, pos: noun, ja: 10月 }
+- { word: november, pos: noun, ja: 11月 }
+- { word: address, pos: noun, ja: 待ち受け先 }
+- { word: certificate, pos: noun, ja: 証明書 }
+- { word: environment, pos: noun, ja: 環境変数 }
+- { word: port, pos: noun, ja: ポート }
+- { word: server, pos: noun, ja: サーバー }
+- { word: setting, pos: noun, ja: 設定 }

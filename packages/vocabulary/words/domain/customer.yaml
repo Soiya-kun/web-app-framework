@@ -1,0 +1,5 @@
+- word: customer
+  pos: noun
+  ja: 顧客
+  forms: [customers]
+  description: 売上を計上する相手。

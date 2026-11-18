@@ -1,0 +1,22 @@
+{
+  "name": "@app/translator",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/translateSource.ts"
+  },
+  "scripts": {
+    "translate": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "sql:ledger": "tsx src/sqlLedger.ts"
+  },
+  "dependencies": {
+    "@app/vocabulary": "workspace:*",
+    "typescript": "~6.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.23.15",
+    "vitest": "^5.1.0"
+  }
+}
