@@ -83,3 +83,18 @@
 - { id: search, ja: { stem: 検索, class: suru } }
 - { id: expand, en: { noun: expansion }, ja: { stem: 展開, class: suru } }
 - { id: call, ja: { dictionary: 呼び出す, class: godan, noun: 呼び出し } }
+- { id: enlarge, ja: { stem: 拡大, class: suru } }
+- { id: shrink, en: { past: shrank, participle: shrunk }, ja: { stem: 縮小, class: suru } }
+- { id: fit, en: { past: fitted, gerund: fitting }, ja: { dictionary: 合わせる, class: ichidan, label: 全体表示 } }
+# キャンバスの操作の動詞。
+- { id: open, ja: { dictionary: 開く, class: godan } }
+- { id: fold, ja: { dictionary: 折りたたむ, class: godan, noun: 折りたたみ } }
+- { id: toggle, ja: { dictionary: 切り替える, class: ichidan, noun: 切り替え } }
+- { id: drag, en: { past: dragged, gerund: dragging }, ja: { stem: ドラッグ, class: suru } }
+- { id: zoom, ja: { stem: ズーム, class: suru } }
+- { id: focus, ja: { stem: フォーカス, class: suru } }
+- { id: finish, ja: { dictionary: 終える, class: ichidan } }
+- { id: receive, ja: { dictionary: 受け取る, class: godan } }
+- { id: clamp, ja: { dictionary: 収める, class: ichidan } }
+- { id: arrange, en: { noun: arrangement }, ja: { stem: 配置, class: suru } }
+- { id: animate, en: { noun: animation }, ja: { stem: アニメーション, class: suru } }

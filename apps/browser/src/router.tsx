@@ -1,4 +1,14 @@
-import { createHashHistory, createRootRoute, createRoute, createRouter, Link, Outlet, type RouterHistory } from '@tanstack/react-router'
+import {
+  createHashHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Link,
+  Outlet,
+  useRouterState,
+  type RouterHistory,
+} from '@tanstack/react-router'
+import { CanvasPage } from './page/canvasPage'
 import { FlowPage } from './page/flowPage'
 import { GlossaryPage } from './page/glossaryPage'
 import { HomePage } from './page/homePage'
@@ -9,12 +19,23 @@ import { WorkPage } from './page/workPage'
 import { text } from './text'
 
 function RootLayout() {
+  const routePath = useRouterState({ select: (state) => state.location.pathname })
+  // キャンバスは画面いっぱいに出す（自分でツールバーを持つ）。
+  if (routePath === '/') {
+    return <Outlet />
+  }
   return (
     <div className="min-h-screen">
       <header className="border-b border-line bg-surface">
         <nav className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3 text-sm">
           <Link to="/" className="font-bold">
             {text.label('codeBrowser')}
+          </Link>
+          <Link to="/" className="text-muted hover:text-ink">
+            {text.label('canvas')}
+          </Link>
+          <Link to="/list" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
+            {text.label('overview')}
           </Link>
           <Link to="/glossary" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
             {text.label('glossary')}
@@ -30,7 +51,8 @@ function RootLayout() {
 
 const rootRoute = createRootRoute({ component: RootLayout })
 const routeTree = rootRoute.addChildren([
-  createRoute({ getParentRoute: () => rootRoute, path: '/', component: HomePage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/', component: CanvasPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/list', component: HomePage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/flow/$flowId', component: FlowPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/scenario/$scenarioId', component: ScenarioPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/work/$workId', component: WorkPage }),
