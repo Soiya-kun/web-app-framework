@@ -20,6 +20,16 @@ export function prepareCustomerPostgresRepository(executor: Executor): CustomerR
       }
       return restoreCustomer(row)
     },
+    async findSelectedCustomer(customerId) {
+      if (customerId === null) {
+        return undefined
+      }
+      const [row] = await executor.execute(findCustomerStatement, [customerId])
+      if (row === undefined) {
+        throw new NotFoundError('missingTarget')
+      }
+      return restoreCustomer(row)
+    },
     async listCustomers() {
       const rows = await executor.execute(listCustomersStatement, [])
       return rows.map(restoreCustomer)

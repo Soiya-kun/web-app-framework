@@ -9,6 +9,7 @@ describeRepositoryContract('モック DB', async () => {
     runTransaction: prepareMemoryTransaction(database),
     async seedTables(seed) {
       database.customer.push(...(seed.customer ?? []))
+      database.payerName.push(...(seed.payerName ?? []))
       database.invoice.push(...(seed.invoice ?? []))
       database.invoiceTax.push(...(seed.invoiceTax ?? []))
       database.invoiceCounter.push(...(seed.invoiceCounter ?? []))

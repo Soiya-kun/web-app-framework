@@ -2,6 +2,8 @@ import type { RepositorySet, RunTransaction } from '../../domain/repositorySet'
 import { prepareCustomerMemoryRepository } from './customerMemoryRepository'
 import { prepareInvoiceMemoryRepository } from './invoiceMemoryRepository'
 import { copyMemoryDatabase, restoreMemoryDatabase, type MemoryDatabase } from './memoryDatabase'
+import { preparePayerNameMemoryRepository } from './payerNameMemoryRepository'
+import { preparePaymentMemoryRepository } from './paymentMemoryRepository'
 import { prepareSalesMemoryRepository } from './salesMemoryRepository'
 
 export function prepareMemoryRepositories(database: MemoryDatabase): RepositorySet {
@@ -9,6 +11,8 @@ export function prepareMemoryRepositories(database: MemoryDatabase): RepositoryS
     customerRepository: prepareCustomerMemoryRepository(database),
     salesRepository: prepareSalesMemoryRepository(database),
     invoiceRepository: prepareInvoiceMemoryRepository(database),
+    paymentRepository: preparePaymentMemoryRepository(database),
+    payerNameRepository: preparePayerNameMemoryRepository(database),
   }
 }
 

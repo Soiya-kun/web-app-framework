@@ -29,10 +29,10 @@ import {
   listUnbilledRefundsStatement,
   listUnbilledSalesStatement,
   takeInvoiceNumberStatement,
-  unbillAdjustmentsStatement,
-  unbillPaymentsStatement,
-  unbillRefundsStatement,
-  unbillSalesStatement,
+  detachAdjustmentsStatement,
+  detachPaymentsStatement,
+  detachRefundsStatement,
+  detachSalesStatement,
 } from './invoiceStatement'
 import type { Executor } from './statement'
 
@@ -145,10 +145,10 @@ export function prepareInvoicePostgresRepository(executor: Executor): InvoiceRep
       }
     },
     async cancelClosing(closingCancel) {
-      await executor.execute(unbillSalesStatement, [closingCancel.invoiceId])
-      await executor.execute(unbillPaymentsStatement, [closingCancel.invoiceId])
-      await executor.execute(unbillRefundsStatement, [closingCancel.invoiceId])
-      await executor.execute(unbillAdjustmentsStatement, [closingCancel.invoiceId])
+      await executor.execute(detachSalesStatement, [closingCancel.invoiceId])
+      await executor.execute(detachPaymentsStatement, [closingCancel.invoiceId])
+      await executor.execute(detachRefundsStatement, [closingCancel.invoiceId])
+      await executor.execute(detachAdjustmentsStatement, [closingCancel.invoiceId])
       await executor.execute(deleteInvoiceTaxesStatement, [closingCancel.invoiceId])
       const rows = await executor.execute(deleteInvoiceStatement, [closingCancel.invoiceId])
       if (rows.length === 0) {

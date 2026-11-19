@@ -1,140 +1,117 @@
-// 単語帳（words/・phrases.yaml・messages.yaml）を検証し、src/generated/vocabularyData.ts を作る。
-// --check を付けると、生成物が最新かどうかだけを確かめる（CI 用）。
-import { readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+// 単語帳のマスタ（words/・messages.yaml）を検査し、生成物を作る。
+// - src/generated/conceptData.ts: 語形をそろえた概念（lint・翻訳ツールが使う）
+// - src/generated/locale/{ja,en}.json: 画面の文言の表（i18n 向けの変換の結果。画面はこれだけを読む）
+// - src/generated/catalogKey.ts: 見出し・ボタン・文のキーの型
+// --check を付けると、書かずに最新かどうかだけを確かめる（CI 用）。
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'yaml'
-import type { MessageEntry, PartOfSpeech, PhraseEntry, WordEntry, WordKind } from './types'
-import { splitWords } from './split'
+import { findUnknownWords } from './analyze'
+import { buildConcepts, type RawEntry, type RawFile } from './buildConcepts'
+import { buildCatalogs, locales } from './catalog'
+import { extractCatalogKeys } from './extractKeys'
+import { prepareLexicon } from './lexicon'
+import type { Category, Concept, MessageDefinition, MessageFrame, WordKind } from './types'
 
 const packageDirectory = join(dirname(fileURLToPath(import.meta.url)), '..')
-const outputFile = join(packageDirectory, 'src/generated/vocabularyData.ts')
-const partsOfSpeech: readonly PartOfSpeech[] = ['verb', 'noun', 'adjective', 'preposition']
-
-type RawRecord = Record<string, unknown>
+const repositoryRoot = join(packageDirectory, '../..')
+const generatedDirectory = join(packageDirectory, 'src/generated')
+/** 見出し・ボタンのキーを集める、画面のコードの場所。 */
+const screenSourceDirectories = ['apps/web/src']
+const messageFrames: readonly MessageFrame[] = ['request', 'prompt', 'done', 'progress', 'missing']
 
 const problems: string[] = []
 
-function readYamlList(file: string): RawRecord[] {
-  const parsed: unknown = parse(readFileSync(file, 'utf8'))
-  if (parsed === null || parsed === undefined) {
-    return []
-  }
+function readYamlList(path: string): RawEntry[] {
+  const parsed: unknown = parse(readFileSync(path, 'utf8'))
   if (!Array.isArray(parsed)) {
-    problems.push(`${file}: 先頭は配列にする`)
+    problems.push(`${path}: 先頭は配列にする`)
     return []
   }
-  return parsed as RawRecord[]
+  return parsed as RawEntry[]
 }
 
-function text(record: RawRecord, key: string, where: string, required: boolean): string {
-  const value = record[key]
-  if (value === undefined || value === null) {
-    if (required) {
-      problems.push(`${where}: ${key} がない`)
-    }
-    return ''
-  }
-  if (typeof value !== 'string') {
-    problems.push(`${where}: ${key} は文字列にする`)
-    return ''
-  }
-  return value
-}
-
-function textList(record: RawRecord, key: string, where: string): string[] {
-  const value = record[key]
-  if (value === undefined || value === null) {
-    return []
-  }
-  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
-    problems.push(`${where}: ${key} は文字列の配列にする`)
-    return []
-  }
-  return value as string[]
-}
-
-function capitalize(word: string): string {
-  return word.charAt(0).toUpperCase() + word.slice(1)
-}
-
-function readWords(kind: WordKind): WordEntry[] {
+function readWordFiles(kind: WordKind): RawFile[] {
   const directory = join(packageDirectory, 'words', kind)
-  const files = readdirSync(directory).filter((file) => file.endsWith('.yaml')).sort()
-  return files.flatMap((file) =>
-    readYamlList(join(directory, file)).map((record, index) => {
-      const where = `words/${kind}/${file}[${index}]`
-      const word = text(record, 'word', where, true)
-      const pos = text(record, 'pos', where, true) as PartOfSpeech
-      if (!/^[a-z]+$/.test(word)) {
-        problems.push(`${where}: word は英小文字だけにする（${word}）`)
-      }
-      if (!partsOfSpeech.includes(pos)) {
-        problems.push(`${where}: pos は ${partsOfSpeech.join('・')} のどれかにする（${pos}）`)
-      }
-      const entry: WordEntry = {
-        word,
-        kind,
-        pos,
-        forms: textList(record, 'forms', where),
-        ja: text(record, 'ja', where, true),
-        jaVerb: text(record, 'jaVerb', where, pos === 'verb' || pos === 'preposition'),
-        jaName: text(record, 'jaName', where, pos === 'preposition'),
-        en: text(record, 'en', where, false) || capitalize(word),
-        role: record['role'] === true,
-        avoid: textList(record, 'avoid', where),
-        description: text(record, 'description', where, kind === 'domain'),
-      }
-      return entry
-    }),
-  )
+  return readdirSync(directory)
+    .filter((file) => file.endsWith('.yaml'))
+    .sort()
+    .map((file) => {
+      const name = basename(file, '.yaml')
+      const category = kind === 'system' ? (name as Category | 'compound') : null
+      return { path: `words/${kind}/${file}`, kind, category, entries: readYamlList(join(directory, file)) }
+    })
 }
 
-const wordList = [...readWords('system'), ...readWords('domain')]
+const built = buildConcepts([...readWordFiles('system'), ...readWordFiles('domain')])
+problems.push(...built.problems)
+const concepts = built.concepts
+const prepared = prepareLexicon(concepts)
+problems.push(...prepared.problems)
+const lexicon = prepared.lexicon
 
-const formOwner = new Map<string, string>()
-for (const entry of wordList) {
-  for (const form of [entry.word, ...entry.forms]) {
-    const owner = formOwner.get(form)
-    if (owner !== undefined) {
-      problems.push(`「${form}」が ${owner} と ${entry.word} の両方にある`)
-    }
-    formOwner.set(form, entry.word)
+// 日本語の側も、名詞の形・動詞の名詞形と辞書形・形容詞の形を、概念ごとに一意にする（日本語から英語へ1通りに戻せるように）。
+const japaneseOwners = new Map<string, string>()
+function claimJapanese(text: string | null, concept: Concept): void {
+  if (text === null || text === '') {
+    return
   }
+  const owner = japaneseOwners.get(text)
+  if (owner !== undefined && owner !== concept.id) {
+    problems.push(`日本語の「${text}」が ${owner} と ${concept.id} の両方にある`)
+  }
+  japaneseOwners.set(text, concept.id)
 }
-for (const entry of wordList) {
-  for (const avoided of entry.avoid) {
-    if (formOwner.has(avoided)) {
-      problems.push(`${entry.word} の avoid にある「${avoided}」が単語として登録されている`)
-    }
-  }
-}
-
-function checkTokens(name: string, where: string): void {
-  for (const token of splitWords(name)) {
-    if (!formOwner.has(token)) {
-      problems.push(`${where}: 単語帳にない単語「${token}」`)
-    }
-  }
+for (const concept of concepts) {
+  claimJapanese(concept.ja.form, concept)
+  claimJapanese(concept.ja.noun, concept)
+  claimJapanese(concept.ja.label, concept)
+  claimJapanese(concept.ja.dictionary, concept)
 }
 
-const phraseList: PhraseEntry[] = readYamlList(join(packageDirectory, 'phrases.yaml')).map((record, index) => {
-  const where = `phrases.yaml[${index}]`
-  const words = text(record, 'words', where, true).split(' ').filter((word) => word !== '')
-  for (const word of words) {
-    if (!formOwner.has(word)) {
-      problems.push(`${where}: 単語帳にない単語「${word}」`)
-    }
-  }
-  return { words, ja: text(record, 'ja', where, true), en: text(record, 'en', where, true) }
-})
-
-const messageList: MessageEntry[] = readYamlList(join(packageDirectory, 'messages.yaml')).map((record, index) => {
+const messages: MessageDefinition[] = readYamlList(join(packageDirectory, 'messages.yaml')).map((record, index) => {
   const where = `messages.yaml[${index}]`
-  const key = text(record, 'key', where, true)
-  checkTokens(key, where)
-  return { key, ja: text(record, 'ja', where, true), en: text(record, 'en', where, true) }
+  const key = typeof record['key'] === 'string' ? record['key'] : ''
+  const unknown = findUnknownWords(lexicon, key)
+  if (key === '' || unknown.length > 0) {
+    problems.push(`${where}: 文のキー「${key}」に単語帳にない単語がある（${unknown.join('・')}）`)
+  }
+  const free = record['free'] as Record<string, unknown> | undefined
+  if (free !== undefined) {
+    if (typeof free['ja'] !== 'string' || typeof free['en'] !== 'string') {
+      problems.push(`${where}: free には ja と en の両方を書く（${key}）`)
+    }
+    return { key, frame: null, verb: null, object: null, free: { ja: String(free['ja']), en: String(free['en']) } }
+  }
+  const frame = record['frame'] as MessageFrame
+  const verb = typeof record['verb'] === 'string' ? record['verb'] : null
+  const object = typeof record['object'] === 'string' ? record['object'] : null
+  if (!messageFrames.includes(frame)) {
+    problems.push(`${where}: frame は ${messageFrames.join('・')} のどれか（${key}）`)
+  }
+  if (frame !== 'missing' && (verb === null || lexicon.concepts.get(verb)?.category !== 'verb')) {
+    problems.push(`${where}: verb に単語帳の動詞を書く（${key}）`)
+  }
+  if (object !== null && !object.startsWith('$') && lexicon.concepts.get(object) === undefined) {
+    problems.push(`${where}: object は $値の名前 か単語帳の名詞の id にする（${key}）`)
+  }
+  return { key, frame, verb, object, free: null }
 })
+
+// 画面で使うキー: 画面のコードから集めたものと、値として画面に出る概念（区分値など）の id。
+const extracted = extractCatalogKeys(repositoryRoot, screenSourceDirectories)
+const conceptLabelKeys = concepts.filter((concept) => concept.category === 'noun' || concept.category === 'adjective').map((concept) => concept.id)
+const labelKeys = [...new Set([...conceptLabelKeys, ...extracted.labels.keys()])].sort()
+const actionKeys = [...extracted.actions.keys()].sort()
+const catalogResult = buildCatalogs(lexicon, labelKeys, actionKeys, messages)
+problems.push(
+  ...catalogResult.problems.map((problem) => {
+    const key = /「([A-Za-z]+)」/.exec(problem)?.[1] ?? ''
+    const locations = extracted.labels.get(key) ?? extracted.actions.get(key) ?? []
+    return locations.length === 0 ? problem : `${problem}（${locations.join('、')}）`
+  }),
+)
 
 if (problems.length > 0) {
   console.error(`単語帳に ${problems.length} 件の問題があります。`)
@@ -144,27 +121,47 @@ if (problems.length > 0) {
   process.exit(1)
 }
 
-const output = `// 生成物。pnpm vocabulary:generate で words/・phrases.yaml・messages.yaml から作る。手で編集しない。
-import type { MessageEntry, PhraseEntry, WordEntry } from '../types'
+function unionType(name: string, keys: readonly string[]): string {
+  return `export type ${name} =\n${keys.map((key) => `  | '${key}'`).join('\n')}\n`
+}
 
-export const wordList: readonly WordEntry[] = ${JSON.stringify(wordList, null, 2)}
+const outputs: Record<string, string> = {
+  'conceptData.ts': `// 生成物。pnpm vocabulary:generate で words/ から作る。手で編集しない。
+import type { Concept } from '../types'
 
-export const phraseList: readonly PhraseEntry[] = ${JSON.stringify(phraseList, null, 2)}
+export const conceptList: readonly Concept[] = ${JSON.stringify(concepts, null, 2)}
+`,
+  'catalogKey.ts': `// 生成物。pnpm vocabulary:generate で作る。手で編集しない。
+// 見出しのキーは、概念の id と、画面のコードの text.label('…')・labelKey('…') から集める。
 
-export const messageList = ${JSON.stringify(messageList, null, 2)} as const satisfies readonly MessageEntry[]
+${unionType('LabelKey', labelKeys)}
+${unionType('ActionKey', actionKeys.length === 0 ? ['never'] : actionKeys)}
+${unionType('MessageKey', messages.map((message) => message.key))}`,
+  ...Object.fromEntries(
+    locales.map((locale) => [`locale/${locale}.json`, `${JSON.stringify(catalogResult.catalogs[locale], null, 2)}\n`]),
+  ),
+}
 
-export type MessageKey = (typeof messageList)[number]['key']
-`
+const frameCount = messages.filter((message) => message.frame !== null).length
+const summary = `概念 ${concepts.length}・見出し ${labelKeys.length}・ボタン ${actionKeys.length}・文 ${messages.length}（文の型 ${frameCount}・自由文 ${messages.length - frameCount}）`
 
 if (process.argv.includes('--check')) {
-  const current = readFileSync(outputFile, 'utf8')
-  if (current !== output) {
-    console.error('src/generated/vocabularyData.ts が単語帳と一致しません。pnpm vocabulary:generate を実行してください。')
+  const stale = Object.entries(outputs).filter(([file, text]) => {
+    try {
+      return readFileSync(join(generatedDirectory, file), 'utf8') !== text
+    } catch {
+      return true
+    }
+  })
+  if (stale.length > 0) {
+    console.error(`単語帳の生成物が最新ではありません（${stale.map(([file]) => file).join('・')}）。pnpm vocabulary:generate を実行してください。`)
     process.exit(1)
   }
-  console.log(`単語帳は最新です（単語 ${wordList.length}・並び ${phraseList.length}・文 ${messageList.length}）。`)
+  console.log(`単語帳は最新です（${summary}）。`)
 } else {
-  mkdirSync(dirname(outputFile), { recursive: true })
-  writeFileSync(outputFile, output)
-  console.log(`src/generated/vocabularyData.ts を作りました（単語 ${wordList.length}・並び ${phraseList.length}・文 ${messageList.length}）。`)
+  for (const [file, text] of Object.entries(outputs)) {
+    mkdirSync(dirname(join(generatedDirectory, file)), { recursive: true })
+    writeFileSync(join(generatedDirectory, file), text)
+  }
+  console.log(`単語帳の生成物を作りました（${summary}）。`)
 }

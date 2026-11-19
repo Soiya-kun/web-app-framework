@@ -7,6 +7,11 @@ import type { Invoice } from '../../src/domain/invoice/entity'
 import type { InvoiceCreate } from '../../src/domain/invoice/invoiceCreate'
 import type { InvoiceIssue } from '../../src/domain/invoice/invoiceIssue'
 import type { ClosingCancel } from '../../src/domain/invoice/closingCancel'
+import type { PayerNameSave } from '../../src/domain/payerName/payerNameSave'
+import type { PaymentCreate } from '../../src/domain/payment/paymentCreate'
+import type { PaymentIdentify } from '../../src/domain/payment/paymentIdentify'
+import type { PayerName } from '../../src/domain/payment/value/payerName'
+import type { PaymentId } from '../../src/domain/payment/value/paymentId'
 import type { ClosingDate } from '../../src/domain/invoice/value/closingDate'
 import type { InvoiceId } from '../../src/domain/invoice/value/invoiceId'
 import type { Payment } from '../../src/domain/payment/entity'
@@ -214,6 +219,48 @@ export function describeRepositoryContract(name: string, prepareTarget: () => Pr
       })
     })
 
+    describe('入金と振込依頼人名', () => {
+      const paymentCreate = { ...unknownPayment, invoiceId: undefined } as unknown as PaymentCreate
+
+      test('入金を、入力境界の項目のまま1行として保存し、請求にはまだ載せない', async () => {
+        await target.repositories.paymentRepository.createPayment(paymentCreate)
+
+        expect((await target.readTables()).payment).toEqual([unknownPayment])
+        expect(await target.repositories.paymentRepository.findPayment('payment-0002' as PaymentId)).toEqual(unknownPayment)
+      })
+
+      test('入金日の新しい順に、顧客の名前（仮受は null）を添えて一覧する', async () => {
+        await target.seedTables({ payment: [parentPayment, unknownPayment] })
+
+        expect(await target.repositories.paymentRepository.listPayments()).toEqual([
+          { ...unknownPayment, customerName: null },
+          { ...parentPayment, customerName: '株式会社親' },
+        ])
+      })
+
+      test('仮受の入金に顧客を入れる。特定済みの入金には入れない', async () => {
+        await target.seedTables({ payment: [parentPayment, unknownPayment] })
+
+        await target.repositories.paymentRepository.identifyPayment({ paymentId: 'payment-0002', customerId: 'customer-0001' } as PaymentIdentify)
+
+        expect((await target.readTables()).payment.map((row) => row.customerId)).toEqual(['customer-0001', 'customer-0001'])
+        await expect(
+          target.repositories.paymentRepository.identifyPayment({ paymentId: 'payment-0001', customerId: 'customer-0003' } as PaymentIdentify),
+        ).rejects.toBeInstanceOf(ConflictError)
+      })
+
+      test('振込依頼人名を覚え、同じ名前は新しい顧客で上書きする', async () => {
+        const payerNameRepository = target.repositories.payerNameRepository
+        await payerNameRepository.savePayerNames([{ payerName: 'カ)オヤ', customerId: 'customer-0003' } as PayerNameSave])
+        await payerNameRepository.savePayerNames([{ payerName: 'カ)オヤ', customerId: 'customer-0001' } as PayerNameSave])
+        await payerNameRepository.savePayerNames([])
+
+        expect((await target.readTables()).payerName).toEqual([{ payerName: 'カ)オヤ', customerId: 'customer-0001' }])
+        expect(await payerNameRepository.findPayerCustomer('カ)オヤ' as PayerName)).toEqual(parentCustomer)
+        expect(await payerNameRepository.findPayerCustomer('ヤマダ タロウ' as PayerName)).toBeUndefined()
+      })
+    })
+
     describe('請求', () => {
       beforeEach(async () => {
         await target.seedTables({
@@ -273,10 +320,10 @@ export function describeRepositoryContract(name: string, prepareTarget: () => Pr
       test('ほかの操作で先に載った行があれば止め、何も変えない', async () => {
         await target.seedTables({ invoice: [{ ...octoberInvoice, invoiceId: 'invoice-0000', closingDate: '2026-09-30' }] })
         await target.seedTables({ sales: [{ ...otherSales, salesId: 'sales-0009', customerId: 'customer-0002', invoiceId: 'invoice-0000' }] })
-        const conflictingCreate = { ...octoberInvoiceCreate, salesIds: ['sales-0001', 'sales-0009'] } as unknown as InvoiceCreate
+        const duplicateCreate = { ...octoberInvoiceCreate, salesIds: ['sales-0001', 'sales-0009'] } as unknown as InvoiceCreate
 
         await expect(
-          target.runTransaction((repositories) => repositories.invoiceRepository.createInvoice(conflictingCreate)),
+          target.runTransaction((repositories) => repositories.invoiceRepository.createInvoice(duplicateCreate)),
         ).rejects.toBeInstanceOf(ConflictError)
 
         const tables = await target.readTables()

@@ -33,7 +33,7 @@ afterAll(async () => {
 })
 
 /** 実行した SQL の名前を記録する。テストで、どの SQL が流れたかを確かめる。 */
-function prepareRecordingExecutor(executor: Executor, statementNames: string[]): Executor {
+function prepareTracingExecutor(executor: Executor, statementNames: string[]): Executor {
   return {
     async execute(statement, values) {
       statementNames.push(statement.name)
@@ -53,6 +53,9 @@ async function seedTables(seed: Partial<MemoryDatabase>): Promise<void> {
       'INSERT INTO customer (customer_id, customer_name, billing_customer_id, closing_day, collection_month_offset, collection_day) VALUES ($1, $2, $3, $4, $5, $6)',
       [row.customerId, row.customerName, row.billingCustomerId, row.closingDay, row.collectionMonthOffset, row.collectionDay],
     )
+  }
+  for (const row of seed.payerName ?? []) {
+    await selectRows('INSERT INTO payer_name (payer_name, customer_id) VALUES ($1, $2)', [row.payerName, row.customerId])
   }
   for (const row of seed.invoice ?? []) {
     await selectRows(
@@ -117,6 +120,7 @@ async function readTables(): Promise<MemoryDatabase> {
     customer: await selectRows(
       'SELECT customer_id AS "customerId", customer_name AS "customerName", billing_customer_id AS "billingCustomerId", closing_day AS "closingDay", collection_month_offset AS "collectionMonthOffset", collection_day AS "collectionDay" FROM customer ORDER BY customer_id',
     ),
+    payerName: await selectRows('SELECT payer_name AS "payerName", customer_id AS "customerId" FROM payer_name ORDER BY payer_name'),
     invoice: await selectRows(
       'SELECT invoice_id AS "invoiceId", billing_customer_id AS "billingCustomerId", previous_invoice_id AS "previousInvoiceId", closing_date AS "closingDate", due_date AS "dueDate", previous_amount AS "previousAmount", payment_amount AS "paymentAmount", adjustment_amount AS "adjustmentAmount", carried_amount AS "carriedAmount", sales_amount AS "salesAmount", tax_amount AS "taxAmount", invoice_amount AS "invoiceAmount", invoice_number AS "invoiceNumber", issue_date AS "issueDate" FROM invoice ORDER BY invoice_id',
     ),
@@ -142,7 +146,7 @@ async function readTables(): Promise<MemoryDatabase> {
 async function preparePostgresTarget(statementNames: string[] = []): Promise<RepositoryTarget> {
   await pool.query('TRUNCATE customer, payer_name, invoice, invoice_tax, invoice_counter, sales, payment, refund, adjustment CASCADE')
   return {
-    repositories: preparePostgresRepositories(prepareRecordingExecutor(prepareClientExecutor(pool), statementNames)),
+    repositories: preparePostgresRepositories(prepareTracingExecutor(prepareClientExecutor(pool), statementNames)),
     runTransaction: preparePostgresTransaction(pool),
     seedTables,
     readTables,

@@ -1,7 +1,7 @@
 // TypeScript のソースを読み、export した関数ごとに「関数名の体言止め」と「処理の手順（〜する）」を作る。
 // 訳は単語帳の品詞と日本語から機械的に作る。訳せない式は、コードのまま `…` で示す。
 import {
-  messageList,
+  listMessages,
   renderNounPhrase,
   splitWords,
   translateFunctionName,
@@ -23,7 +23,7 @@ export type FunctionTranslation = {
   readonly line: number
 }
 
-const messageText = new Map<string, string>(messageList.map((entry) => [entry.key, entry.ja]))
+const messageText = new Map<string, string>(Object.entries(listMessages('ja')))
 
 export function translateSource(sourceText: string, fileName: string): FunctionTranslation[] {
   const sourceFile = ts.createSourceFile(fileName, sourceText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)

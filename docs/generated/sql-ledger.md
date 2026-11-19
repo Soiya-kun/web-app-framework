@@ -3,7 +3,7 @@
 > 生成物。`pnpm sql:ledger` で packages/backend/src/repository/postgres の defineStatement から作る。手で編集しない。
 > repository が実行する SQL は、ここにあるものだけ（Executor は defineStatement で定義した SQL しか受け付けない）。
 
-SQL の数: 34
+SQL の数: 40
 
 ## findCustomer
 
@@ -317,7 +317,7 @@ WHERE invoice_id = $1 AND issue_date IS NULL
 RETURNING invoice_id AS "invoiceId"
 ```
 
-## unbillSales
+## detachSales
 
 [packages/backend/src/repository/postgres/invoiceStatement.ts:295](../../packages/backend/src/repository/postgres/invoiceStatement.ts#L295)
 
@@ -325,7 +325,7 @@ RETURNING invoice_id AS "invoiceId"
 UPDATE sales SET invoice_id = NULL WHERE invoice_id = $1
 ```
 
-## unbillPayments
+## detachPayments
 
 [packages/backend/src/repository/postgres/invoiceStatement.ts:302](../../packages/backend/src/repository/postgres/invoiceStatement.ts#L302)
 
@@ -333,7 +333,7 @@ UPDATE sales SET invoice_id = NULL WHERE invoice_id = $1
 UPDATE payment SET invoice_id = NULL WHERE invoice_id = $1
 ```
 
-## unbillRefunds
+## detachRefunds
 
 [packages/backend/src/repository/postgres/invoiceStatement.ts:309](../../packages/backend/src/repository/postgres/invoiceStatement.ts#L309)
 
@@ -341,7 +341,7 @@ UPDATE payment SET invoice_id = NULL WHERE invoice_id = $1
 UPDATE refund SET invoice_id = NULL WHERE invoice_id = $1
 ```
 
-## unbillAdjustments
+## detachAdjustments
 
 [packages/backend/src/repository/postgres/invoiceStatement.ts:316](../../packages/backend/src/repository/postgres/invoiceStatement.ts#L316)
 
@@ -367,9 +367,79 @@ WHERE invoice_id = $1 AND issue_date IS NULL
 RETURNING invoice_id AS "invoiceId"
 ```
 
+## findPayerCustomer
+
+[packages/backend/src/repository/postgres/payerNameStatement.ts:5](../../packages/backend/src/repository/postgres/payerNameStatement.ts#L5)
+
+```sql
+SELECT c.customer_id AS "customerId",
+       c.customer_name AS "customerName",
+       c.billing_customer_id AS "billingCustomerId",
+       c.closing_day AS "closingDay",
+       c.collection_month_offset AS "collectionMonthOffset",
+       c.collection_day AS "collectionDay"
+FROM payer_name n
+JOIN customer c ON c.customer_id = n.customer_id
+WHERE n.payer_name = $1
+```
+
+## savePayerNames
+
+[packages/backend/src/repository/postgres/payerNameStatement.ts:20](../../packages/backend/src/repository/postgres/payerNameStatement.ts#L20)
+
+```sql
+INSERT INTO payer_name (payer_name, customer_id)
+SELECT entry.payer_name, entry.customer_id
+FROM unnest($1::text[], $2::text[]) AS entry (payer_name, customer_id)
+ON CONFLICT (payer_name) DO UPDATE SET customer_id = EXCLUDED.customer_id
+```
+
+## createPayment
+
+[packages/backend/src/repository/postgres/paymentStatement.ts:5](../../packages/backend/src/repository/postgres/paymentStatement.ts#L5)
+
+```sql
+INSERT INTO payment (payment_id, payment_date, payment_method, payment_amount, payer_name, customer_id)
+VALUES ($1, $2, $3, $4, $5, $6)
+```
+
+## findPayment
+
+[packages/backend/src/repository/postgres/paymentStatement.ts:15](../../packages/backend/src/repository/postgres/paymentStatement.ts#L15)
+
+```sql
+SELECT payment_id AS "paymentId", payment_date AS "paymentDate", payment_method AS "paymentMethod",
+       payment_amount AS "paymentAmount", payer_name AS "payerName", customer_id AS "customerId", invoice_id AS "invoiceId"
+FROM payment
+WHERE payment_id = $1
+```
+
+## listPayments
+
+[packages/backend/src/repository/postgres/paymentStatement.ts:25](../../packages/backend/src/repository/postgres/paymentStatement.ts#L25)
+
+```sql
+SELECT p.payment_id AS "paymentId", p.payment_date AS "paymentDate", p.payment_method AS "paymentMethod",
+       p.payment_amount AS "paymentAmount", p.payer_name AS "payerName", p.customer_id AS "customerId", p.invoice_id AS "invoiceId",
+       c.customer_name AS "customerName"
+FROM payment p
+LEFT JOIN customer c ON c.customer_id = p.customer_id
+ORDER BY p.payment_date DESC, p.payment_id
+```
+
+## identifyPayment
+
+[packages/backend/src/repository/postgres/paymentStatement.ts:37](../../packages/backend/src/repository/postgres/paymentStatement.ts#L37)
+
+```sql
+UPDATE payment SET customer_id = $2
+WHERE payment_id = $1 AND customer_id IS NULL AND invoice_id IS NULL
+RETURNING payment_id AS "paymentId"
+```
+
 ## beginTransaction
 
-[packages/backend/src/repository/postgres/postgresDatabase.ts:8](../../packages/backend/src/repository/postgres/postgresDatabase.ts#L8)
+[packages/backend/src/repository/postgres/postgresDatabase.ts:10](../../packages/backend/src/repository/postgres/postgresDatabase.ts#L10)
 
 ```sql
 BEGIN
@@ -377,7 +447,7 @@ BEGIN
 
 ## commitTransaction
 
-[packages/backend/src/repository/postgres/postgresDatabase.ts:9](../../packages/backend/src/repository/postgres/postgresDatabase.ts#L9)
+[packages/backend/src/repository/postgres/postgresDatabase.ts:11](../../packages/backend/src/repository/postgres/postgresDatabase.ts#L11)
 
 ```sql
 COMMIT
@@ -385,7 +455,7 @@ COMMIT
 
 ## rollbackTransaction
 
-[packages/backend/src/repository/postgres/postgresDatabase.ts:10](../../packages/backend/src/repository/postgres/postgresDatabase.ts#L10)
+[packages/backend/src/repository/postgres/postgresDatabase.ts:12](../../packages/backend/src/repository/postgres/postgresDatabase.ts#L12)
 
 ```sql
 ROLLBACK

@@ -2,7 +2,7 @@
 // DB だけをモック DB にする。境界値はここで確かめる。
 import type { SalesRequest } from '@app/backend'
 import { prepareMemoryDatabase, type Customer, type Stored } from '@app/backend/testing'
-import { prepareText, type MessageKey, type MessageParams } from '@app/vocabulary'
+import { prepareText, type LabelKey, type MessageKey, type MessageParams } from '@app/vocabulary/text'
 import { screen, waitFor } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
 import { renderScreen } from '../../test/renderScreen'
@@ -45,12 +45,12 @@ async function submitSalesForm(salesRequest: SalesRequest) {
     await user.type(screen.getByLabelText(text.label('salesAmount')), salesRequest.salesAmount)
   }
   await user.selectOptions(screen.getByLabelText(text.label('taxRate')), salesRequest.taxRate)
-  await user.click(screen.getByRole('button', { name: text.label('create') }))
+  await user.click(screen.getByRole('button', { name: text.action('create') }))
   return { database }
 }
 
 /** 項目の下に、その項目の問題の文が出ていること。 */
-async function expectProblem(fieldName: string, messageKey: MessageKey, params: MessageParams = {}) {
+async function expectProblem(fieldName: LabelKey, messageKey: MessageKey, params: MessageParams = {}) {
   const fieldLabel = text.label(fieldName)
   const field = screen.getByLabelText(fieldLabel)
   await waitFor(() => {

@@ -16,6 +16,9 @@ export function prepareCustomerMemoryRepository(database: MemoryDatabase): Custo
     findCustomer,
     // モック DB は同時に動かないので、ロックは取得と同じ。
     lockCustomer: findCustomer,
+    async findSelectedCustomer(customerId) {
+      return customerId === null ? undefined : findCustomer(customerId)
+    },
     async listCustomers() {
       return database.customer
         .toSorted((left, right) => left.customerId.localeCompare(right.customerId))

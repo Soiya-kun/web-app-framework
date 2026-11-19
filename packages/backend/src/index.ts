@@ -1,4 +1,5 @@
 export type { ClosingRequest } from './domain/invoice/closingRequest'
+export type { PaymentRequest } from './domain/payment/paymentRequest'
 export type { SalesRequest } from './domain/sales/salesRequest'
 export type { ErrorKind, FieldProblem } from './domain/shared/error'
 export { prepareApp, type AppType } from './handler/app'

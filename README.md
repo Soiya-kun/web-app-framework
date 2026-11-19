@@ -4,9 +4,9 @@ TypeScript（React + Hono）で業務 Web アプリを作るための土台（�
 
 - 画面の操作から、API 通信を介さずにバックエンドの業務処理までを同じプロセスで結合テストする。差し替えるのは DB だけ。
 - 識別子の英単語を単語帳で絞り、処理を日本語に機械翻訳して読めるようにする。
-- 単語帳の単語を画面の文言にも使う。
+- 単語帳から画面の文言ファイル（日本語・英語）を生成し、画面・コード・設計の言葉をそろえる。
 
-要求と方針は [docs/requirements.md](docs/requirements.md)、業務の作りは [docs/domain-model.md](docs/domain-model.md)、処理の日本語訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)、SQL の台帳は [docs/generated/sql-ledger.md](docs/generated/sql-ledger.md)。
+要求と方針は [docs/requirements.md](docs/requirements.md)、業務の作りは [docs/domain-model.md](docs/domain-model.md)、単語帳の設計は [docs/vocabulary-design.md](docs/vocabulary-design.md)、処理の日本語訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)、SQL の台帳は [docs/generated/sql-ledger.md](docs/generated/sql-ledger.md)。
 
 ## 使い方
 
@@ -15,12 +15,13 @@ Node.js（`.node-version`）と pnpm（`package.json` の `packageManager`）を
 | コマンド | 内容 |
 | --- | --- |
 | `pnpm install` | 依存を入れる |
-| `pnpm check` | 単語帳の生成物・lint・型・テスト・翻訳の生成物をまとめて確かめる |
+| `pnpm check` | 単語帳の生成物・lint・型・テスト・翻訳と SQL の台帳の生成物をまとめて確かめる |
 | `pnpm test` | テストだけ（Docker は要らない） |
 | `pnpm test:database` | Docker の PostgreSQL を起動し、repository のテストを流す |
-| `pnpm vocabulary:generate` | 単語帳（`packages/vocabulary/words` など）を変えたあとに辞書を作り直す |
+| `pnpm vocabulary:generate` | 単語帳（`packages/vocabulary/words` など）を変えたあとに、辞書と画面の文言ファイルを作り直す |
+| `pnpm vocabulary:find <日本語>` | 日本語の用語から英語の名前を引く（`振込依頼人の顧客` → `payerCustomer`） |
 | `pnpm translate` | 処理の日本語訳を作り直す |
-| `pnpm sql:ledger` | SQL の台帳を作り直す |
+| `pnpm sql:ledger` | SQL の台帳を作り直す（DB の名前の単語帳の検査も行う） |
 | `pnpm dev:api` / `pnpm dev:web` | 手元で API サーバー（環境変数 `DATABASE_URL` が要る）と画面を動かす |
 | `pnpm --filter @app/infra synth` | AWS の CloudFormation のテンプレートを作る（`-c stage=dev` などで環境を選ぶ） |
 
@@ -31,7 +32,7 @@ Node.js（`.node-version`）と pnpm（`package.json` の `packageManager`）を
 | `apps/web` | React の画面と、画面の結合テスト |
 | `apps/server` | 本番の API サーバーとマイグレーションの実行（Dockerfile） |
 | `packages/backend` | Hono の API（domain・usecase・repository・handler） |
-| `packages/vocabulary` | 単語帳と、そこから作る辞書・文法・画面の文言 |
+| `packages/vocabulary` | 単語帳と、そこから作る辞書・文法・画面の文言ファイル |
 | `packages/eslint-plugin` | 単語帳・関数名の文法・usecase の書き方の lint |
 | `packages/translator` | 日本語翻訳ツールと SQL の台帳の生成 |
 | `infra` | AWS の CDK |

@@ -11,21 +11,22 @@ import { useText } from '../shared/text'
 import { readTodayText } from '../shared/today'
 import { displayYen } from '../shared/yen'
 import { deleteClosing, invoiceQueryKey, postIssue, prepareInvoiceDetailQuery } from './invoiceApi'
+import { labelKey } from '@app/vocabulary/text'
 
 const invoiceDetailRoute = getRouteApi('/invoices/$invoiceId')
 
 /** 残高を繰り越す請求書の金額の並び（見出しの単語帳の名前と、請求の項目）。 */
 const breakdownColumns = [
-  { labelName: 'previousInvoiceAmount', field: 'previousAmount' },
-  { labelName: 'currentPaymentAmount', field: 'paymentAmount' },
-  { labelName: 'adjustmentAmount', field: 'adjustmentAmount' },
-  { labelName: 'carriedAmount', field: 'carriedAmount' },
-  { labelName: 'currentSalesAmount', field: 'salesAmount' },
-  { labelName: 'taxAmount', field: 'taxAmount' },
-  { labelName: 'currentInvoiceAmount', field: 'invoiceAmount' },
+  { labelName: labelKey('previousInvoiceAmount'), field: 'previousAmount' },
+  { labelName: labelKey('currentPaymentAmount'), field: 'paymentAmount' },
+  { labelName: labelKey('adjustmentAmount'), field: 'adjustmentAmount' },
+  { labelName: labelKey('carriedAmount'), field: 'carriedAmount' },
+  { labelName: labelKey('currentSalesAmount'), field: 'salesAmount' },
+  { labelName: labelKey('taxAmount'), field: 'taxAmount' },
+  { labelName: labelKey('currentInvoiceAmount'), field: 'invoiceAmount' },
 ] as const
 
-const issueFieldLabelNames = { issueDate: 'issueDate' } as const
+const issueFieldLabelNames = { issueDate: labelKey('issueDate') } as const
 
 /** 請求書の中身を出し、発行前なら発行と締めの取消を行う。 */
 export function InvoiceDetailPage() {
@@ -74,7 +75,7 @@ export function InvoiceDetailPage() {
           </div>
           <div>
             <dt className="text-muted">{text.label('invoiceNumber')}</dt>
-            <dd>{invoice.invoiceNumber ?? text.message('unissuedState')}</dd>
+            <dd>{invoice.invoiceNumber ?? text.label('unissued')}</dd>
           </div>
           <div>
             <dt className="text-muted">{text.label('issueDate')}</dt>
@@ -194,7 +195,7 @@ export function InvoiceDetailPage() {
               <TextInput {...issueFeedback.describeField('issueDate')} inputMode="numeric" defaultValue={readTodayText()} />
             </FormField>
             <Button type="submit" disabled={issueMutation.isPending}>
-              {text.label('issue')}
+              {text.action('issue')}
             </Button>
             <Button variant="danger" disabled={cancelMutation.isPending} onClick={() => cancelMutation.mutate()}>
               {text.label('closingCancel')}

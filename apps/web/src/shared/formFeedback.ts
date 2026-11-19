@@ -1,4 +1,4 @@
-import type { Text } from '@app/vocabulary'
+import type { LabelKey, Text } from '@app/vocabulary/text'
 import { ApiError } from './apiClient'
 
 /**
@@ -8,7 +8,7 @@ import { ApiError } from './apiClient'
 export function prepareFormFeedback<Field extends string>(
   text: Text,
   error: Error | null,
-  fieldLabels: Readonly<Record<Field, string>>,
+  fieldLabels: Readonly<Record<Field, LabelKey>>,
 ) {
   const failure = error instanceof ApiError ? error.detail : undefined
 

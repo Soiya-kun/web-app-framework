@@ -39,13 +39,13 @@
    1. 請求IDを解釈する
    2. 請求を取得する
    3. 顧客をロックする
-   4. 締めの取消ができることを確かめる
+   4. 締めを取り消せることを確かめる
    5. 締めの取消を計画する
    6. 締めを取り消す
 
 ## usecase/invoice/closeInvoice.ts
 
-### 請求の締め処理
+### 請求の締め
 
 - 関数: `closeInvoice`
 - 目的: 請求先の締め日までの売上・入金・返金・調整を、前回からの残高を繰り越した請求にまとめるため。
@@ -55,7 +55,7 @@
    1. 締めリクエストを解釈する
    2. 顧客をロックする
    3. 最新の請求を取得する
-   4. 締められることを確かめる
+   4. 締められるを確かめる
    5. 請求に載せていない明細を一覧取得する
    6. 請求IDを割り当てる
    7. 請求登録を計画する
@@ -86,7 +86,7 @@
 
    1. 発行リクエストを解釈する
    2. 請求を取得する
-   3. 発行できることを確かめる
+   3. 発行できるを確かめる
    4. 発行年を読み取る
    5. 請求番号を取り出す
    6. 請求発行を計画する
@@ -104,6 +104,57 @@
 
    1. 請求を一覧取得する
    2. 請求を返す
+
+## usecase/payment/identifyPayment.ts
+
+### 入金の特定
+
+- 関数: `identifyPayment`
+- 目的: 振込人を特定できていない入金（仮受）に顧客を入れ、次の締めで請求に載るようにするため。振込依頼人名も覚える。
+- 引数: リポジトリ、特定リクエスト
+- 処理:
+
+   1. 特定リクエストを解釈する
+   2. 入金を取得する
+   3. 顧客を取得する
+   4. 入金を特定できることを確かめる
+   5. 入金特定を計画する
+   6. 入金を特定する
+   7. 振込依頼人名保存を計画する
+   8. 振込依頼人名を保存する
+
+## usecase/payment/listPayments.ts
+
+### 入金の一覧取得
+
+- 関数: `listPayments`
+- 目的: 入金を、顧客（仮受を含む）と請求に載せたかどうかとともに示すため。
+- 引数: リポジトリ
+- 処理:
+
+   1. 入金を一覧取得する
+   2. 入金を返す
+
+## usecase/payment/registerPayment.ts
+
+### 入金の記録
+
+- 関数: `registerPayment`
+- 目的: 入金を記録するため。顧客を選んでいなければ振込依頼人名で覚えた顧客にし、それもなければ仮受にする。
+顧客を選んだときは、その振込依頼人名を覚え、次から自動で特定する。
+- 引数: リポジトリ、ID生成器、入金リクエスト
+- 処理:
+
+   1. 入金リクエストを解釈する
+   2. 選んだ顧客を取得する
+   3. 振込依頼人の顧客を取得する
+   4. 入金の顧客を決める
+   5. 入金IDを割り当てる
+   6. 入金登録を計画する
+   7. 入金を登録する
+   8. 振込依頼人名保存を計画する
+   9. 振込依頼人名を保存する
+   10. 入金登録を返す
 
 ## usecase/sales/createSales.ts
 
@@ -127,10 +178,10 @@
 
 - 関数: `restoreAdjustment`
 - 目的: 保存済みの値から調整を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。
-- 引数: 保存形の
+- 引数: 保存形
 - 処理:
 
-   1. 保存形のを返す
+   1. 保存形を返す
 
 ## domain/customer/billingKnowledge.ts
 
@@ -158,10 +209,10 @@
 
 - 関数: `restoreCustomer`
 - 目的: 保存済みの値から顧客を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。
-- 引数: 保存形の
+- 引数: 保存形
 - 処理:
 
-   1. 保存形のを返す
+   1. 保存形を返す
 
 ## domain/customer/value/customerId.ts
 
@@ -178,7 +229,7 @@
 
 ## domain/invoice/closingCancel.ts
 
-### 締めの取消ができることの確認
+### 締めを取り消せることの確認
 
 - 関数: `ensureClosingCancelable`
 - 目的: 締めを取り消してよいかを確かめるため。発行した請求は取り消さない（訂正は次の請求で行う）。
@@ -209,7 +260,7 @@
    1. 日付を分ける
    2. `placeMonthDay(closingParts.year, closingParts.month, customer.closingDay) === closingDate`を返す
 
-### 締められることの確認
+### 締められるの確認
 
 - 関数: `ensureClosable`
 - 目的: 締めてよいかを確かめるため。
@@ -245,28 +296,28 @@
 
 - 関数: `restoreInvoice`
 - 目的: 保存済みの値から請求を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。
-- 引数: 保存形の
+- 引数: 保存形
 - 処理:
 
-   1. 保存形のを返す
+   1. 保存形を返す
 
-### 請求一覧品目の復元
+### 請求一覧の品目の復元
 
 - 関数: `restoreInvoiceListItem`
 - 目的: 保存済みの値から一覧の請求を組み立てるため。
-- 引数: 保存形の
+- 引数: 保存形
 - 処理:
 
-   1. 保存形のを返す
+   1. 保存形を返す
 
-### 請求税の復元
+### 請求の税の復元
 
 - 関数: `restoreInvoiceTax`
 - 目的: 保存済みの値から税率ごとの合計を組み立てるため。
-- 引数: 保存形の
+- 引数: 保存形
 - 処理:
 
-   1. 保存形のを返す
+   1. 保存形を返す
 
 ## domain/invoice/invoiceCreate.ts
 
@@ -284,7 +335,7 @@
    3. 入金額を`sumYen(unbilledEntries.payments.map((payment) => payment.paymentAmount)) - sumYen(unbilledEntries.refunds.map((refund) => refund.refundAmount))`にする
    4. 円を合計する
    5. 繰越額を`previousAmount - paymentAmount - adjustmentAmount`にする
-   6. 請求税を計算する
+   6. 請求の税を計算する
    7. 円を合計する
    8. 円を合計する
    9. 請求を`{ invoiceId, billingCustomerId: billingCustomer.customerId, previousInvoiceId: latestInvoice?.invoiceId ?? null, closingDate: closingInput.closingDate, dueDate: decideDueDate(closingInput.closingDate, billingCustomer.collectionMonthOffset, billingCustomer.collectionDay), previousAmount, paymentAmount, adjustmentAmount, carriedAmount, salesAmount, taxAmount, invoiceAmount: (carriedAmount + salesAmount + taxAmount) as Yen, invoiceNumber: null, issueDate: null, }`にする
@@ -293,7 +344,7 @@
 
 ## domain/invoice/invoiceIssue.ts
 
-### 発行できることの確認
+### 発行できるの確認
 
 - 関数: `ensureIssuable`
 - 目的: 発行してよいかを確かめるため。発行前で、発行日が請求締め日以後であること。
@@ -316,7 +367,7 @@
 
 ## domain/invoice/invoiceTaxKnowledge.ts
 
-### 請求税の計算
+### 請求の税の計算
 
 - 関数: `calculateInvoiceTaxes`
 - 目的: 請求の税率ごとの合計と消費税額を求めるため（インボイス制度）。
@@ -385,7 +436,7 @@
 - 処理:
 
    1. テキストが空である場合
-      1. エラー「{field}を入力してください。」で止める
+      1. エラー「{field}を記入してください。」で止める
    2. テキストを返す
 
 ## domain/invoice/value/invoiceNumber.ts
@@ -419,16 +470,202 @@
 
    1. `splitDate(issueDate)`の年を返す
 
+## domain/payerName/payerNameSave.ts
+
+### 振込依頼人名保存の計画
+
+- 関数: `planPayerNameSaves`
+- 目的: 顧客を選んで登録・特定した入金の振込依頼人名を、次から自動で特定できるよう覚えるため。
+顧客を選んでいなければ（自動で特定した・仮受）覚えるものはない。
+- 引数: 振込依頼人名、選んだ顧客
+- 処理:
+
+   1. 選んだ顧客が空である場合
+      1. `[]`を返す
+   2. `[{ payerName, customerId: selectedCustomer.customerId } as PayerNameSave]`を返す
+
 ## domain/payment/entity.ts
 
 ### 入金の復元
 
 - 関数: `restorePayment`
 - 目的: 保存済みの値から入金を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。
-- 引数: 保存形の
+- 引数: 保存形
 - 処理:
 
-   1. 保存形のを返す
+   1. 保存形を返す
+
+### 入金一覧の品目の復元
+
+- 関数: `restorePaymentListItem`
+- 目的: 保存済みの値から一覧の入金を組み立てるため。
+- 引数: 保存形
+- 処理:
+
+   1. 保存形を返す
+
+## domain/payment/identifyRequest.ts
+
+### 特定リクエストの解釈
+
+- 関数: `interpretIdentifyRequest`
+- 目的: 画面の入力を、特定に使える値にそろえるため。
+- 引数: 特定リクエスト
+- 処理:
+
+   1. 項目を解釈する（その結果を返す）
+
+## domain/payment/payerPolicy.ts
+
+### 入金の顧客の決定
+
+- 関数: `decidePaymentCustomer`
+- 目的: 入金の顧客を決めるため。画面で選んだ顧客を優先し、選んでいなければ振込依頼人名で覚えた顧客にする。
+どちらもなければ null（振込人を特定できていない入金＝仮受）にする。入金を受けるのは請求先だけ。
+- 引数: 選んだ顧客、振込依頼人の顧客
+- 処理:
+
+   1. 選んだ顧客が空でない場合
+      1. 請求先でない場合
+         1. エラー（`rejectField('customerId', 'billingCustomerRequired')`）で止める
+      2. 選んだ顧客の顧客IDを返す
+   2. `payerCustomer?.customerId ?? null`を返す
+
+### 入金を特定できることの確認
+
+- 関数: `ensurePaymentIdentifiable`
+- 目的: 仮受の入金の顧客を特定してよいかを確かめるため。仮受のままで、まだ請求に載せておらず、相手が請求先であること。
+- 引数: 入金、顧客
+- 処理:
+
+   1. 入金の顧客IDが空でない、または入金の請求IDが空でない場合
+      1. エラー「この入金はすでに顧客を特定済みか、請求に載せています。」で止める
+   2. 請求先でない場合
+      1. エラー（`rejectField('customerId', 'billingCustomerRequired')`）で止める
+
+## domain/payment/paymentCreate.ts
+
+### 入金登録の計画
+
+- 関数: `planPaymentCreate`
+- 目的: 検証済みの入力と決めた顧客から、保存する入金を決めるため。
+- 引数: 入金ID、入金入力、顧客ID
+- 処理:
+
+   1. `{ paymentId, paymentDate: paymentInput.paymentDate, paymentMethod: paymentInput.paymentMethod, paymentAmount: paymentInput.paymentAmount, payerName: paymentInput.payerName, customerId, }`を返す
+
+## domain/payment/paymentIdentify.ts
+
+### 入金特定の計画
+
+- 関数: `planPaymentIdentify`
+- 引数: 入金、顧客
+- 処理:
+
+   1. `{ paymentId: payment.paymentId, customerId: customer.customerId }`を返す
+
+## domain/payment/paymentRequest.ts
+
+### 入金リクエストの解釈
+
+- 関数: `interpretPaymentRequest`
+- 目的: 画面の入力を、入金として扱える値にそろえるため。
+- 引数: 入金リクエスト
+- 処理:
+
+   1. 項目を解釈する（その結果を返す）
+
+## domain/payment/value/payerName.ts
+
+### 振込依頼人名の正規化
+
+- 関数: `normalizePayerName`
+- 目的: 銀行の明細の書き方の違い（半角カナ・全角英数・空白の数）をそろえるため。
+同じ振込人が同じ名前に見えるようにし、振込依頼人名から顧客を特定できるようにする。
+- 引数: テキスト
+- 処理:
+
+   1. `text.normalize('NFKC').trim().replace(/\s+/g, ' ')`を返す
+
+### 振込依頼人名の解釈
+
+- 関数: `interpretPayerName`
+- 目的: 画面から入力された振込依頼人名を受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. 振込依頼人名を正規化する
+   2. 正規化済みのテキストが空である場合
+      1. エラー「{field}を記入してください。」で止める
+   3. `[...normalizedText]`の長さが最大振込依頼人名の長さより大きい場合
+      1. エラー「{field}は{maximum}文字以内で記入してください。」で止める
+   4. 正規化済みのテキストを返す
+
+## domain/payment/value/paymentAmount.ts
+
+### 入金額の解釈
+
+- 関数: `interpretPaymentAmount`
+- 目的: 画面から入力された金額を、入金額として受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. テキストを前後の空白を除く
+   2. 前後の空白を除いたテキストが空である場合
+      1. エラー「{field}を記入してください。」で止める
+   3. `/^\d+$/.test(trimmedText)`が偽である場合
+      1. エラー「{field}は整数で記入してください。」で止める
+   4. 金額を`Number(trimmedText)`で求める
+   5. 金額が最小入金額より小さい、または金額が最大入金額より大きい場合
+      1. エラー「{field}は{minimum}から{maximum}までで記入してください。」で止める
+   6. 金額を返す
+
+## domain/payment/value/paymentDate.ts
+
+### 入金日の解釈
+
+- 関数: `interpretPaymentDate`
+- 目的: 画面から入力された日付を、入金日として受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. 日付テキストを解釈する（その結果を返す）
+
+## domain/payment/value/paymentId.ts
+
+### 入金IDの割り当て
+
+- 関数: `assignPaymentId`
+- 目的: 新しい入金に ID を割り当てるため。
+- 引数: ID生成器
+- 処理:
+
+   1. IDを生成する（その結果を返す）
+
+### 入金IDの解釈
+
+- 関数: `interpretPaymentId`
+- 目的: 画面から届いた入金の ID を受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. テキストが空である場合
+      1. エラー「{field}を記入してください。」で止める
+   2. テキストを返す
+
+## domain/payment/value/paymentMethod.ts
+
+### 入金方法の解釈
+
+- 関数: `interpretPaymentMethod`
+- 目的: 画面で選んだ入金方法を受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. 入金方法を取得する
+   2. 入金方法が空である場合
+      1. エラー「{field}を選んでください。」で止める
+   3. 入金方法を返す
 
 ## domain/refund/entity.ts
 
@@ -436,10 +673,10 @@
 
 - 関数: `restoreRefund`
 - 目的: 保存済みの値から返金を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。
-- 引数: 保存形の
+- 引数: 保存形
 - 処理:
 
-   1. 保存形のを返す
+   1. 保存形を返す
 
 ## domain/sales/entity.ts
 
@@ -447,10 +684,10 @@
 
 - 関数: `restoreSales`
 - 目的: 保存済みの値から売上を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。
-- 引数: 保存形の
+- 引数: 保存形
 - 処理:
 
-   1. 保存形のを返す
+   1. 保存形を返す
 
 ## domain/sales/salesCreate.ts
 
@@ -484,11 +721,11 @@
 - 引数: テキスト
 - 処理:
 
-   1. 前後の空白を除いたテキストを`text.trim()`で求める
+   1. テキストを前後の空白を除く
    2. 前後の空白を除いたテキストが空である場合
-      1. エラー「{field}を入力してください。」で止める
-   3. `[...trimmedText]`の長さが最大品名長さより大きい場合
-      1. エラー「{field}は{maximum}文字以内で入力してください。」で止める
+      1. エラー「{field}を記入してください。」で止める
+   3. `[...trimmedText]`の長さが最大品名の長さより大きい場合
+      1. エラー「{field}は{maximum}文字以内で記入してください。」で止める
    4. 前後の空白を除いたテキストを返す
 
 ## domain/sales/value/salesAmount.ts
@@ -500,14 +737,14 @@
 - 引数: テキスト
 - 処理:
 
-   1. 前後の空白を除いたテキストを`text.trim()`で求める
+   1. テキストを前後の空白を除く
    2. 前後の空白を除いたテキストが空である場合
-      1. エラー「{field}を入力してください。」で止める
+      1. エラー「{field}を記入してください。」で止める
    3. `/^\d+$/.test(trimmedText)`が偽である場合
-      1. エラー「{field}は整数で入力してください。」で止める
+      1. エラー「{field}は整数で記入してください。」で止める
    4. 金額を`Number(trimmedText)`で求める
    5. 金額が最小売上金額より小さい、または金額が最大売上金額より大きい場合
-      1. エラー「{field}は{minimum}から{maximum}までで入力してください。」で止める
+      1. エラー「{field}は{minimum}から{maximum}までで記入してください。」で止める
    6. 金額を返す
 
 ## domain/sales/value/salesDate.ts
@@ -569,8 +806,8 @@
 - 引数: テキスト
 - 処理:
 
-   1. 一致したを`/^(\d{4})-(\d{2})-(\d{2})$/.exec(text)`で求める
-   2. 一致したが空である場合
+   1. 一致済みを`/^(\d{4})-(\d{2})-(\d{2})$/.exec(text)`で求める
+   2. 一致済みが空である場合
       1. `false`を返す
    3. 年を`Number(matched[1])`で求める
    4. 月を`Number(matched[2])`で求める
@@ -597,7 +834,7 @@
 
    1. ``${String(parts.year).padStart(4, '0')}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}``を返す
 
-### 月長さの測定
+### 月の長さの測定
 
 - 関数: `measureMonthLength`
 - 目的: その月の日数（うるう年の2月は29）。
@@ -630,7 +867,7 @@
 
 - 関数: `isEarlierDate`
 - 目的: 日付（YYYY-MM-DD）の前後を比べる。left が right より前の日付なら true。
-- 引数: 左の、右の
+- 引数: 左、右
 - 処理:
 
    1. `left < right`を返す
@@ -644,11 +881,11 @@
 - 引数: テキスト
 - 処理:
 
-   1. 前後の空白を除いたテキストを`text.trim()`で求める
+   1. テキストを前後の空白を除く
    2. 前後の空白を除いたテキストが空である場合
-      1. エラー「{field}を入力してください。」で止める
+      1. エラー「{field}を記入してください。」で止める
    3. 暦日付でない場合
-      1. エラー「{field}は実在する日付を YYYY-MM-DD の形で入力してください。」で止める
+      1. エラー「{field}は実在する日付を YYYY-MM-DD の形で記入してください。」で止める
    4. 前後の空白を除いたテキストを返す
 
 ## domain/shared/validation.ts
@@ -657,7 +894,7 @@
 
 - 関数: `rejectValue`
 - 目的: 1つの値を受け付けないことを表すため。項目名は interpretFields が付ける。
-- 引数: メッセージキー、値
+- 引数: メッセージキー、パラメーター
 - 処理:
 
    1. `new ValidationError([{ field: '', messageKey, params }])`を返す
@@ -666,7 +903,7 @@
 
 - 関数: `rejectField`
 - 目的: 値そのものは正しいが、ほかの値との組合せで受け付けない項目を表すため。
-- 引数: 項目、メッセージキー、値
+- 引数: 項目、メッセージキー、パラメーター
 - 処理:
 
    1. `new ValidationError([{ field, messageKey, params }])`を返す

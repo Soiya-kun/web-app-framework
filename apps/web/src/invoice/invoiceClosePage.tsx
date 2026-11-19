@@ -9,13 +9,14 @@ import { AlertMessage, PageTitle, Section } from '../shared/component/page'
 import { prepareFormFeedback, readField } from '../shared/formFeedback'
 import { useText } from '../shared/text'
 import { invoiceQueryKey, postClosing, prepareBillingCustomerListQuery } from './invoiceApi'
+import { labelKey, type LabelKey } from '@app/vocabulary/text'
 
 type ClosingField = keyof ClosingRequest
 
 const fieldLabelNames = {
-  billingCustomerId: 'billingCustomer',
-  closingDate: 'closingDate',
-} as const satisfies Record<ClosingField, string>
+  billingCustomerId: labelKey('billingCustomer'),
+  closingDate: labelKey('closingDate'),
+} as const satisfies Record<ClosingField, LabelKey>
 
 /** 請求先と請求締め日を選び、売上・入金などを前回からの残高を繰り越した請求にまとめる。 */
 export function InvoiceClosePage() {
@@ -62,7 +63,7 @@ export function InvoiceClosePage() {
           </FormField>
           <div className="sm:col-span-2">
             <Button type="submit" disabled={closingMutation.isPending}>
-              {text.label('close')}
+              {text.action('close')}
             </Button>
           </div>
         </form>
