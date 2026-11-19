@@ -21,3 +21,6 @@
 - { id: invoiceList, en: { tokens: invoice list, label: Invoices }, ja: { form: 請求一覧 } }
 - { id: paymentList, en: { tokens: payment list, label: Payments }, ja: { form: 入金一覧 } }
 - { id: taxBreakdown, en: { tokens: tax breakdown }, ja: { form: 税率ごとの内訳 } }
+- { id: outsideWork, en: { tokens: outside work }, ja: { form: システムの外の業務 } }
+- { id: childFlow, en: { tokens: child flow }, ja: { form: 子フロー, attach: direct } }
+- { id: timeLapse, en: { tokens: time lapse }, ja: { form: 時の経過 } }

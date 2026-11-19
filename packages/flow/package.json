@@ -1,0 +1,24 @@
+{
+  "name": "@app/flow",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts",
+    "./vitest": "./src/vitest.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@app/vocabulary": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/user-event": "^14.6.12",
+    "dom-accessibility-api": "^0.6.3",
+    "jsdom": "^31.0.1",
+    "typescript": "~6.0.3",
+    "vitest": "^5.1.0"
+  }
+}

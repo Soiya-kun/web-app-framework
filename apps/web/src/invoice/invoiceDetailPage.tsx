@@ -1,3 +1,4 @@
+import type { AdjustmentKind } from '@app/backend'
 import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import type { FormEvent } from 'react'
@@ -11,7 +12,14 @@ import { useText } from '../shared/text'
 import { readTodayText } from '../shared/today'
 import { displayYen } from '../shared/yen'
 import { deleteClosing, invoiceQueryKey, postIssue, prepareInvoiceDetailQuery } from './invoiceApi'
-import { labelKey } from '@app/vocabulary/text'
+import { labelKey, type LabelKey } from '@app/vocabulary/text'
+
+/** 調整の区分の見出し（区分値を画面の文言のキーにつなぐ）。 */
+const adjustmentKindLabels = {
+  transferFee: labelKey('transferFee'),
+  smallDifference: labelKey('smallDifference'),
+  correction: labelKey('correction'),
+} satisfies Record<AdjustmentKind, LabelKey>
 
 const invoiceDetailRoute = getRouteApi('/invoices/$invoiceId')
 
@@ -176,7 +184,7 @@ export function InvoiceDetailPage() {
           {invoiceDetail.adjustments.map((adjustment) => (
             <tr key={adjustment.adjustmentId}>
               <Cell>{adjustment.adjustmentDate}</Cell>
-              <Cell>{text.label(adjustment.adjustmentKind)}</Cell>
+              <Cell>{text.label(adjustmentKindLabels[adjustment.adjustmentKind])}</Cell>
               <Cell>—</Cell>
               <Cell align="right">{displayYen(text.locale, adjustment.adjustmentAmount)}</Cell>
             </tr>

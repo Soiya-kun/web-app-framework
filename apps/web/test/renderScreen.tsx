@@ -3,7 +3,7 @@ import { prepareMemoryDependency, type MemoryDatabase } from '@app/backend/testi
 import { QueryClient } from '@tanstack/react-query'
 import { createMemoryHistory } from '@tanstack/react-router'
 import { render } from '@testing-library/react'
-import { userEvent } from '@testing-library/user-event'
+import { PointerEventsCheckLevel, userEvent } from '@testing-library/user-event'
 import { prepareApiClient } from '../src/shared/apiClient'
 import { AppRoot } from '../src/shared/appRoot'
 import { prepareRouter } from '../src/shared/router'
@@ -21,7 +21,8 @@ export async function renderScreen(path: string, database: MemoryDatabase) {
   })
   const router = prepareRouter({ apiClient, queryClient }, createMemoryHistory({ initialEntries: [path] }))
   await router.load()
-  const user = userEvent.setup({ delay: null })
+  // pointer-events の確かめ（祖先の getComputedStyle）は重く、このアプリでは要らないので切る。
+  const user = userEvent.setup({ delay: null, pointerEventsCheck: PointerEventsCheckLevel.Never })
   render(<AppRoot apiClient={apiClient} queryClient={queryClient} router={router} locale="ja" />)
   return { user, router }
 }

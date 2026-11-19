@@ -69,3 +69,14 @@
 - { id: trim, en: { past: trimmed, gerund: trimming }, ja: { dictionary: 前後の空白を除く, class: godan, noun: 前後の空白の除去 } }
 - { id: remain, ja: { dictionary: 残る, class: godan, noun: 残り } }
 - { id: trace, ja: { stem: 追跡, class: suru } }
+# 業務フローとシナリオで使う動詞。
+- { id: operate, en: { noun: operation }, ja: { stem: 操作, class: suru } }
+- { id: browse, ja: { stem: 閲覧, class: suru } }
+- { id: go, en: { past: went, participle: gone, gerund: going }, ja: { dictionary: 移る, class: godan } }
+- { id: follow, ja: { dictionary: たどる, class: godan } }
+- { id: fill, ja: { dictionary: 入れる, class: ichidan } }
+- { id: press, ja: { dictionary: 押す, class: godan } }
+- { id: occur, en: { past: occurred, gerund: occurring }, ja: { dictionary: 起きる, class: ichidan } }
+- { id: elapse, ja: { stem: 経過, class: suru } }
+- { id: nest, ja: { stem: 入れ子に, class: suru } }
+- { id: launch, ja: { stem: 起動, class: suru } }
