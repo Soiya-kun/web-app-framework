@@ -41,3 +41,6 @@
 - { id: twentieth, ja: { stem: 20日締め, class: no } }
 - { id: unknown, ja: { stem: 不明, class: na } }
 - { id: automatic, ja: { stem: 自動, class: no } }
+- { id: external, ja: { stem: 外, class: no } }
+- { id: pending, ja: { stem: 未着手, class: no } }
+- { id: mistaken, ja: { stem: 誤り, class: no } }

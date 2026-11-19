@@ -1,3 +1,4 @@
+export type { AdjustmentKind } from './domain/adjustment/value/adjustmentKind'
 export type { ClosingRequest } from './domain/invoice/closingRequest'
 export type { PaymentRequest } from './domain/payment/paymentRequest'
 export type { SalesRequest } from './domain/sales/salesRequest'

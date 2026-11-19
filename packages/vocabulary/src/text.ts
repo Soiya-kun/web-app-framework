@@ -53,3 +53,8 @@ export function prepareText(locale: Locale): Text {
     },
   }
 }
+
+/** ボタンのキーか（ボタンの表にあるか）。見出しのキーと見分ける。 */
+export function isActionKey(key: string): key is ActionKey {
+  return Object.hasOwn(ja.action, key)
+}

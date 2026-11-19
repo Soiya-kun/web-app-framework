@@ -132,3 +132,26 @@
 - { id: server, ja: { form: サーバー, attach: direct } }
 - { id: setting, ja: { form: 設定, attach: direct } }
 - { id: method, en: { plural: methods }, ja: { form: 方法, attach: direct } }
+# 業務フローとコードのブラウザで使う名詞（コーバーンのユースケースの用語に合わせる）。
+- { id: flow, ja: { form: 業務フロー } }
+- { id: scenario, ja: { form: シナリオ, attach: direct } }
+- { id: step, ja: { form: 手順 } }
+- { id: case, en: { plural: cases }, ja: { form: ケース, attach: direct } }
+- { id: extension, ja: { form: 拡張 } }
+- { id: variation, ja: { form: バリエーション } }
+- { id: condition, ja: { form: 条件 } }
+- { id: precondition, ja: { form: 事前条件 } }
+- { id: actor, ja: { form: 担当 } }
+- { id: guarantee, ja: { form: 保証 } }
+- { id: handling, ja: { form: 扱い } }
+- { id: time, ja: { form: 時 } }
+- { id: progress, ja: { form: 進み具合 } }
+- { id: glossary, ja: { form: 用語集 } }
+- { id: summary, ja: { form: 要約 } }
+- { id: goal, ja: { form: 目的 } }
+- { id: level, ja: { form: レベル, attach: direct } }
+- { id: management, ja: { form: 管理, attach: direct } }
+- { id: browser, ja: { form: ブラウザ } }
+- { id: endpoint, ja: { form: API の入口 } }
+- { id: rule, ja: { form: 規則 } }
+- { id: subfunction, ja: { form: 下位機能, attach: direct } }
