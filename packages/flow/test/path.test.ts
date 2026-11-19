@@ -25,7 +25,7 @@ const child = defineFlow('paymentManagement', {
   ],
 })
 const parent = defineFlow('monthlyInvoice', {
-  steps: [outside('salesperson', 'deliverItem'), elapse('closingDate', '2026-10-31'), nest(child), operate(browsePayments)],
+  steps: [outside('salesperson', 'deliverProduct'), elapse('closingDate', '2026-10-31'), nest(child), operate(browsePayments)],
 })
 
 describe('listFlowPaths', () => {

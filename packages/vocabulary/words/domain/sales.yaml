@@ -1,3 +1,4 @@
 # 業務の単語。description は用語集に出す。
 - { id: sales, category: noun, ja: { form: 売上, attach: direct }, description: 顧客に役務を提供して計上する収益。1件の売上も複数の売上も sales と書く。 }
+- { id: product, category: noun, ja: { form: 商品 }, description: 顧客へ納品する品物。納品すると売上になる。 }
 - { id: transport, category: noun, ja: { form: 輸送 }, description: 貨物を運ぶ役務。 }
