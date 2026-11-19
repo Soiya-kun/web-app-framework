@@ -32,7 +32,6 @@ export type FlowExtensionNode = {
 export type FlowNode = SourcePlace & {
   readonly id: string
   readonly title: string
-  readonly purpose: string
   readonly precondition: string | null
   readonly steps: readonly FlowStepNode[]
   /** この業務フローを子フローにしている業務フロー。 */
@@ -66,7 +65,6 @@ export type ScenarioUse = { readonly flowId: string; readonly number: string }
 export type ScenarioNode = SourcePlace & {
   readonly id: string
   readonly title: string
-  readonly purpose: string
   readonly actor: string
   readonly actorTitle: string
   readonly pending: boolean
@@ -113,7 +111,6 @@ export type RepositoryCallNode = { readonly repository: string; readonly method:
 export type WorkNode = SourcePlace & {
   readonly id: string
   readonly title: string
-  readonly purpose: string
   readonly steps: readonly StepTranslationNode[]
   readonly ruleIds: readonly string[]
   readonly repositoryCalls: readonly RepositoryCallNode[]
@@ -124,7 +121,6 @@ export type RuleNode = SourcePlace & {
   readonly id: string
   readonly name: string
   readonly title: string
-  readonly purpose: string
   readonly steps: readonly StepTranslationNode[]
 }
 

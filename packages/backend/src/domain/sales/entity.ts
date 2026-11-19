@@ -20,7 +20,6 @@ export type Sales = {
   readonly invoiceId: InvoiceId | null
 }
 
-/** 保存済みの値から売上を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。 */
 export function restoreSales(stored: Stored<Sales>): Sales {
   return stored as Sales
 }

@@ -13,7 +13,6 @@ export type ClosingInput = {
   readonly closingDate: ClosingDate
 }
 
-/** 画面の入力を、締めに使える値にそろえるため。 */
 export function interpretClosingRequest(closingRequest: ClosingRequest): ClosingInput {
   return interpretFields({
     billingCustomerId: () => interpretCustomerId(closingRequest.billingCustomerId),

@@ -17,7 +17,6 @@ export type Refund = {
   readonly invoiceId: InvoiceId | null
 }
 
-/** 保存済みの値から返金を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。 */
 export function restoreRefund(stored: Stored<Refund>): Refund {
   return stored as Refund
 }

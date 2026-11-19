@@ -7,7 +7,6 @@ export type SalesAmount = Brand<number, 'SalesAmount'>
 export const minimumSalesAmount = 1
 export const maximumSalesAmount = 999_999_999
 
-/** 画面から入力された金額（返品・値引も正で入力する）を、売上の金額として受け付けるため。 */
 export function interpretSalesAmount(text: string): SalesAmount {
   const trimmedText = text.trim()
   if (trimmedText === '') {

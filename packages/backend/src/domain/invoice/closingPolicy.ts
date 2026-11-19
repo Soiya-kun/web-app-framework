@@ -13,10 +13,6 @@ export function isClosingDayOf(customer: Customer, closingDate: ClosingDate): bo
   return placeMonthDay(closingParts.year, closingParts.month, customer.closingDay) === closingDate
 }
 
-/**
- * 締めてよいかを確かめるため。
- * 請求先であること、締め日が請求先の締日に合うこと、前回の請求が発行済みで、締め日が前回より後であること。
- */
 export function ensureClosable(billingCustomer: Customer, latestInvoice: Invoice | undefined, closingInput: ClosingInput): void {
   if (!isBillingCustomer(billingCustomer)) {
     throw rejectField('billingCustomerId', 'billingCustomerRequired')

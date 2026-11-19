@@ -7,10 +7,6 @@ import type { RepositorySet } from '../../domain/repositorySet'
 import type { IdGenerator } from '../../domain/shared/idGenerator'
 import type { PaymentCreate } from '../../domain/payment/paymentCreate'
 
-/**
- * 入金を記録するため。顧客を選んでいなければ振込依頼人名で覚えた顧客にし、それもなければ仮受にする。
- * 顧客を選んだときは、その振込依頼人名を覚え、次から自動で特定する。
- */
 export async function registerPayment(
   repositories: RepositorySet,
   idGenerator: IdGenerator,

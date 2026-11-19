@@ -5,7 +5,6 @@ import { interpretSalesRequest, type SalesRequest } from '../../domain/sales/sal
 import { assignSalesId, type SalesId } from '../../domain/sales/value/salesId'
 import type { IdGenerator } from '../../domain/shared/idGenerator'
 
-/** 顧客への売上を計上するため。 */
 export async function createSales(
   salesRepository: SalesRepository,
   customerRepository: CustomerRepository,

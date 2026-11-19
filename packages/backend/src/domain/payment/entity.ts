@@ -25,12 +25,10 @@ export type Payment = {
 /** 一覧に出す入金。顧客の名前を添える（仮受は null）。 */
 export type PaymentListItem = Payment & { readonly customerName: CustomerName | null }
 
-/** 保存済みの値から入金を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。 */
 export function restorePayment(stored: Stored<Payment>): Payment {
   return stored as Payment
 }
 
-/** 保存済みの値から一覧の入金を組み立てるため。 */
 export function restorePaymentListItem(stored: Stored<PaymentListItem>): PaymentListItem {
   return stored as PaymentListItem
 }

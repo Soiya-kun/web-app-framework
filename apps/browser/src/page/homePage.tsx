@@ -115,7 +115,6 @@ export function HomePage() {
                   {flow.title}
                 </TextLink>
               </span>
-              <span className="text-muted">{flow.purpose}</span>
             </li>
           ))}
         </ul>

@@ -5,7 +5,6 @@ export const taxRates = [10, 8] as const
 
 export type TaxRate = (typeof taxRates)[number]
 
-/** 画面で選んだ税率を受け付けるため。 */
 export function interpretTaxRate(text: string): TaxRate {
   const taxRate = taxRates.find((rate) => String(rate) === text)
   if (taxRate === undefined) {

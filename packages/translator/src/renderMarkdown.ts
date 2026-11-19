@@ -12,9 +12,6 @@ function renderSteps(steps: readonly StepTranslation[], depth: number): string[]
 
 export function renderFunction(translation: FunctionTranslation): string {
   const lines = [`### ${translation.title}`, '', `- 関数: \`${translation.name}\``]
-  if (translation.purpose !== '') {
-    lines.push(`- 目的: ${translation.purpose}`)
-  }
   if (translation.parameters.length > 0) {
     lines.push(`- 引数: ${translation.parameters.join('、')}`)
   }

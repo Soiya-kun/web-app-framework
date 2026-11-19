@@ -4,7 +4,6 @@ import { interpretIssueRequest, type IssueRequest } from '../../domain/invoice/i
 import type { InvoiceNumber } from '../../domain/invoice/value/invoiceNumber'
 import { readIssueYear } from '../../domain/invoice/value/issueDate'
 
-/** 締めた請求に請求番号を振って発行し、以後は変えないようにするため。 */
 export async function issueInvoice(repositories: RepositorySet, issueRequest: IssueRequest): Promise<InvoiceNumber> {
   const issueInput = interpretIssueRequest(issueRequest)
   const invoice = await repositories.invoiceRepository.findInvoice(issueInput.invoiceId)

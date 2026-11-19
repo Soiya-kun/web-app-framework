@@ -10,7 +10,6 @@ import { paymentManagement } from './paymentManagement'
 
 const october = { billingCustomer: '株式会社親', closingDate: '2026-10-31' }
 
-/** 月ごとに売上を請求にまとめて発行し、入金で残高を減らして、次の月の請求へ繰り越す（最上位の業務フロー）。 */
 export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoice', {
   precondition: { summary: '親会社（末締め翌月末払い）と、請求先を親会社にした子会社が、顧客として登録されている', seed: { customer: customers } },
   steps: [

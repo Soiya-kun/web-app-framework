@@ -155,17 +155,14 @@ export function FlowFrame({
         className="flex flex-col overflow-hidden rounded-xl border border-line/70 bg-surface shadow-[var(--shadow-card)]"
         style={{ minWidth: folded ? 360 : laneSize.label + layout.width }}
       >
-        <div
-          className="flex flex-col gap-1 border-b border-line/60 px-4 py-3 text-[13px]"
-          style={{ maxWidth: Math.max(360, laneSize.label + layout.width) }}
-        >
-          <p>{flow.purpose}</p>
-          {flow.precondition === null ? null : (
-            <p className="text-xs text-muted">
-              {text.label('precondition')}: {flow.precondition}
-            </p>
-          )}
-        </div>
+        {flow.precondition === null ? null : (
+          <p
+            className="border-b border-line/60 px-4 py-3 text-xs text-muted"
+            style={{ maxWidth: Math.max(360, laneSize.label + layout.width) }}
+          >
+            {text.label('precondition')}: {flow.precondition}
+          </p>
+        )}
         {folded ? null : (
           <figure aria-label={`${flow.title}の${text.label('laneDiagram')}`} className="relative flex" style={{ height: layout.height }}>
             <div className="relative shrink-0 border-r border-line/60" style={{ width: laneSize.label }}>

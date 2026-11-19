@@ -156,7 +156,6 @@ export function WorkCard({ path, workId }: { readonly path: string; readonly wor
   const card = (
     <Card path={path} tone="work" kind={text.label('work')} title={work.title} width={380}>
       <p className="font-mono text-xs text-muted">{work.id}</p>
-      {work.purpose === '' ? null : <p>{work.purpose}</p>}
       <Fold path={`${path}#step`} title={text.label('step')} count={work.steps.length} initialOpened>
         <StepTree label={`${work.title}の${text.label('step')}`} steps={work.steps} />
       </Fold>
@@ -166,7 +165,6 @@ export function WorkCard({ path, workId }: { readonly path: string; readonly wor
             const rule = rules.get(ruleId)
             return rule === undefined ? null : (
               <Fold key={ruleId} path={`${path}#rule:${ruleId}`} title={<span className="font-medium text-ink">{rule.title}</span>}>
-                {rule.purpose === '' ? null : <p className="text-muted">{rule.purpose}</p>}
                 <StepTree label={rule.title} steps={rule.steps} />
               </Fold>
             )
@@ -231,7 +229,6 @@ export function ScenarioCard({ path, step }: { readonly path: string; readonly s
         </span>
         {scenario.pending ? <span className="rounded-full bg-pending px-2 py-0.5 text-pending-line">{text.label('pending')}</span> : null}
       </div>
-      {scenario.purpose === '' ? null : <p>{scenario.purpose}</p>}
       {step.inputs.length === 0 ? null : (
         <Fold path={`${path}#input`} title={text.label('input')} count={step.inputs.length} initialOpened>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">

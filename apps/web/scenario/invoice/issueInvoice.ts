@@ -7,7 +7,6 @@ export type IssueInput = {
   readonly issueDate: string
 }
 
-/** 確かめた請求に請求番号を振り、変えられない請求書にするため。 */
 export const issueInvoice = defineScenario('issueInvoice', {
   actor: 'accountant',
   operate: async (screen, issue: IssueInput) => {

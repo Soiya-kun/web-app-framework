@@ -6,7 +6,6 @@ export type ItemName = Brand<string, 'ItemName'>
 
 export const maximumItemNameLength = 100
 
-/** 画面から入力された品名を受け付けるため。 */
 export function interpretItemName(text: string): ItemName {
   const trimmedText = text.trim()
   if (trimmedText === '') {

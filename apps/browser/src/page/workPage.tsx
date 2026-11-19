@@ -32,7 +32,6 @@ export function WorkPage() {
   return (
     <>
       <PageTitle level={`${text.label('subfunction')}（${text.label('work')}）`}>{work.title}</PageTitle>
-      <p className="text-sm">{work.purpose}</p>
       <p className="font-mono text-xs">{work.id}</p>
       <SourcePlace file={work.file} line={work.line} />
       <Section title={text.label('step')}>
@@ -49,7 +48,6 @@ export function WorkPage() {
                     <span className="font-medium">{rule.title}</span> <span className="font-mono text-xs text-muted">{rule.name}</span>
                   </summary>
                   <div className="flex flex-col gap-1 pt-2">
-                    {rule.purpose === '' ? null : <p className="text-muted">{rule.purpose}</p>}
                     <StepTree label={rule.title} steps={rule.steps} />
                     <SourcePlace file={rule.file} line={rule.line} />
                   </div>

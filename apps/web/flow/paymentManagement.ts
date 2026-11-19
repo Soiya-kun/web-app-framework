@@ -5,7 +5,6 @@ import { browsePayments } from '../scenario/payment/browsePayments'
 import { identifyPayment } from '../scenario/payment/identifyPayment'
 import { registerPayment } from '../scenario/payment/registerPayment'
 
-/** 振り込まれた代金を記録し、振込人が分からなければ仮受にして、あとで顧客を特定する。 */
 export const paymentManagement = defineFlow<Partial<MemoryDatabase>>('paymentManagement', {
   precondition: { summary: '親会社が顧客として登録されている', seed: { customer: customers } },
   steps: [

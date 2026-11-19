@@ -6,7 +6,6 @@ export type InvoiceTarget = {
   readonly closingDate: string
 }
 
-/** 締めた請求の内容（残高を繰り越す請求書の金額と、載せた行）を、発行する前に確かめるため。 */
 export const browseInvoice = defineScenario('browseInvoice', {
   actor: 'accountant',
   operate: async (screen, invoice: InvoiceTarget) => {
