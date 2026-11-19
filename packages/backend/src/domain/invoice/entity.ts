@@ -64,17 +64,14 @@ export type UnbilledEntries = {
   readonly adjustments: readonly Adjustment[]
 }
 
-/** 保存済みの値から請求を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。 */
 export function restoreInvoice(stored: Stored<Invoice>): Invoice {
   return stored as Invoice
 }
 
-/** 保存済みの値から一覧の請求を組み立てるため。 */
 export function restoreInvoiceListItem(stored: Stored<InvoiceListItem>): InvoiceListItem {
   return stored as InvoiceListItem
 }
 
-/** 保存済みの値から税率ごとの合計を組み立てるため。 */
 export function restoreInvoiceTax(stored: Stored<InvoiceTax>): InvoiceTax {
   return stored as InvoiceTax
 }

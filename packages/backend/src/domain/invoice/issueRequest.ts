@@ -13,7 +13,6 @@ export type IssueInput = {
   readonly issueDate: IssueDate
 }
 
-/** 画面の入力を、発行に使える値にそろえるため。 */
 export function interpretIssueRequest(issueRequest: IssueRequest): IssueInput {
   return interpretFields({
     invoiceId: () => interpretInvoiceId(issueRequest.invoiceId),

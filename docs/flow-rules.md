@@ -43,7 +43,6 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
 ### 2.1 規則
 
 - 名前は**名詞句**で、単語帳の言葉だけで書く（`monthlyInvoice` →「月次の請求」）。変数の名前と同じにする。
-- 1行目の TSDoc に、業務フローの目的を書く。
 - `precondition` に、事前条件を日本語（`summary`）と、テストで最初に入れておく行（`seed`）で書く。子フローとして使うときは、親の事前条件だけを使う。
 - 段は次の5種類だけにする。
 
@@ -75,7 +74,6 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
 ## 3. シナリオ
 
 ```ts
-/** 振り込まれた代金を記録し、次の締めで請求先の残高を減らすため。 */
 export const registerPayment = defineScenario('registerPayment', {
   actor: 'accountant',
   operate: async (screen, payment: PaymentInput) => {
@@ -105,7 +103,6 @@ export const registerPayment = defineScenario('registerPayment', {
 
 - 名前は**動詞で始める**（`registerPayment` →「入金を記録する」）。単語帳の言葉だけで書き、変数の名前と同じにする。
 - 1つのシナリオは、**1人が1回の操作で果たす目的**にする（コーバーンの「利用者の目的」。済んだらコーヒーを飲みに行ける大きさ）。
-- 1行目の TSDoc に、目的（なぜこの操作をするか）を書く。
 - `actor` に主アクターを書く（単語帳の名詞）。
 - `operate`（主成功シナリオの手順）は、**画面を開く（`screen.go`）ところから始める**。前のシナリオの画面に頼らない。
 - `operate` と `confirm` には、画面の操作（`await screen.…`）を並べるだけにする。`if`・繰り返し・計算は書かない（usecase と同じく、手順の並びのまま日本語に訳すため）。
@@ -235,7 +232,7 @@ describeScenario(registerPayment, (cases) => {
 
 - 一覧: 進み具合・規則の問題・業務フロー・シナリオ・処理・テーブルの一覧と、名前の検索。
 - 業務フロー: 担当ごとのレーン図（子フローは中を開く）、段の表、拡張、テストの経路。
-- シナリオ: 主アクター・目的・使う業務フロー・主な成功シナリオ・成功の保証・拡張の表・ケース（行の表と、中身の日本語の手順）・開く画面・通る処理（押すボタンから呼ぶものと、画面を開いて読むもの）。
+- シナリオ: 主アクター・使う業務フロー・主な成功シナリオ・成功の保証・拡張の表・ケース（行の表と、中身の日本語の手順）・開く画面・通る処理（押すボタンから呼ぶものと、画面を開いて読むもの）。
 - 処理: usecase の手順、通る規則（domain の関数の訳）、リポジトリの呼び出しと SQL、API の入口、使うシナリオ。
 - SQL・テーブル: SQL の全文と、使うテーブル・処理。テーブルの列の日本語。
 - 用語集: 単語帳の業務の言葉（日本語・英語・名前・説明）。

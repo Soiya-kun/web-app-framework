@@ -74,7 +74,6 @@ export function ScenarioPage() {
         </Badge>
         {scenario.pending ? <Badge tone="pending">{text.label('pending')}</Badge> : null}
       </div>
-      <p className="text-sm">{scenario.purpose}</p>
       <SourcePlace file={scenario.file} line={scenario.line} />
       <Section title={text.label('flow')}>
         <ul className="text-sm">

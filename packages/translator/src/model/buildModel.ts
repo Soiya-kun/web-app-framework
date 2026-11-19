@@ -106,7 +106,6 @@ export function buildModel(root: string): Model {
     return {
       id: scenario.id,
       title: scenario.title,
-      purpose: scenario.purpose,
       actor: scenario.actor,
       actorTitle: renderNounPhrase(scenario.actor, 'ja'),
       pending: scenario.pending,

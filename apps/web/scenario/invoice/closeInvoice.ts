@@ -7,7 +7,6 @@ export type ClosingInput = {
   readonly breakdown?: CellExpectation
 }
 
-/** 請求先の締め日までの売上・入金・返金・調整を、前回からの残高を繰り越した請求にまとめるため。 */
 export const closeInvoice = defineScenario('closeInvoice', {
   actor: 'accountant',
   operate: async (screen, closing: ClosingInput) => {

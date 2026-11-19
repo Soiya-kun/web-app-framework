@@ -184,7 +184,6 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
 シナリオは、主アクター・主成功シナリオの手順・成功の保証・拡張を持ちます。
 
 ```ts
-/** 振り込まれた代金を記録し、次の締めで請求先の残高を減らすため。 */
 export const registerPayment = defineScenario('registerPayment', {
   actor: 'accountant',
   operate: async (screen, payment: PaymentInput) => {
@@ -227,7 +226,7 @@ export const registerPayment = defineScenario('registerPayment', {
 この訳は、後で出てくる「コードのブラウザ」のシナリオのページにそのまま出ます。
 
 ![シナリオ「入金を記録する」のページ](/images/typesafe-requirements/scenario-page.png)
-*シナリオのページ。主アクター・目的・使う業務フロー・主な成功シナリオ・成功の保証・拡張が、コードから生成されて並ぶ*
+*シナリオのページ。主アクター・使う業務フロー・主な成功シナリオ・成功の保証・拡張が、コードから生成されて並ぶ*
 
 ### 4.3 ケース
 
@@ -300,7 +299,7 @@ describeScenario(registerPayment, (cases) => {
 
 細部を書いても、読めるのは利用者の言葉です。`screen.fill('paymentDate', …)` は「入金日に〈入金日〉を入れる」と訳され、CSS のセレクタや画面の部品の名前は出てきません。
 
-利用者の意図は、シナリオの名前（`registerPayment` ＝「入金を記録する」）と目的の1行が表します。ブラウザでは、まず名前で意図を読み、開くと具体的な操作が見えます。
+利用者の意図は、シナリオの名前（`registerPayment` ＝「入金を記録する」）が表します。ブラウザでは、まず名前で意図を読み、開くと具体的な操作が見えます。
 
 コーバーンが画面の細部を避けたのは、細部が「腐る」からでした。要件を型にすると、細部は腐らなくなります。だから、意図と細部の両方を1つのシナリオに持てるようになりました。
 
@@ -335,7 +334,6 @@ export function operate<Input, ExtensionName extends string>(
 バックエンドは Hono で、domain・usecase・repository・handler の層に分けます。usecase には `if`・`for`・`let`・`try`・`throw`・メソッドチェーンを書かず、lint（`app/flat-steps`）が止めます。
 
 ```ts
-/** 入金を記録するため。顧客を選んでいなければ振込依頼人名で覚えた顧客にし、それもなければ仮受にする。… */
 export async function registerPayment(repositories: RepositorySet, idGenerator: IdGenerator, paymentRequest: PaymentRequest) {
   const paymentInput = interpretPaymentRequest(paymentRequest)
   const selectedCustomer = await repositories.customerRepository.findSelectedCustomer(paymentInput.customerId)
@@ -358,8 +356,6 @@ export async function registerPayment(repositories: RepositorySet, idGenerator: 
 > 3. 振込依頼人の顧客を取得する
 > 4. 入金の顧客を決める
 > …
-
-コメントに書くのは目的だけです。手順は名前から訳せるので書きません（書くと古くなる）。
 
 ### 5.2 判断は domain、値はブランド型
 
@@ -595,7 +591,7 @@ TypeScript で書いた業務フローから、担当ごとのレーン図が自
 
 ### 日本語を書かずに、日本語の仕様書が出る
 
-英単語の組み合わせ（名前）から、日本語の手順を機械で作ります。手順・題・画面の文言の日本語は、人が1文字も書いていません（人が日本語で書くのは、目的の1行と、拡張の条件・ケースの見出しだけ）。
+英単語の組み合わせ（名前）から、日本語の手順を機械で作ります。手順・題・画面の文言の日本語は、人が1文字も書いていません（人が日本語で書くのは、拡張の条件とケースの見出しだけ）。
 
 | 書いたもの（英語のコード） | 生成される日本語 |
 | --- | --- |

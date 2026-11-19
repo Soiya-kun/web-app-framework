@@ -6,7 +6,6 @@ export type IdentifyInput = {
   readonly customer: string
 }
 
-/** 振込人が分からず仮受にした入金の顧客を決め、その振込依頼人名を覚えるため。 */
 export const identifyPayment = defineScenario('identifyPayment', {
   actor: 'accountant',
   operate: async (screen, identify: IdentifyInput) => {

@@ -24,7 +24,6 @@ export type PaymentInput = {
   readonly customerId: CustomerId | null
 }
 
-/** 画面の入力を、入金として扱える値にそろえるため。 */
 export function interpretPaymentRequest(paymentRequest: PaymentRequest): PaymentInput {
   return interpretFields({
     paymentDate: () => interpretPaymentDate(paymentRequest.paymentDate),

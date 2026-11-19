@@ -18,7 +18,6 @@ export type Adjustment = {
   readonly invoiceId: InvoiceId | null
 }
 
-/** 保存済みの値から調整を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。 */
 export function restoreAdjustment(stored: Stored<Adjustment>): Adjustment {
   return stored as Adjustment
 }

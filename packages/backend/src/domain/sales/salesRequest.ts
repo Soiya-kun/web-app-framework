@@ -26,7 +26,6 @@ export type SalesInput = {
   readonly taxRate: TaxRate
 }
 
-/** 画面の入力を、売上として扱える値にそろえるため。 */
 export function interpretSalesRequest(salesRequest: SalesRequest): SalesInput {
   return interpretFields({
     customerId: () => interpretCustomerId(salesRequest.customerId),

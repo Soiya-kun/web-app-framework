@@ -56,7 +56,6 @@ export function FlowPage() {
   return (
     <>
       <PageTitle level={`${text.label('summary')}（${text.label('flow')}）`}>{flow.title}</PageTitle>
-      <p className="text-sm">{flow.purpose}</p>
       <SourcePlace file={flow.file} line={flow.line} />
       {flow.precondition === null ? null : (
         <Section title={text.label('precondition')}>

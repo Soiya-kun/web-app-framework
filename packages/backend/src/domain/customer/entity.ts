@@ -17,7 +17,6 @@ export type Customer = {
   readonly collectionDay: MonthDay
 }
 
-/** 保存済みの値から顧客を組み立てるため。保存済みの値は DB の制約で検証済みとして扱う。 */
 export function restoreCustomer(stored: Stored<Customer>): Customer {
   return stored as Customer
 }

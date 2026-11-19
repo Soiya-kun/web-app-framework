@@ -17,7 +17,6 @@ export type StepTranslation = {
 export type FunctionTranslation = {
   readonly name: string
   readonly title: string
-  readonly purpose: string
   readonly parameters: readonly string[]
   readonly steps: readonly StepTranslation[]
   readonly line: number
@@ -237,11 +236,6 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
     return statements.flatMap(translateStatement)
   }
 
-  function readPurpose(node: ts.Node): string {
-    const [document] = ts.getJSDocCommentsAndTags(node).filter(ts.isJSDoc)
-    return ts.getTextOfJSDocComment(document?.comment) ?? ''
-  }
-
   function isExported(statement: ts.Statement): boolean {
     return ts.canHaveModifiers(statement) && (ts.getModifiers(statement) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)
   }
@@ -261,7 +255,6 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
     return {
       name,
       title: translateFunctionName(name),
-      purpose: readPurpose(documentNode),
       parameters: node.parameters.map((parameter) =>
         ts.isIdentifier(parameter.name) ? renderNounPhrase(parameter.name.text, 'ja') : code(parameter.name),
       ),

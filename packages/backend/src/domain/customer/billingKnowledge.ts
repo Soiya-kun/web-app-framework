@@ -5,7 +5,6 @@ export function isBillingCustomer(customer: Customer): boolean {
   return customer.billingCustomerId === customer.customerId
 }
 
-/** 締めの画面で選べる請求先を示すため。 */
 export function selectBillingCustomers(customers: readonly Customer[]): readonly Customer[] {
   return customers.filter(isBillingCustomer)
 }

@@ -6,7 +6,6 @@ describe('translateSource', () => {
   test('関数名を体言止めに、手順を「〜する」に訳す', () => {
     const [translation] = translateSource(
       `
-      /** 輸送の実績を売上として計上するため。 */
       export async function createNewTransportSales(salesRepository: SalesRepository, salesRequest: SalesRequest) {
         const validatedRequest = validateSalesRequest(salesRequest)
         const transportSales = planTransportSales(validatedRequest)
@@ -23,7 +22,6 @@ describe('translateSource', () => {
         '### 新輸送売上の登録',
         '',
         '- 関数: `createNewTransportSales`',
-        '- 目的: 輸送の実績を売上として計上するため。',
         '- 引数: 売上リポジトリ、売上リクエスト',
         '- 処理:',
         '',

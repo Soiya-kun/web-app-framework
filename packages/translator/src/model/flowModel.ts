@@ -2,7 +2,7 @@
 import { findUnknownTokens, renderNounPhrase, startsWithVerb } from '@app/vocabulary'
 import ts from 'typescript'
 import { labelOf, messageText, readInputs, translateName, translateScreenBody, translateScreenCall, valueOf } from './screenText'
-import { collectCalls, lineOf, listExportedCalls, readPurpose, readProperty, readString, unwrap, type ParsedSource, type SourceReader } from './source'
+import { collectCalls, lineOf, listExportedCalls, readProperty, readString, unwrap, type ParsedSource, type SourceReader } from './source'
 import type { CaseNode, FlowExtensionNode, FlowNode, FlowStepNode, ModelInput, ModelProblem } from './types'
 
 export const scenarioRoot = 'apps/web/scenario'
@@ -12,7 +12,6 @@ export type ScenarioDraft = {
   readonly id: string
   readonly variable: string
   readonly title: string
-  readonly purpose: string
   readonly actor: string
   readonly pending: boolean
   /** operate の本体（画面のつながりを読むのに使う）。 */
@@ -70,7 +69,7 @@ function readScenarios(reader: SourceReader, problems: ModelProblem[]): Scenario
   const files = reader.list(scenarioRoot, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
   return files.flatMap((file) => {
     const parsed = reader.read(file)
-    return listExportedCalls(parsed, 'defineScenario').flatMap(({ name: variable, call, statement }) => {
+    return listExportedCalls(parsed, 'defineScenario').flatMap(({ name: variable, call }) => {
       const place = { file, line: lineOf(parsed, call) }
       const name = readString(call.arguments[0]) ?? variable
       const options = call.arguments[1]
@@ -117,7 +116,6 @@ function readScenarios(reader: SourceReader, problems: ModelProblem[]): Scenario
           id: name,
           variable,
           title: translateName(name),
-          purpose: readPurpose(statement),
           actor,
           pending: operate === null,
           operateBody: operate?.body ?? null,
@@ -466,7 +464,7 @@ function readFlows(reader: SourceReader, scenarios: readonly ScenarioDraft[], pr
   const definitions = files.flatMap((file) => listExportedCalls(reader.read(file), 'defineFlow').map((definition) => ({ ...definition, file })))
   const flowNames = new Map(definitions.map((definition) => [`${definition.file}#${definition.name}`, readString(definition.call.arguments[0]) ?? definition.name]))
   const scenarioByPlace = new Map(scenarios.map((scenario) => [`${scenario.file}#${scenario.variable}`, scenario]))
-  const flows = definitions.flatMap(({ name: variable, call, statement, file }) => {
+  const flows = definitions.flatMap(({ name: variable, call, file }) => {
     const parsed = reader.read(file)
     const place = { file, line: lineOf(parsed, call) }
     const name = readString(call.arguments[0]) ?? variable
@@ -485,7 +483,6 @@ function readFlows(reader: SourceReader, scenarios: readonly ScenarioDraft[], pr
       {
         id: name,
         title: renderNounPhrase(name, 'ja'),
-        purpose: readPurpose(statement),
         precondition: precondition !== undefined && ts.isObjectLiteralExpression(precondition) ? (readString(readProperty(precondition, 'summary')) ?? null) : null,
         steps:
           stepsNode !== undefined && ts.isArrayLiteralExpression(stepsNode)

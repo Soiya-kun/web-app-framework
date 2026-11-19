@@ -10,7 +10,6 @@ export type SalesInput = {
   readonly taxRate: string
 }
 
-/** 顧客へ納品した商品を、売上として計上するため。 */
 export const createSales = defineScenario('createSales', {
   actor: 'salesperson',
   operate: async (screen, sales: SalesInput) => {

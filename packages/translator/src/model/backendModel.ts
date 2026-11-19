@@ -132,7 +132,6 @@ function readRules(reader: SourceReader): RuleNode[] {
         id: `${file}#${translation.name}`,
         name: translation.name,
         title: translation.title,
-        purpose: translation.purpose,
         steps: toStepNodes(translation.steps),
         file,
         line: translation.line,
@@ -225,7 +224,6 @@ function readWorks(reader: SourceReader, rules: readonly RuleNode[], repositoryS
           {
             id: name,
             title: translation.title,
-            purpose: translation.purpose,
             steps: toStepNodes(translation.steps),
             ruleIds: [...new Set(calledRules)],
             repositoryCalls,

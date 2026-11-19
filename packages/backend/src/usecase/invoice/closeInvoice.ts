@@ -5,7 +5,6 @@ import { planInvoiceCreate } from '../../domain/invoice/invoiceCreate'
 import { assignInvoiceId, type InvoiceId } from '../../domain/invoice/value/invoiceId'
 import type { IdGenerator } from '../../domain/shared/idGenerator'
 
-/** 請求先の締め日までの売上・入金・返金・調整を、前回からの残高を繰り越した請求にまとめるため。 */
 export async function closeInvoice(
   repositories: RepositorySet,
   idGenerator: IdGenerator,

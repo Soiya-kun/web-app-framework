@@ -4,7 +4,6 @@ import type { Yen } from '../../shared/yen'
 export const minimumPaymentAmount = 1
 export const maximumPaymentAmount = 999_999_999
 
-/** 画面から入力された金額を、入金額として受け付けるため。 */
 export function interpretPaymentAmount(text: string): Yen {
   const trimmedText = text.trim()
   if (trimmedText === '') {

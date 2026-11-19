@@ -8,7 +8,6 @@ export type PaymentInput = {
   readonly customer: string
 }
 
-/** 振り込まれた代金を記録し、次の締めで請求先の残高を減らすため。 */
 export const registerPayment = defineScenario('registerPayment', {
   actor: 'accountant',
   operate: async (screen, payment: PaymentInput) => {

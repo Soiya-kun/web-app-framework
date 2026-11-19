@@ -13,7 +13,6 @@ export type IdentifyInput = {
   readonly customerId: CustomerId
 }
 
-/** 画面の入力を、特定に使える値にそろえるため。 */
 export function interpretIdentifyRequest(identifyRequest: IdentifyRequest): IdentifyInput {
   return interpretFields({
     paymentId: () => interpretPaymentId(identifyRequest.paymentId),

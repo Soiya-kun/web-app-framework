@@ -114,18 +114,12 @@ export function unwrap(expression: ts.Expression): ts.Expression {
   return expression
 }
 
-/** TSDoc の1行目（目的）。 */
-export function readPurpose(node: ts.Node): string {
-  const [document] = ts.getJSDocCommentsAndTags(node).filter(ts.isJSDoc)
-  return ts.getTextOfJSDocComment(document?.comment) ?? ''
-}
-
 export function isExported(statement: ts.Statement): boolean {
   return ts.canHaveModifiers(statement) && (ts.getModifiers(statement) ?? []).some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword)
 }
 
 /** export const name = call(...) の形を集める。 */
-export function listExportedCalls(parsed: ParsedSource, calleeName: string): { readonly name: string; readonly call: ts.CallExpression; readonly statement: ts.VariableStatement }[] {
+export function listExportedCalls(parsed: ParsedSource, calleeName: string): { readonly name: string; readonly call: ts.CallExpression }[] {
   return parsed.source.statements.flatMap((statement) => {
     if (!ts.isVariableStatement(statement) || !isExported(statement)) {
       return []
@@ -139,7 +133,7 @@ export function listExportedCalls(parsed: ParsedSource, calleeName: string): { r
         ts.isIdentifier(initializer.expression) &&
         initializer.expression.text === calleeName
       ) {
-        return [{ name: declaration.name.text, call: initializer, statement }]
+        return [{ name: declaration.name.text, call: initializer }]
       }
       return []
     })
