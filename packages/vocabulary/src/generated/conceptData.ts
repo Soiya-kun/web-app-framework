@@ -18853,7 +18853,7 @@ export const conceptList: readonly Concept[] = [
     },
     "role": false,
     "avoid": [],
-    "description": "顧客へ品目を納め、売上を登録する担当。"
+    "description": "顧客へ商品を納品し、売上を登録する担当。"
   },
   {
     "id": "accountant",
@@ -18922,20 +18922,20 @@ export const conceptList: readonly Concept[] = [
     },
     "ja": {
       "form": null,
-      "attach": "no",
-      "verbClass": "ichidan",
+      "attach": "direct",
+      "verbClass": "suru",
       "noun": "納品",
       "label": "納品",
-      "dictionary": "納める",
-      "te": "納めて",
-      "past": "納めた",
-      "potential": "納められる",
-      "politePast": "納めました",
-      "negative": "納めない",
-      "perfective": "納めた",
-      "perfectiveLabel": "納めた",
-      "negativePerfective": "納めていない",
-      "negativePerfectiveLabel": "納めていない",
+      "dictionary": "納品する",
+      "te": "納品して",
+      "past": "納品した",
+      "potential": "納品できる",
+      "politePast": "納品しました",
+      "negative": "納品しない",
+      "perfective": "納品済みの",
+      "perfectiveLabel": "納品済み",
+      "negativePerfective": "未納品の",
+      "negativePerfectiveLabel": "未納品",
       "adjectiveClass": null,
       "attributive": null,
       "predicative": null,
@@ -18945,7 +18945,7 @@ export const conceptList: readonly Concept[] = [
     },
     "role": false,
     "avoid": [],
-    "description": "顧客へ品目を納めること。売上のもとになる（システムの外）。"
+    "description": "顧客へ商品を納品すること。売上のもとになる（システムの外）。"
   },
   {
     "id": "send",
@@ -19636,6 +19636,52 @@ export const conceptList: readonly Concept[] = [
     "role": false,
     "avoid": [],
     "description": "顧客に役務を提供して計上する収益。1件の売上も複数の売上も sales と書く。"
+  },
+  {
+    "id": "product",
+    "kind": "domain",
+    "category": "noun",
+    "tokens": [
+      "product"
+    ],
+    "en": {
+      "base": "product",
+      "label": "Product",
+      "plural": "products",
+      "third": null,
+      "past": null,
+      "participle": null,
+      "gerund": null,
+      "able": null,
+      "unPast": null,
+      "noun": null
+    },
+    "ja": {
+      "form": "商品",
+      "attach": "no",
+      "verbClass": null,
+      "noun": null,
+      "label": "商品",
+      "dictionary": null,
+      "te": null,
+      "past": null,
+      "potential": null,
+      "politePast": null,
+      "negative": null,
+      "perfective": null,
+      "perfectiveLabel": null,
+      "negativePerfective": null,
+      "negativePerfectiveLabel": null,
+      "adjectiveClass": null,
+      "attributive": null,
+      "predicative": null,
+      "nounPattern": null,
+      "stepPattern": null,
+      "titlePattern": null
+    },
+    "role": false,
+    "avoid": [],
+    "description": "顧客へ納品する品物。納品すると売上になる。"
   },
   {
     "id": "transport",

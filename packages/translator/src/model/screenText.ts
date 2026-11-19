@@ -206,7 +206,7 @@ export function translateScreenBody(body: ts.ConciseBody, constants: ReadonlyMap
   return { steps, flat }
 }
 
-/** 動詞で始まる名前の手順（deliverItem →「品目を納める」）。 */
+/** 動詞で始まる名前の手順（deliverProduct →「商品を納品する」）。 */
 export function translateName(name: string): string {
   return translateStep(name) ?? name
 }

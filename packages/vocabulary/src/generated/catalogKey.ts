@@ -241,6 +241,7 @@ export type LabelKey =
   | 'primary'
   | 'primarySuccessScenario'
   | 'problem'
+  | 'product'
   | 'production'
   | 'progress'
   | 'prompt'

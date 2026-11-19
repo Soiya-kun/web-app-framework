@@ -115,7 +115,7 @@ export function operate<Input, ExtensionName extends string>(
   return { kind: 'operate', scenario: scenario as Scenario<unknown, string>, input, extensions: extensionList }
 }
 
-/** 段: システムの外の業務（品目を納める・請求書を送るなど）。name は動詞で始まる名前。 */
+/** 段: システムの外の業務（商品を納品する・請求書を送るなど）。name は動詞で始まる名前。 */
 export function outside(actor: string, name: string): FlowStep {
   return { kind: 'outside', actor, name }
 }

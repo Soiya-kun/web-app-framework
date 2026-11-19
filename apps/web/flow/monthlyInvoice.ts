@@ -14,7 +14,7 @@ const october = { billingCustomer: '株式会社親', closingDate: '2026-10-31' 
 export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoice', {
   precondition: { summary: '親会社（末締め翌月末払い）と、請求先を親会社にした子会社が、顧客として登録されている', seed: { customer: customers } },
   steps: [
-    outside('salesperson', 'deliverItem'),
+    outside('salesperson', 'deliverProduct'),
     operate(createSales, { customer: '株式会社子', salesDate: '2026-10-15', salesKind: '通常', itemName: '運賃', salesAmount: '100000', taxRate: '10%' }),
     elapse('closingDate', '2026-10-31'),
     operate(closeInvoice, { ...october, breakdown: { currentSalesAmount: 100_000, taxAmount: 10_000, currentInvoiceAmount: 110_000 } }),

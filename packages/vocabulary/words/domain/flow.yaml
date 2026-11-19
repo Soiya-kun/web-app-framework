@@ -1,7 +1,7 @@
 # 業務フローの担当と、システムの外の業務の言葉。description は用語集に出す。
-- { id: salesperson, category: noun, en: { plural: salespeople }, ja: { form: 営業担当 }, description: 顧客へ品目を納め、売上を登録する担当。 }
+- { id: salesperson, category: noun, en: { plural: salespeople }, ja: { form: 営業担当 }, description: 顧客へ商品を納品し、売上を登録する担当。 }
 - { id: accountant, category: noun, ja: { form: 経理担当 }, description: 請求の締め・発行と、入金の記録・特定をする担当。 }
-- { id: deliver, category: verb, ja: { dictionary: 納める, class: ichidan, noun: 納品 }, description: 顧客へ品目を納めること。売上のもとになる（システムの外）。 }
+- { id: deliver, category: verb, ja: { stem: 納品, class: suru }, description: 顧客へ商品を納品すること。売上のもとになる（システムの外）。 }
 - { id: send, category: verb, en: { past: sent }, ja: { dictionary: 送る, class: godan, noun: 送付 }, description: 請求書を顧客へ送ること（システムの外）。 }
 - { id: pay, category: verb, en: { past: paid }, ja: { dictionary: 支払う, class: godan, noun: 支払 }, description: 顧客が請求の代金を支払うこと。このサンプルでは振込で受け取る。 }
 - { id: monthly, category: adjective, ja: { stem: 月次, class: no }, description: 月ごとに繰り返すこと（月次の請求）。 }

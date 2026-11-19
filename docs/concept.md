@@ -380,7 +380,7 @@ repository のテストでは、「どの SQL が流れたか」を記録して�
 
 要約のユースケースの各手順は、1つ下のレベルのユースケースへのつながりになっている。コーバーンはユースケースの集まりを「どこまでも展開していく物語」にたとえる。上の段を開くと下の段の物語が出てくる。この木の「業務フロー → シナリオ → usecase」はまさにこれである。
 
-**組織とシステム。** コーバーンは、対象の範囲（scope）で、組織の業務のユースケース（business use case）と、システムのユースケース（system use case）も分ける。最上位の業務フローは組織の業務なので、「商品を納める」「請求書を送る」「代金を振り込む」のような、システムの外の手順を含む。この木でも、業務フローの段にはシステムの外の業務を置ける（6.4）。
+**組織とシステム。** コーバーンは、対象の範囲（scope）で、組織の業務のユースケース（business use case）と、システムのユースケース（system use case）も分ける。最上位の業務フローは組織の業務なので、「商品を納品する」「請求書を送る」「代金を振り込む」のような、システムの外の手順を含む。この木でも、業務フローの段にはシステムの外の業務を置ける（6.4）。
 
 **ユースケースの項目。** コーバーンのユースケースの書式の項目は、この木の要素に対応づけられる。
 
@@ -434,7 +434,7 @@ JSON は、解析して作る生成物として使う。ブラウザは、その
 export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoice', {
   precondition: { summary: '親会社と、請求先を親会社にした子会社が、顧客として登録されている', seed: { customer: customers } },
   steps: [
-    outside('salesperson', 'deliverItem'),                       // システムの外の業務: 品目を納める
+    outside('salesperson', 'deliverProduct'),                    // システムの外の業務: 商品を納品する
     operate(createSales, { customer: '株式会社子', … }),          // 画面の操作: 売上を登録する
     elapse('closingDate', '2026-10-31'),                         // 時の経過: 請求締め日になる
     operate(closeInvoice, { …october, breakdown: { currentInvoiceAmount: 110_000, … } }),
@@ -496,7 +496,7 @@ export const createSales = defineScenario('createSales', { actor: 'salesperson' 
 export const closeInvoice = defineScenario('closeInvoice', { actor: 'accountant' })    // 未着手
 
 export const monthlyInvoice = defineFlow('monthlyInvoice', {
-  steps: [outside('salesperson', 'deliverItem'), operate(createSales), elapse('closingDate', '2026-10-31'), operate(closeInvoice), …],
+  steps: [outside('salesperson', 'deliverProduct'), operate(createSales), elapse('closingDate', '2026-10-31'), operate(closeInvoice), …],
 })
 ```
 
@@ -516,7 +516,7 @@ export const monthlyInvoice = defineFlow('monthlyInvoice', {
 
 | 経路 | 流れ | 時間（インプロセス） |
 | --- | --- | --- |
-| 本線 | 品目を納める → 売上を登録する → 請求締め日になる → 請求を締める → 請求を閲覧する → 請求を発行する → 請求を送る → 入金管理（請求を支払う → 入金を記録する → 入金を閲覧する）→ 請求締め日になる → 請求を締める（前回請求額・今回入金額・繰越額を確かめる） | 約 0.45 秒（最初のテストの準備を含む） |
+| 本線 | 商品を納品する → 売上を登録する → 請求締め日になる → 請求を締める → 請求を閲覧する → 請求を発行する → 請求を送る → 入金管理（請求を支払う → 入金を記録する → 入金を閲覧する）→ 請求締め日になる → 請求を締める（前回請求額・今回入金額・繰越額を確かめる） | 約 0.45 秒（最初のテストの準備を含む） |
 | 5a. 請求の内容に誤りがある | 請求を閲覧したあと、締めを取り消す → 漏れた売上を登録する → 締め直す → 発行する（ここで終える） | 約 0.3 秒 |
 | 8.2a. 振込依頼人名から顧客を特定できない | 入金を仮受として記録する → 入金を特定する → 本線へ戻り、次の締めで今回入金額に載る | 約 0.3 秒 |
 
