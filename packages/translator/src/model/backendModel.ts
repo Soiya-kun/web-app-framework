@@ -259,7 +259,9 @@ function readStatements(reader: SourceReader): { statements: StatementNode[]; na
           continue
         }
         names.set(`${file}#${declaration.name.text}`, name)
-        const tableIds = [...new Set([...text.matchAll(/\b(?:FROM|JOIN|INTO|UPDATE)\s+([a-z_]+)/gi)].map((match) => match[1] ?? ''))].filter(
+        // 行のロック（FOR UPDATE OF s）と upsert（DO UPDATE SET）はテーブルではないので、先に除く。
+        const tableText = text.replace(/\bFOR\s+UPDATE(?:\s+OF\s+\w+)?/gi, '').replace(/\bDO\s+UPDATE\b/gi, '')
+        const tableIds = [...new Set([...tableText.matchAll(/\b(?:FROM|JOIN|INTO|UPDATE)\s+([a-z_]+)/gi)].map((match) => match[1] ?? ''))].filter(
           (table) => table !== '' && table !== 'unnest',
         )
         statements.push({ id: name, text: text.trim(), tableIds, file, line: lineOf(parsed, initializer) })

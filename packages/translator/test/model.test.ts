@@ -29,6 +29,13 @@ describe('このリポジトリのモデル', () => {
     ])
   })
 
+  test('SQL のテーブルは FROM・JOIN・INTO・UPDATE から求め、行のロック（FOR UPDATE OF）と upsert（DO UPDATE SET）は含めない', () => {
+    const tableIds = new Set(model.statements.flatMap((statement) => statement.tableIds))
+
+    expect(model.statements.find((statement) => statement.id === 'listUnbilledSales')?.tableIds).toEqual(['sales', 'customer'])
+    expect([...tableIds].sort()).toEqual(model.tables.map((table) => table.id).sort())
+  })
+
   test('業務フローの段は、シナリオか子フローにつながり、子フローは親を知っている', () => {
     const monthly = model.flows.find((flow) => flow.id === 'monthlyInvoice')
     const nested = model.flows.find((flow) => flow.id === 'paymentManagement')
