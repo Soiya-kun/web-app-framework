@@ -6,7 +6,7 @@ TypeScript（React + Hono）で業務 Web アプリを作るための土台（�
 - 識別子の英単語を単語帳で絞り、処理を日本語に機械翻訳して読めるようにする。
 - 単語帳の単語を画面の文言にも使う。
 
-要求と方針は [docs/requirements.md](docs/requirements.md)、業務の作りは [docs/domain-model.md](docs/domain-model.md)、処理の日本語訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)、SQL の台帳は [docs/generated/sql-ledger.md](docs/generated/sql-ledger.md)。
+要求と方針は [docs/requirements.md](docs/requirements.md)、業務の作りは [docs/domain-model.md](docs/domain-model.md)、単語帳の設計は [docs/vocabulary-design.md](docs/vocabulary-design.md)、処理の日本語訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)、SQL の台帳は [docs/generated/sql-ledger.md](docs/generated/sql-ledger.md)。
 
 ## 使い方
 
