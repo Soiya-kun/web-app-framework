@@ -85,7 +85,6 @@
 - { word: executor, pos: noun, ja: 実行器, role: true }
 - { word: file, pos: noun, ja: ファイル }
 - { word: format, pos: noun, ja: 形式, forms: [formats] }
-- { word: method, pos: noun, ja: 方法 }
 - { word: migration, pos: noun, ja: マイグレーション, forms: [migrations] }
 - { word: number, pos: noun, ja: 番号 }
 - { word: parent, pos: noun, ja: 親 }
@@ -134,3 +133,4 @@
 - { word: port, pos: noun, ja: ポート }
 - { word: server, pos: noun, ja: サーバー }
 - { word: setting, pos: noun, ja: 設定 }
+- { word: method, pos: noun, ja: 方法, forms: [methods] }

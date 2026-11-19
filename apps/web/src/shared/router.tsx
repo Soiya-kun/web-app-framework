@@ -5,6 +5,9 @@ import { prepareBillingCustomerListQuery, prepareInvoiceDetailQuery, prepareInvo
 import { InvoiceClosePage } from '../invoice/invoiceClosePage'
 import { InvoiceDetailPage } from '../invoice/invoiceDetailPage'
 import { InvoiceListPage } from '../invoice/invoiceListPage'
+import { preparePaymentListQuery } from '../payment/paymentApi'
+import { PaymentCreatePage } from '../payment/paymentCreatePage'
+import { PaymentListPage } from '../payment/paymentListPage'
 import { prepareCustomerListQuery } from '../sales/salesApi'
 import { SalesCreatePage } from '../sales/salesCreatePage'
 import type { ApiClient } from './apiClient'
@@ -20,6 +23,8 @@ const navigationLinks = [
   { path: '/sales/new', labelName: 'salesCreate' },
   { path: '/invoices/close', labelName: 'invoiceClosing' },
   { path: '/invoices', labelName: 'invoiceList' },
+  { path: '/payments/new', labelName: 'paymentCreate' },
+  { path: '/payments', labelName: 'paymentList' },
 ] as const
 
 function RootLayout() {
@@ -88,7 +93,33 @@ const invoiceDetailRoute = createRoute({
   component: InvoiceDetailPage,
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, salesCreateRoute, invoiceListRoute, invoiceCloseRoute, invoiceDetailRoute])
+const paymentListRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/payments',
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(preparePaymentListQuery(context.apiClient)),
+      context.queryClient.ensureQueryData(prepareBillingCustomerListQuery(context.apiClient)),
+    ]),
+  component: PaymentListPage,
+})
+
+const paymentCreateRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/payments/new',
+  loader: ({ context }) => context.queryClient.ensureQueryData(prepareBillingCustomerListQuery(context.apiClient)),
+  component: PaymentCreatePage,
+})
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  salesCreateRoute,
+  invoiceListRoute,
+  invoiceCloseRoute,
+  invoiceDetailRoute,
+  paymentListRoute,
+  paymentCreateRoute,
+])
 
 /** 画面の道筋（URL と画面の対応）を組み立てる。テストでは history にメモリ上の履歴を渡す。 */
 export function prepareRouter(routerContext: RouterContext, history?: RouterHistory) {

@@ -59,3 +59,10 @@
 - { word: closable, pos: adjective, ja: 締められること }
 - { word: issuable, pos: adjective, ja: 発行できること }
 - { word: cancelable, pos: adjective, ja: の取消ができること }
+- { word: automatic, pos: adjective, ja: 自動の }
+- { word: identifiable, pos: adjective, ja: 特定できること }
+- { word: identified, pos: adjective, ja: 特定済みの }
+- { word: unidentified, pos: adjective, ja: 仮受の }
+- { word: selected, pos: adjective, ja: 選んだ }
+- { word: normalized, pos: adjective, ja: 正規化した }
+- { word: registered, pos: adjective, ja: 記録した }

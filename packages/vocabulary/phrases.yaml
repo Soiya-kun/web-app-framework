@@ -31,3 +31,5 @@
 - { words: closing cancel, ja: 締めの取消, en: Cancel Closing }
 - { words: tax breakdown, ja: 税率ごとの内訳, en: Tax Breakdown }
 - { words: invoice breakdown, ja: 請求の内訳, en: Invoice Breakdown }
+- { words: payment list, ja: 入金一覧, en: Payments }
+- { words: payment create, ja: 入金登録, en: Register Payment }

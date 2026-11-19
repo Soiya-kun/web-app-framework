@@ -105,6 +105,57 @@
    1. 請求を一覧取得する
    2. 請求を返す
 
+## usecase/payment/identifyPayment.ts
+
+### 入金の特定
+
+- 関数: `identifyPayment`
+- 目的: 振込人を特定できていない入金（仮受）に顧客を入れ、次の締めで請求に載るようにするため。振込依頼人名も覚える。
+- 引数: リポジトリ、特定リクエスト
+- 処理:
+
+   1. 特定リクエストを解釈する
+   2. 入金を取得する
+   3. 顧客を取得する
+   4. 入金特定できることを確かめる
+   5. 入金特定を計画する
+   6. 入金を特定する
+   7. 振込依頼人名保存を計画する
+   8. 振込依頼人名を保存する
+
+## usecase/payment/listPayments.ts
+
+### 入金の一覧取得
+
+- 関数: `listPayments`
+- 目的: 入金を、顧客（仮受を含む）と請求に載せたかどうかとともに示すため。
+- 引数: リポジトリ
+- 処理:
+
+   1. 入金を一覧取得する
+   2. 入金を返す
+
+## usecase/payment/registerPayment.ts
+
+### 入金の記録
+
+- 関数: `registerPayment`
+- 目的: 入金を記録するため。顧客を選んでいなければ振込依頼人名で覚えた顧客にし、それもなければ仮受にする。
+顧客を選んだときは、その振込依頼人名を覚え、次から自動で特定する。
+- 引数: リポジトリ、ID生成器、入金リクエスト
+- 処理:
+
+   1. 入金リクエストを解釈する
+   2. 選んだ顧客を取得する
+   3. 振込依頼人顧客を取得する
+   4. 入金顧客を決める
+   5. 入金IDを割り当てる
+   6. 入金登録を計画する
+   7. 入金を登録する
+   8. 振込依頼人名保存を計画する
+   9. 振込依頼人名を保存する
+   10. 入金登録を返す
+
 ## usecase/sales/createSales.ts
 
 ### 売上の登録
@@ -419,6 +470,20 @@
 
    1. `splitDate(issueDate)`の年を返す
 
+## domain/payerName/payerNameSave.ts
+
+### 振込依頼人名保存の計画
+
+- 関数: `planPayerNameSaves`
+- 目的: 顧客を選んで登録・特定した入金の振込依頼人名を、次から自動で特定できるよう覚えるため。
+顧客を選んでいなければ（自動で特定した・仮受）覚えるものはない。
+- 引数: 振込依頼人名、選んだ顧客
+- 処理:
+
+   1. 選んだ顧客が空である場合
+      1. `[]`を返す
+   2. `[{ payerName, customerId: selectedCustomer.customerId } as PayerNameSave]`を返す
+
 ## domain/payment/entity.ts
 
 ### 入金の復元
@@ -429,6 +494,178 @@
 - 処理:
 
    1. 保存形のを返す
+
+### 入金一覧品目の復元
+
+- 関数: `restorePaymentListItem`
+- 目的: 保存済みの値から一覧の入金を組み立てるため。
+- 引数: 保存形の
+- 処理:
+
+   1. 保存形のを返す
+
+## domain/payment/identifyRequest.ts
+
+### 特定リクエストの解釈
+
+- 関数: `interpretIdentifyRequest`
+- 目的: 画面の入力を、特定に使える値にそろえるため。
+- 引数: 特定リクエスト
+- 処理:
+
+   1. 項目を解釈する（その結果を返す）
+
+## domain/payment/payerPolicy.ts
+
+### 入金顧客の決定
+
+- 関数: `decidePaymentCustomer`
+- 目的: 入金の顧客を決めるため。画面で選んだ顧客を優先し、選んでいなければ振込依頼人名で覚えた顧客にする。
+どちらもなければ null（振込人を特定できていない入金＝仮受）にする。入金を受けるのは請求先だけ。
+- 引数: 選んだ顧客、振込依頼人顧客
+- 処理:
+
+   1. 選んだ顧客が空でない場合
+      1. 請求先でない場合
+         1. エラー（`rejectField('customerId', 'billingCustomerRequired')`）で止める
+      2. 選んだ顧客の顧客IDを返す
+   2. `payerCustomer?.customerId ?? null`を返す
+
+### 入金特定できることの確認
+
+- 関数: `ensurePaymentIdentifiable`
+- 目的: 仮受の入金の顧客を特定してよいかを確かめるため。仮受のままで、まだ請求に載せておらず、相手が請求先であること。
+- 引数: 入金、顧客
+- 処理:
+
+   1. 入金の顧客IDが空でない、または入金の請求IDが空でない場合
+      1. エラー「この入金はすでに顧客を特定済みか、請求に載せています。」で止める
+   2. 請求先でない場合
+      1. エラー（`rejectField('customerId', 'billingCustomerRequired')`）で止める
+
+## domain/payment/paymentCreate.ts
+
+### 入金登録の計画
+
+- 関数: `planPaymentCreate`
+- 目的: 検証済みの入力と決めた顧客から、保存する入金を決めるため。
+- 引数: 入金ID、入金入力、顧客ID
+- 処理:
+
+   1. `{ paymentId, paymentDate: paymentInput.paymentDate, paymentMethod: paymentInput.paymentMethod, paymentAmount: paymentInput.paymentAmount, payerName: paymentInput.payerName, customerId, }`を返す
+
+## domain/payment/paymentIdentify.ts
+
+### 入金特定の計画
+
+- 関数: `planPaymentIdentify`
+- 引数: 入金、顧客
+- 処理:
+
+   1. `{ paymentId: payment.paymentId, customerId: customer.customerId }`を返す
+
+## domain/payment/paymentRequest.ts
+
+### 入金リクエストの解釈
+
+- 関数: `interpretPaymentRequest`
+- 目的: 画面の入力を、入金として扱える値にそろえるため。
+- 引数: 入金リクエスト
+- 処理:
+
+   1. 項目を解釈する（その結果を返す）
+
+## domain/payment/value/payerName.ts
+
+### 振込依頼人名の正規化
+
+- 関数: `normalizePayerName`
+- 目的: 銀行の明細の書き方の違い（半角カナ・全角英数・空白の数）をそろえるため。
+同じ振込人が同じ名前に見えるようにし、振込依頼人名から顧客を特定できるようにする。
+- 引数: テキスト
+- 処理:
+
+   1. `text.normalize('NFKC').trim().replace(/\s+/g, ' ')`を返す
+
+### 振込依頼人名の解釈
+
+- 関数: `interpretPayerName`
+- 目的: 画面から入力された振込依頼人名を受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. 振込依頼人名を正規化する
+   2. 正規化したテキストが空である場合
+      1. エラー「{field}を入力してください。」で止める
+   3. `[...normalizedText]`の長さが最大振込依頼人名長さより大きい場合
+      1. エラー「{field}は{maximum}文字以内で入力してください。」で止める
+   4. 正規化したテキストを返す
+
+## domain/payment/value/paymentAmount.ts
+
+### 入金額の解釈
+
+- 関数: `interpretPaymentAmount`
+- 目的: 画面から入力された金額を、入金額として受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. 前後の空白を除いたテキストを`text.trim()`で求める
+   2. 前後の空白を除いたテキストが空である場合
+      1. エラー「{field}を入力してください。」で止める
+   3. `/^\d+$/.test(trimmedText)`が偽である場合
+      1. エラー「{field}は整数で入力してください。」で止める
+   4. 金額を`Number(trimmedText)`で求める
+   5. 金額が最小入金額より小さい、または金額が最大入金額より大きい場合
+      1. エラー「{field}は{minimum}から{maximum}までで入力してください。」で止める
+   6. 金額を返す
+
+## domain/payment/value/paymentDate.ts
+
+### 入金日の解釈
+
+- 関数: `interpretPaymentDate`
+- 目的: 画面から入力された日付を、入金日として受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. 日付テキストを解釈する（その結果を返す）
+
+## domain/payment/value/paymentId.ts
+
+### 入金IDの割り当て
+
+- 関数: `assignPaymentId`
+- 目的: 新しい入金に ID を割り当てるため。
+- 引数: ID生成器
+- 処理:
+
+   1. IDを生成する（その結果を返す）
+
+### 入金IDの解釈
+
+- 関数: `interpretPaymentId`
+- 目的: 画面から届いた入金の ID を受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. テキストが空である場合
+      1. エラー「{field}を入力してください。」で止める
+   2. テキストを返す
+
+## domain/payment/value/paymentMethod.ts
+
+### 入金方法の解釈
+
+- 関数: `interpretPaymentMethod`
+- 目的: 画面で選んだ入金方法を受け付けるため。
+- 引数: テキスト
+- 処理:
+
+   1. 入金方法を取得する
+   2. 入金方法が空である場合
+      1. エラー「{field}を選んでください。」で止める
+   3. 入金方法を返す
 
 ## domain/refund/entity.ts
 

@@ -1,6 +1,7 @@
 import type { Adjustment } from '../../domain/adjustment/entity'
 import type { Customer } from '../../domain/customer/entity'
 import type { Invoice, InvoiceTax } from '../../domain/invoice/entity'
+import type { PayerNameEntry } from '../../domain/payerName/entity'
 import type { Payment } from '../../domain/payment/entity'
 import type { Refund } from '../../domain/refund/entity'
 import type { Sales } from '../../domain/sales/entity'
@@ -15,6 +16,7 @@ export type InvoiceCounterRow = {
 /** 画面の結合テストで本物の DB の代わりに使う。テーブルごとに、保存の形（Stored）の行の配列を持つ。 */
 export type MemoryDatabase = {
   readonly customer: Stored<Customer>[]
+  readonly payerName: Stored<PayerNameEntry>[]
   readonly invoice: Stored<Invoice>[]
   readonly invoiceTax: Stored<InvoiceTax>[]
   readonly invoiceCounter: InvoiceCounterRow[]
@@ -24,11 +26,12 @@ export type MemoryDatabase = {
   readonly adjustment: Stored<Adjustment>[]
 }
 
-const tableNames = ['customer', 'invoice', 'invoiceTax', 'invoiceCounter', 'sales', 'payment', 'refund', 'adjustment'] as const
+const tableNames = ['customer', 'payerName', 'invoice', 'invoiceTax', 'invoiceCounter', 'sales', 'payment', 'refund', 'adjustment'] as const
 
 export function prepareMemoryDatabase(seed: Partial<MemoryDatabase> = {}): MemoryDatabase {
   return {
     customer: [...(seed.customer ?? [])],
+    payerName: [...(seed.payerName ?? [])],
     invoice: [...(seed.invoice ?? [])],
     invoiceTax: [...(seed.invoiceTax ?? [])],
     invoiceCounter: [...(seed.invoiceCounter ?? [])],

@@ -80,3 +80,21 @@
 - key: unissuedState
   ja: 未発行
   en: Not issued
+- key: identifiedPayment
+  ja: この入金はすでに顧客を特定済みか、請求に載せています。
+  en: This payment already has a customer or is on an invoice.
+- key: paymentIdentified
+  ja: '{customer}の入金として登録しました。'
+  en: 'Registered as a payment from {customer}.'
+- key: unidentifiedPayment
+  ja: 振込人を特定できなかったため、仮受として登録しました。入金の一覧で顧客を特定してください。
+  en: The payer could not be identified, so the payment was registered as unidentified. Identify the customer in the payment list.
+- key: identifyCompleted
+  ja: 顧客を特定しました。
+  en: The customer was identified.
+- key: automaticSelection
+  ja: 振込依頼人名から自動で特定
+  en: Identify from the payer name
+- key: unidentifiedState
+  ja: 仮受
+  en: Unidentified

@@ -2,6 +2,8 @@ import pg from 'pg'
 import type { RepositorySet, RunTransaction } from '../../domain/repositorySet'
 import { prepareCustomerPostgresRepository } from './customerPostgresRepository'
 import { prepareInvoicePostgresRepository } from './invoicePostgresRepository'
+import { preparePayerNamePostgresRepository } from './payerNamePostgresRepository'
+import { preparePaymentPostgresRepository } from './paymentPostgresRepository'
 import { prepareSalesPostgresRepository } from './salesPostgresRepository'
 import { defineStatement, type Executor } from './statement'
 
@@ -65,6 +67,8 @@ export function preparePostgresRepositories(executor: Executor): RepositorySet {
     customerRepository: prepareCustomerPostgresRepository(executor),
     salesRepository: prepareSalesPostgresRepository(executor),
     invoiceRepository: prepareInvoicePostgresRepository(executor),
+    paymentRepository: preparePaymentPostgresRepository(executor),
+    payerNameRepository: preparePayerNamePostgresRepository(executor),
   }
 }
 

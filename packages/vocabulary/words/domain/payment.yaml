@@ -5,6 +5,7 @@
   description: 顧客から受け取ったお金。振込人を特定できていない入金（仮受）もある。
 - word: payer
   pos: noun
+  forms: [payers]
   ja: 振込依頼人
   description: 入金の振込をした人の名前（銀行の明細に出る名前）。顧客の名前と違うことがある。
 - word: transfer

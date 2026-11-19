@@ -54,6 +54,9 @@ async function seedTables(seed: Partial<MemoryDatabase>): Promise<void> {
       [row.customerId, row.customerName, row.billingCustomerId, row.closingDay, row.collectionMonthOffset, row.collectionDay],
     )
   }
+  for (const row of seed.payerName ?? []) {
+    await selectRows('INSERT INTO payer_name (payer_name, customer_id) VALUES ($1, $2)', [row.payerName, row.customerId])
+  }
   for (const row of seed.invoice ?? []) {
     await selectRows(
       'INSERT INTO invoice (invoice_id, billing_customer_id, previous_invoice_id, closing_date, due_date, previous_amount, payment_amount, adjustment_amount, carried_amount, sales_amount, tax_amount, invoice_amount, invoice_number, issue_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
@@ -117,6 +120,7 @@ async function readTables(): Promise<MemoryDatabase> {
     customer: await selectRows(
       'SELECT customer_id AS "customerId", customer_name AS "customerName", billing_customer_id AS "billingCustomerId", closing_day AS "closingDay", collection_month_offset AS "collectionMonthOffset", collection_day AS "collectionDay" FROM customer ORDER BY customer_id',
     ),
+    payerName: await selectRows('SELECT payer_name AS "payerName", customer_id AS "customerId" FROM payer_name ORDER BY payer_name'),
     invoice: await selectRows(
       'SELECT invoice_id AS "invoiceId", billing_customer_id AS "billingCustomerId", previous_invoice_id AS "previousInvoiceId", closing_date AS "closingDate", due_date AS "dueDate", previous_amount AS "previousAmount", payment_amount AS "paymentAmount", adjustment_amount AS "adjustmentAmount", carried_amount AS "carriedAmount", sales_amount AS "salesAmount", tax_amount AS "taxAmount", invoice_amount AS "invoiceAmount", invoice_number AS "invoiceNumber", issue_date AS "issueDate" FROM invoice ORDER BY invoice_id',
     ),

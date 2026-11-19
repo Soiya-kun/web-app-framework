@@ -783,6 +783,97 @@ export const wordList: readonly WordEntry[] = [
     "description": ""
   },
   {
+    "word": "automatic",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "自動の",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Automatic",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "identifiable",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "特定できること",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Identifiable",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "identified",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "特定済みの",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Identified",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "unidentified",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "仮受の",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Unidentified",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "selected",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "選んだ",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Selected",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "normalized",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "正規化した",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Normalized",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "registered",
+    "kind": "system",
+    "pos": "adjective",
+    "forms": [],
+    "ja": "記録した",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Registered",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
     "word": "amount",
     "kind": "system",
     "pos": "noun",
@@ -1939,19 +2030,6 @@ export const wordList: readonly WordEntry[] = [
     "description": ""
   },
   {
-    "word": "method",
-    "kind": "system",
-    "pos": "noun",
-    "forms": [],
-    "ja": "方法",
-    "jaVerb": "",
-    "jaName": "",
-    "en": "Method",
-    "role": false,
-    "avoid": [],
-    "description": ""
-  },
-  {
     "word": "migration",
     "kind": "system",
     "pos": "noun",
@@ -2598,6 +2676,21 @@ export const wordList: readonly WordEntry[] = [
     "description": ""
   },
   {
+    "word": "method",
+    "kind": "system",
+    "pos": "noun",
+    "forms": [
+      "methods"
+    ],
+    "ja": "方法",
+    "jaVerb": "",
+    "jaName": "",
+    "en": "Method",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
     "word": "for",
     "kind": "system",
     "pos": "preposition",
@@ -2700,8 +2793,7 @@ export const wordList: readonly WordEntry[] = [
     "role": false,
     "avoid": [
       "add",
-      "insert",
-      "register"
+      "insert"
     ],
     "description": ""
   },
@@ -3434,6 +3526,60 @@ export const wordList: readonly WordEntry[] = [
     "description": ""
   },
   {
+    "word": "identify",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "特定",
+    "jaVerb": "特定する",
+    "jaName": "",
+    "en": "Identify",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "register",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "記録",
+    "jaVerb": "記録する",
+    "jaName": "",
+    "en": "Register",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "save",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [
+      "saves"
+    ],
+    "ja": "保存",
+    "jaVerb": "保存する",
+    "jaName": "",
+    "en": "Save",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
+    "word": "normalize",
+    "kind": "system",
+    "pos": "verb",
+    "forms": [],
+    "ja": "正規化",
+    "jaVerb": "正規化する",
+    "jaName": "",
+    "en": "Normalize",
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
     "word": "invoice",
     "kind": "domain",
     "pos": "noun",
@@ -3601,7 +3747,9 @@ export const wordList: readonly WordEntry[] = [
     "word": "payer",
     "kind": "domain",
     "pos": "noun",
-    "forms": [],
+    "forms": [
+      "payers"
+    ],
     "ja": "振込依頼人",
     "jaVerb": "",
     "jaName": "",
@@ -4029,6 +4177,22 @@ export const phraseList: readonly PhraseEntry[] = [
     ],
     "ja": "請求の内訳",
     "en": "Invoice Breakdown"
+  },
+  {
+    "words": [
+      "payment",
+      "list"
+    ],
+    "ja": "入金一覧",
+    "en": "Payments"
+  },
+  {
+    "words": [
+      "payment",
+      "create"
+    ],
+    "ja": "入金登録",
+    "en": "Register Payment"
   }
 ]
 
@@ -4167,6 +4331,36 @@ export const messageList = [
     "key": "unissuedState",
     "ja": "未発行",
     "en": "Not issued"
+  },
+  {
+    "key": "identifiedPayment",
+    "ja": "この入金はすでに顧客を特定済みか、請求に載せています。",
+    "en": "This payment already has a customer or is on an invoice."
+  },
+  {
+    "key": "paymentIdentified",
+    "ja": "{customer}の入金として登録しました。",
+    "en": "Registered as a payment from {customer}."
+  },
+  {
+    "key": "unidentifiedPayment",
+    "ja": "振込人を特定できなかったため、仮受として登録しました。入金の一覧で顧客を特定してください。",
+    "en": "The payer could not be identified, so the payment was registered as unidentified. Identify the customer in the payment list."
+  },
+  {
+    "key": "identifyCompleted",
+    "ja": "顧客を特定しました。",
+    "en": "The customer was identified."
+  },
+  {
+    "key": "automaticSelection",
+    "ja": "振込依頼人名から自動で特定",
+    "en": "Identify from the payer name"
+  },
+  {
+    "key": "unidentifiedState",
+    "ja": "仮受",
+    "en": "Unidentified"
   }
 ] as const satisfies readonly MessageEntry[]
 

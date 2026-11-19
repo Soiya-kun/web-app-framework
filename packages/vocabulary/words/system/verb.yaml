@@ -4,7 +4,7 @@
   ja: 登録
   jaVerb: 登録する
   en: Create
-  avoid: [add, insert, register]
+  avoid: [add, insert]
 - word: find
   pos: verb
   ja: 取得
@@ -230,3 +230,20 @@
   pos: verb
   ja: 印付け
   jaVerb: 印を付ける
+- word: identify
+  pos: verb
+  ja: 特定
+  jaVerb: 特定する
+- word: register
+  pos: verb
+  ja: 記録
+  jaVerb: 記録する
+- word: save
+  pos: verb
+  ja: 保存
+  jaVerb: 保存する
+  forms: [saves]
+- word: normalize
+  pos: verb
+  ja: 正規化
+  jaVerb: 正規化する
