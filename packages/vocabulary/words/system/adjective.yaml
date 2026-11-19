@@ -44,3 +44,5 @@
 - { id: external, ja: { stem: 外, class: no } }
 - { id: pending, ja: { stem: 未着手, class: no } }
 - { id: mistaken, ja: { stem: 誤り, class: no } }
+- { id: first, ja: { stem: 最初, class: no } }
+- { id: middle, ja: { stem: 中間, class: no } }

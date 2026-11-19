@@ -3,12 +3,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/translateSource.ts"
+    ".": "./src/translateSource.ts",
+    "./model": "./src/model/buildModel.ts",
+    "./model-types": "./src/model/types.ts"
   },
   "scripts": {
     "translate": "tsx src/cli.ts",
     "typecheck": "tsc --noEmit",
-    "sql:ledger": "tsx src/sqlLedger.ts"
+    "sql:ledger": "tsx src/sqlLedger.ts",
+    "model": "tsx src/model/cli.ts"
   },
   "dependencies": {
     "@app/vocabulary": "workspace:*",

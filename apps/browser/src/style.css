@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* 見た目の調整は、ここ（色・角丸・書体）と src/component の部品の2か所で行う。 */
+@theme {
+  --color-canvas: #f4f5f7;
+  --color-surface: #ffffff;
+  --color-line: #d5d9e0;
+  --color-ink: #1d2330;
+  --color-muted: #5a6273;
+  --color-primary: #1f4fd1;
+  --color-primary-soft: #e8f0fe;
+  --color-outside: #eef0f3;
+  --color-event: #fff4e0;
+  --color-event-line: #d9a441;
+  --color-time: #f1ecfb;
+  --color-time-line: #8a6fd1;
+  --color-pending: #fdecea;
+  --color-pending-line: #b42318;
+  --radius-control: 0.375rem;
+  --font-sans: "Noto Sans JP", "Hiragino Sans", system-ui, sans-serif;
+  --font-mono: "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+body {
+  @apply bg-canvas text-ink font-sans;
+}

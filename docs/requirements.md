@@ -72,6 +72,8 @@ TypeScript で業務 Web アプリを作るための土台（フレームワー�
 | 単語帳の形 | 言語に依らない概念 ＋ 言語ごとの語形（活用の型）と文法。英語・日本語とも1対1にし、画面の文言（i18n の文言ファイル）も同じマスタから生成する。編集は開発者だけ（[単語帳の設計](vocabulary-design.md)） | 2026-11-19 |
 | 業務フローの正本 | TypeScript で書く（参照は import、名前は単語帳の言葉）。JSON は解析して作るブラウザ向けの生成物にする（[このリポジトリの考え方](concept.md) の6章） | 2026-11-19 |
 | 業務フローの未着手 | 中身が空の段・シナリオ・ケースを許し、数を出す（ヒアリングから育てるため） | 2026-11-19 |
+| 業務フローの書き方 | 業務フロー（要約）・シナリオ（利用者の目的）・ケース（主成功シナリオ・バリエーション・拡張）をコーバーンのユースケースに合わせて書き、規則を `pnpm flow:check` で止める。画面のテストはシナリオのケースにだけ書く（[業務フローの書き方の規則](flow-rules.md)） | 2026-11-19 |
+| コードのブラウザ | 静的解析で作ったモデルを読む静的な画面（`apps/browser`）。開いている間はソースの保存ごとに後ろでモデルを作り直す | 2026-11-19 |
 | 翻訳ツール | usecase・domain を対象に、制御構文も訳し、CLI で Markdown を作る | 2026-11-18 |
 | コメント | 当面は目的だけ（TSDoc の1行） | 2026-11-18 |
 | 大きなテスト | 当面持たない | 2026-11-18 |
@@ -86,9 +88,11 @@ TypeScript で業務 Web アプリを作るための土台（フレームワー�
 ```text
 web-app-framework/
 ├─ apps/web/                  # React の画面（Vite・TanStack Router・TanStack Query）
-│  ├─ src/sales/              # 売上登録の画面と、その画面の結合テスト
-│  ├─ src/shared/             # API クライアント・ルーター・文言・画面の土台
-│  └─ test/renderScreen.tsx   # 画面の結合テストの道具
+│  ├─ src/                    # 画面（sales・invoice・payment）と、API クライアント・ルーター・文言・画面の土台（shared）
+│  ├─ scenario/               # シナリオ（*.ts）と、そのケース＝画面の結合テスト（*.test.tsx）
+│  ├─ flow/                   # 業務フローと、その E2E（flow.test.tsx）
+│  └─ test/launchApp.tsx      # 画面をインプロセスで開く道具
+├─ apps/browser/              # コードのブラウザ（モデルを読む静的な画面）
 ├─ apps/server/               # 本番の API サーバー（Node で Hono を常駐）とマイグレーションの実行。Dockerfile
 ├─ packages/backend/          # Hono の API
 │  ├─ database/migration/     # スキーマ（手書きの SQL のマイグレーション）
@@ -102,8 +106,9 @@ web-app-framework/
 │  │  └─ production.ts        # 本番の部品（PostgreSQL で組み立てる）
 │  └─ test/repository/        # repository の契約のテスト（モック DB と PostgreSQL に同じテストを流す）
 ├─ packages/vocabulary/       # 単語帳（YAML）と、そこから作る辞書・文法・画面の文言ファイル
+├─ packages/flow/             # 業務フロー・シナリオ・ケースの書き方と、画面の操作の部品
 ├─ packages/eslint-plugin/    # 単語帳・関数名の文法・usecase の書き方の lint
-├─ packages/translator/       # 日本語翻訳ツールと SQL の台帳の生成
+├─ packages/translator/       # 日本語翻訳ツール・SQL の台帳の生成・コードのブラウザのモデル（静的解析）
 ├─ infra/                     # AWS の CDK
 ├─ docs/generated/            # 翻訳ツールの出力・SQL の台帳
 └─ docker-compose.yaml        # テスト用の PostgreSQL
@@ -114,7 +119,7 @@ web-app-framework/
 | コマンド | 内容 |
 | --- | --- |
 | `pnpm install` | 依存を入れる |
-| `pnpm check` | 単語帳の生成物・lint・型・テスト・翻訳と SQL の台帳の生成物をまとめて確かめる（Docker は要らない） |
+| `pnpm check` | 単語帳の生成物・lint・型・テスト・翻訳と SQL の台帳の生成物・業務フローの書き方をまとめて確かめる（Docker は要らない） |
 | `pnpm test` | テストだけ（Docker は要らない） |
 | `pnpm test:database` | Docker の PostgreSQL を起動し、repository のテストを流す |
 | `pnpm database:down` | テスト用の PostgreSQL を止める |
@@ -122,6 +127,9 @@ web-app-framework/
 | `pnpm vocabulary:find <日本語>` | 日本語の用語から英語の名前を引く |
 | `pnpm translate` | 処理の日本語訳を作り直す |
 | `pnpm sql:ledger` | SQL の台帳を作り直す（DB の名前の単語帳の検査も行う） |
+| `pnpm flow:check` | 業務フローの書き方の規則を確かめる（`pnpm check` に含まれる） |
+| `pnpm model` | コードのブラウザのモデル（`apps/browser/generated/model.json`）を作る |
+| `pnpm dev:browser` | コードのブラウザを開く（ソースを保存するたびにモデルを作り直す） |
 | `pnpm dev:api` / `pnpm dev:web` | 手元で API サーバー（`DATABASE_URL` が要る）と画面を動かす。画面の `/api` は API サーバーへ中継する |
 | `pnpm --filter @app/infra synth` | AWS の CloudFormation のテンプレートを作る（`-c stage=dev` などで環境を選ぶ） |
 
@@ -130,7 +138,7 @@ web-app-framework/
 | 確かめたこと | 結果 |
 | --- | --- |
 | 画面の操作から usecase まで、通信なしで流せるか | 流せる。画面のコードは本番と同じで、テストでは `fetch` だけを差し替える |
-| 画面の結合テストの速さ | 1件 約 20ms（最初の1件だけ準備込みで約 120ms）。Docker なしのテスト全体（352件。うち単語帳の往復のテスト 237件）は約 6 秒 |
+| 画面の結合テストの速さ | 1件 約 50ms（画面をナビゲーションから開く分を含む。2026-11-19 の環境）。業務フロー「月次の請求」の本線の E2E は約 0.45 秒。Docker なしのテスト全体（441件）は約 8 秒 |
 | バックエンドの処理の速さ | `app.request` 1回あたり約 0.05ms（モック DB）。画面のテストの時間はほぼ画面側 |
 | 境界値を画面から厚く確かめられるか | 売上金額・売上日・品名の境界、返品・値引の符号、軽減税率、顧客の未選択、複数の項目の同時の誤りを、画面の結合テストだけで確かめた |
 | 業務の場面を画面から確かめられるか | 請求の締めで、初回・親会社への一括請求・分割入金・振込手数料・不足入金・過入金（前受）・返金・一括入金・仮受・締め後の過去日付の売上・締日と入金期日・前回の請求との関係を、画面の操作から確かめた（[業務の作り](domain-model.md) の4章）。発行（年ごとの請求番号）・締めの取消も同じ |
@@ -395,13 +403,13 @@ flowchart LR
 
 | 点 | 状況 |
 | --- | --- |
-| 業務フローのブラウザで、シナリオと usecase・SQL のつながりをどう取るか（静的解析だけか、テストの実行の記録を使うか） | 条件は「軽いこと（待ち時間が少ない）」と「非同期で保守できること」。静的解析を先に作り、実行の記録は試して時間を測ってから決める（[このリポジトリの考え方](concept.md) の 6.7） |
+| 業務フローのブラウザで、シナリオと usecase・SQL のつながりをテストの実行の記録でも取るか | 静的解析で作った（全体で約 0.2 秒、保存のたびに後ろで作り直す）。いまの書き方なら、押すボタンから処理・SQL まで結べるので、実行の記録は足していない。静的解析で結べない書き方が増えたら考える（[このリポジトリの考え方](concept.md) の 6.7） |
 
 ## 8. 次の作業
 
 サンプルの業務は、売上の登録・請求の締めと発行・入金の記録と仮受の特定で区切った（返金・調整の登録・顧客・残高の画面は作らない）。次は土台の側を詰める。
 
-1. 業務フローとコードのブラウザ（[このリポジトリの考え方](concept.md) の6章・11章）。フローとシナリオの書き方を作って「月次の請求」を最上位の E2E としてインプロセスで通し、静的解析でモデルを作り、ブラウザを作る。
+1. 最上位の業務フローを、実ブラウザ（Playwright）と実 DB でも流す。ブラウザの英語の表示。
 2. CI（GitHub Actions で `pnpm check` と `pnpm test:database`）と、配備の自動化（GitHub Actions から CDK とマイグレーション）。
 3. 認証（Cognito のユーザープールと、API での ID トークンの検証）。
 4. 請求書の PDF の出力と、自社の情報（名前・登録番号など）の設定。

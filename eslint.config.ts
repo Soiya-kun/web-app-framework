@@ -48,7 +48,7 @@ export default defineConfig(
 
   // useEffect は一切使わない（useLayoutEffect・useInsertionEffect も同じ）。
   {
-    files: ['apps/web/**/*.{ts,tsx}'],
+    files: ['apps/web/**/*.{ts,tsx}', 'apps/browser/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',

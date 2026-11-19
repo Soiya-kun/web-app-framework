@@ -75,6 +75,10 @@ export function buildConcepts(files: readonly RawFile[]): { readonly concepts: C
         problems.push(`${where}: id は英字の camelCase にする（${String(id)}）`)
         return
       }
+      if (concepts.some((concept) => concept.id === id)) {
+        problems.push(`${where}: id「${id}」がほかの項目と同じ（1つの概念は1か所にだけ書く）`)
+        return
+      }
       const isCompound = file.category === 'compound'
       const category = (isCompound ? 'noun' : (file.category ?? readText(entry, 'category'))) as Category
       if (!categories.includes(category)) {

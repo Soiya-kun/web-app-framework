@@ -18,7 +18,7 @@ const packageDirectory = join(dirname(fileURLToPath(import.meta.url)), '..')
 const repositoryRoot = join(packageDirectory, '../..')
 const generatedDirectory = join(packageDirectory, 'src/generated')
 /** 見出し・ボタンのキーを集める、画面のコードの場所。 */
-const screenSourceDirectories = ['apps/web/src']
+const screenSourceDirectories = ['apps/web/src', 'apps/browser/src']
 const messageFrames: readonly MessageFrame[] = ['request', 'prompt', 'done', 'progress', 'missing']
 
 const problems: string[] = []

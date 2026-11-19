@@ -155,3 +155,28 @@
 - { id: endpoint, ja: { form: API の入口 } }
 - { id: rule, ja: { form: 規則 } }
 - { id: subfunction, ja: { form: 下位機能, attach: direct } }
+- { id: english, ja: { form: 英語 } }
+- { id: japanese, ja: { form: 日本語 } }
+- { id: lane, ja: { form: レーン, attach: direct } }
+- { id: diagram, ja: { form: 図, attach: direct } }
+- { id: mainline, ja: { form: 本線 } }
+- { id: note, ja: { form: 備考 } }
+- { id: course, ja: { form: 経路 } }
+# ブラウザ（レーン図）の部品で使う名詞。
+- { id: model, ja: { form: モデル } }
+- { id: node, en: { plural: nodes }, ja: { form: 節 } }
+- { id: group, en: { plural: groups }, ja: { form: まとまり } }
+- { id: box, en: { plural: boxes }, ja: { form: 箱 } }
+- { id: width, ja: { form: 幅 } }
+- { id: height, ja: { form: 高さ } }
+- { id: depth, ja: { form: 深さ } }
+- { id: top, ja: { form: 上端 } }
+- { id: tone, ja: { form: 色調 } }
+- { id: style, ja: { form: 見た目 } }
+- { id: prefix, ja: { form: 頭 } }
+- { id: line, ja: { form: 線 } }
+- { id: source, ja: { form: ソース } }
+- { id: home, ja: { form: ホーム } }
+- { id: badge, ja: { form: バッジ } }
+- { id: code, ja: { form: コード } }
+- { id: margin, ja: { form: 余白 } }
