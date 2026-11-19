@@ -64,15 +64,15 @@ flowchart TB
   Q1 --> T1[(テーブル<br>payment)]
 ```
 
-| 階層 | 何を表すか | 正本（どこに書くか） |
-| --- | --- | --- |
-| 業務フロー | 業務のひと続き（月次の請求） | `apps/web/flow/*.ts`（TypeScript） |
-| 段 | フローの1ステップ（画面の操作・システムの外の業務・時の経過など） | 同上 |
-| シナリオ | 1人が1回の操作で目的を果たす手順 | `apps/web/scenario/**/*.ts` |
-| ケース | 同じシナリオの入力や条件の違い | `apps/web/scenario/**/*.test.tsx`（画面の結合テスト） |
-| 処理 | 業務処理の手順 | `packages/backend/src/usecase` |
-| 規則 | 判断・計算 | `packages/backend/src/domain` |
-| SQL・テーブル | 保存と読み出し | `packages/backend/src/repository`・マイグレーション |
+各階層が表すものと、書く場所（正本）です。
+
+- **業務フロー**：業務のひと続き（月次の請求）。`apps/web/flow/*.ts`
+- **段**：業務フローの1ステップ（画面の操作・システムの外の業務・時の経過など）。業務フローと同じファイル
+- **シナリオ**：1人が1回の操作で目的を果たす手順。`apps/web/scenario/**/*.ts`
+- **ケース**：同じシナリオの入力や条件の違い（画面の結合テスト）。`apps/web/scenario/**/*.test.tsx`
+- **処理**：業務処理の手順。`packages/backend/src/usecase`
+- **規則**：判断・計算。`packages/backend/src/domain`
+- **SQL・テーブル**：保存と読み出し。`packages/backend/src/repository` とマイグレーション
 
 ### 2.2 4つの原則
 
