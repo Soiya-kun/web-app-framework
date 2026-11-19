@@ -180,3 +180,36 @@
 - { id: badge, ja: { form: バッジ } }
 - { id: code, ja: { form: コード } }
 - { id: margin, ja: { form: 余白 } }
+- { id: canvas, ja: { form: キャンバス } }
+- { id: layer, ja: { form: レイヤー } }
+- { id: scale, ja: { form: 倍率 } }
+- { id: guide, ja: { form: 案内 } }
+- { id: overview, ja: { form: 一覧 } }
+# キャンバス（無限に広がる領域）で使う名詞。
+- { id: card, en: { plural: cards }, ja: { form: カード } }
+- { id: frame, en: { plural: frames }, ja: { form: フレーム } }
+- { id: viewport, ja: { form: 表示領域 } }
+- { id: rail, ja: { form: レール } }
+- { id: board, ja: { form: ボード } }
+- { id: area, ja: { form: 領域 } }
+- { id: view, ja: { form: 視点 } }
+- { id: icon, ja: { form: アイコン } }
+- { id: branch, en: { plural: branches }, ja: { form: 枝 } }
+- { id: space, ja: { form: スペース } }
+- { id: toolbar, ja: { form: ツールバー } }
+- { id: panel, ja: { form: パネル } }
+- { id: size, ja: { form: 大きさ } }
+- { id: rectangle, ja: { form: 矩形 } }
+- { id: ratio, ja: { form: 比 } }
+- { id: pointer, ja: { form: ポインタ } }
+- { id: wheel, ja: { form: ホイール } }
+- { id: plus, ja: { form: プラス } }
+- { id: minus, ja: { form: マイナス } }
+- { id: chevron, ja: { form: 山形 } }
+- { id: center, ja: { form: 中央 } }
+- { id: bottom, ja: { form: 下端 } }
+- { id: origin, ja: { form: 起点 } }
+- { id: point, ja: { form: 点 } }
+- { id: curve, ja: { form: 曲線 } }
+- { id: factor, ja: { form: 係数 } }
+- { id: limit, ja: { form: 上限 } }

@@ -1,7 +1,7 @@
 // コードのブラウザの画面のテスト。このリポジトリのソースを解析したモデルを渡し、業務フローから SQL までたどれることを確かめる。
 import { buildModel } from '@app/translator/model'
 import { createMemoryHistory } from '@tanstack/react-router'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { PointerEventsCheckLevel, userEvent } from '@testing-library/user-event'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -46,7 +46,7 @@ describe('コードのブラウザ', () => {
   })
 
   test('名前の一部で、業務フロー・シナリオ・処理・テーブルを探せる', async () => {
-    const { user } = await launchBrowser('/')
+    const { user } = await launchBrowser('/list')
 
     await user.type(screen.getByLabelText('検索'), '入金')
 
@@ -62,5 +62,56 @@ describe('コードのブラウザ', () => {
     await user.type(screen.getByLabelText('検索'), 'billing')
 
     expect(screen.getByRole('region', { name: /用語集/ })).toHaveTextContent('請求先')
+  })
+})
+
+describe('キャンバス', () => {
+  test('業務フローをフレームとして並べ、最上位は開き、子フローは閉じて置く', async () => {
+    await launchBrowser('/')
+
+    expect(screen.getByRole('figure', { name: '月次の請求のレーン図' })).toBeVisible()
+    expect(screen.getByRole('button', { name: /^入金管理/, expanded: false })).toBeVisible()
+  })
+
+  test('子フローを開き、段 → シナリオ → 処理 → SQL → テーブルとカードを開いていける', async () => {
+    const { user } = await launchBrowser('/')
+    const frame = screen.getByRole('region', { name: '月次の請求' })
+
+    await user.click(within(frame).getByRole('button', { name: '8 入金管理' }))
+    await user.click(within(frame).getByRole('button', { name: '8.2 入金を記録する' }))
+    const scenarioCard = within(frame).getByRole('article', { name: '入金を記録する' })
+    expect(within(scenarioCard).getByRole('list', { name: '主な成功シナリオ' })).toHaveTextContent('「記録」を押す')
+
+    await user.click(within(scenarioCard).getByRole('button', { name: /入金の記録/ }))
+    const workCard = within(frame).getByRole('article', { name: '入金の記録' })
+    await user.click(within(workCard).getByRole('button', { name: /createPayment/ }))
+    const statementCard = within(frame).getByRole('article', { name: 'createPayment' })
+    expect(within(statementCard).getByLabelText('createPayment')).toHaveTextContent('INSERT INTO payment')
+
+    await user.click(within(statementCard).getByRole('button', { name: /入金/ }))
+    expect(within(frame).getByRole('article', { name: '入金' })).toHaveTextContent('payer_name')
+
+    await user.click(within(frame).getByRole('button', { name: '8.2 入金を記録する' }))
+    expect(within(frame).queryByRole('article', { name: '入金を記録する' })).toBeNull()
+  })
+
+  test('ボタン・Ctrl＋ホイールで拡大・縮小し、背景のドラッグで動かす', async () => {
+    const { user } = await launchBrowser('/')
+    const canvas = screen.getByRole('application', { name: 'キャンバス' })
+    const scaleButton = screen.getByRole('button', { name: '倍率' })
+    const board = canvas.firstElementChild as HTMLElement
+
+    await user.click(screen.getByRole('button', { name: '拡大' }))
+    expect(scaleButton).toHaveTextContent('125%')
+    fireEvent.wheel(canvas, { ctrlKey: true, deltaY: 200 })
+    expect(Number.parseInt(scaleButton.textContent ?? '', 10)).toBeLessThan(125)
+    await user.click(scaleButton)
+    expect(scaleButton).toHaveTextContent('100%')
+
+    const initialStyle = board.style.transform
+    fireEvent.pointerDown(canvas, { button: 0, pointerId: 1, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 160, clientY: 130 })
+    fireEvent.pointerUp(canvas, { pointerId: 1 })
+    expect(board.style.transform).not.toBe(initialStyle)
   })
 })

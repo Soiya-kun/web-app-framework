@@ -2,52 +2,9 @@
 // 子フローは中を開いて並べ、上に子フローの名前の帯を出す。
 import type { FlowNode, FlowStepNode } from '@app/translator/model-types'
 import { Link } from '@tanstack/react-router'
-import { useModel, type ModelTable } from '../model'
+import { useModel } from '../model'
 import { text } from '../text'
-
-type DiagramStep = {
-  readonly number: string
-  readonly step: FlowStepNode
-  readonly laneKey: string
-  readonly laneTitle: string
-  readonly pending: boolean
-}
-
-type DiagramGroup = {
-  readonly flowId: string
-  readonly title: string
-  readonly first: number
-  readonly last: number
-  readonly depth: number
-}
-
-const columnWidth = 152
-const boxWidth = 132
-const boxHeight = 64
-const laneHeight = 88
-const labelWidth = 112
-// 段の箱の横の余白（図の左端から最初の箱まで）。
-const diagramMargin = 8
-const groupHeight = 24
-
-/** 子フローを開いて、段を1列に並べる。 */
-function expandSteps(table: ModelTable, flow: FlowNode, prefix = '', depth = 0, steps: DiagramStep[] = [], groups: DiagramGroup[] = []) {
-  for (const step of flow.steps) {
-    const number = `${prefix}${step.number}`
-    const child = step.flowId === null ? undefined : table.flows.get(step.flowId)
-    if (step.kind === 'nest' && child !== undefined && depth < 3) {
-      const first = steps.length
-      expandSteps(table, child, `${number}.`, depth + 1, steps, groups)
-      groups.push({ flowId: child.id, title: child.title, first, last: steps.length - 1, depth })
-      continue
-    }
-    const laneKey = step.kind === 'elapse' ? 'time' : (step.actor ?? 'unknown')
-    const laneTitle = step.kind === 'elapse' ? text.label('timeLapse') : (step.actorTitle ?? '')
-    const pending = step.scenarioId !== null && table.scenarios.get(step.scenarioId)?.pending === true
-    steps.push({ number, step, laneKey, laneTitle, pending })
-  }
-  return { steps, groups }
-}
+import { kindLabel, laneSize, arrangeLanes } from './laneLayout'
 
 const boxStyle: Readonly<Record<FlowStepNode['kind'], string>> = {
   operate: 'border-primary bg-surface',
@@ -57,25 +14,12 @@ const boxStyle: Readonly<Record<FlowStepNode['kind'], string>> = {
   nest: 'border-line bg-surface',
 }
 
-const kindLabel: Readonly<Record<FlowStepNode['kind'], string>> = {
-  operate: text.label('screenOperation'),
-  outside: text.label('outsideWork'),
-  occur: text.label('externalEvent'),
-  elapse: text.label('timeLapse'),
-  nest: text.label('childFlow'),
-}
+const { column: columnWidth, boxWidth, boxHeight, lane: laneHeight, label: labelWidth, group: groupHeight } = laneSize
 
 export function FlowDiagram({ flow }: { readonly flow: FlowNode }) {
   const table = useModel()
-  const { steps, groups } = expandSteps(table, flow)
-  const lanes = [...new Map(steps.map((step) => [step.laneKey, step.laneTitle])).entries()]
-  const laneIndex = new Map(lanes.map(([laneKey], index) => [laneKey, index]))
-  const groupDepth = groups.reduce((depth, group) => Math.max(depth, group.depth + 1), 0)
-  const top = groupDepth * groupHeight
-  const width = diagramMargin * 2 + steps.length * columnWidth
-  const height = top + lanes.length * laneHeight
-  const measureBoxLeft = (index: number) => diagramMargin + index * columnWidth + (columnWidth - boxWidth) / 2
-  const measureBoxTop = (laneKey: string) => top + (laneIndex.get(laneKey) ?? 0) * laneHeight + (laneHeight - boxHeight) / 2
+  // ページのレーン図は、子フローをすべて開く。
+  const { steps, groups, lanes, top, width, height, measureBoxLeft, measureBoxTop } = arrangeLanes(table, flow, () => true)
 
   return (
     <figure aria-label={`${flow.title}の${text.label('laneDiagram')}`} className="flex rounded-control border border-line bg-surface">

@@ -59,3 +59,11 @@
   free: { ja: そのあと、本線の次の段へ戻る。, en: Then return to the next step of the mainline. }
 - key: endCourse
   free: { ja: この経路はここで終える（本線へ戻らない）。, en: This course ends here without returning to the mainline. }
+- key: canvasGuide
+  free: { ja: ドラッグで移動・Ctrl（⌘）＋ホイールで拡大と縮小・段を押すと中を開く, en: Drag to move. Ctrl (⌘) + wheel to zoom. Press a step to open it. }
+- key: outsideWorkNote
+  free: { ja: システムの外で行う業務。テストでは何もせず、業務フローに置いて流れを示す。, en: Work done outside the system. Tests do nothing here; it shows the flow. }
+- key: occurNote
+  free: { ja: システムの外で起きるイベント。テストでは何もしない（必要ならデータを作る段にする）。, en: An event outside the system. Tests do nothing here unless data is needed. }
+- key: elapseNote
+  free: { ja: 時の経過。テストでは今日の日付をこの日にする。, en: Time passes. Tests set today to this date. }
