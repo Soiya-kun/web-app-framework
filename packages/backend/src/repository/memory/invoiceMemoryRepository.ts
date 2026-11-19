@@ -24,7 +24,7 @@ function billRows<Row extends BilledRow>(rows: Row[], readId: (row: Row) => stri
 }
 
 /** 請求に載せた行を、載せる前に戻す。 */
-function unbillRows<Row extends BilledRow>(rows: Row[], invoiceId: string): void {
+function detachRows<Row extends BilledRow>(rows: Row[], invoiceId: string): void {
   rows.forEach((row, index) => {
     if (row.invoiceId === invoiceId) {
       rows[index] = { ...row, invoiceId: null }
@@ -179,10 +179,10 @@ export function prepareInvoiceMemoryRepository(database: MemoryDatabase): Invoic
       if (index === -1) {
         throw new ConflictError('issuedInvoice')
       }
-      unbillRows(database.sales, closingCancel.invoiceId)
-      unbillRows(database.payment, closingCancel.invoiceId)
-      unbillRows(database.refund, closingCancel.invoiceId)
-      unbillRows(database.adjustment, closingCancel.invoiceId)
+      detachRows(database.sales, closingCancel.invoiceId)
+      detachRows(database.payment, closingCancel.invoiceId)
+      detachRows(database.refund, closingCancel.invoiceId)
+      detachRows(database.adjustment, closingCancel.invoiceId)
       const remainingTaxes = database.invoiceTax.filter((tax) => tax.invoiceId !== closingCancel.invoiceId)
       database.invoiceTax.splice(0, database.invoiceTax.length, ...remainingTaxes)
       database.invoice.splice(index, 1)

@@ -320,10 +320,10 @@ export function describeRepositoryContract(name: string, prepareTarget: () => Pr
       test('ほかの操作で先に載った行があれば止め、何も変えない', async () => {
         await target.seedTables({ invoice: [{ ...octoberInvoice, invoiceId: 'invoice-0000', closingDate: '2026-09-30' }] })
         await target.seedTables({ sales: [{ ...otherSales, salesId: 'sales-0009', customerId: 'customer-0002', invoiceId: 'invoice-0000' }] })
-        const conflictingCreate = { ...octoberInvoiceCreate, salesIds: ['sales-0001', 'sales-0009'] } as unknown as InvoiceCreate
+        const duplicateCreate = { ...octoberInvoiceCreate, salesIds: ['sales-0001', 'sales-0009'] } as unknown as InvoiceCreate
 
         await expect(
-          target.runTransaction((repositories) => repositories.invoiceRepository.createInvoice(conflictingCreate)),
+          target.runTransaction((repositories) => repositories.invoiceRepository.createInvoice(duplicateCreate)),
         ).rejects.toBeInstanceOf(ConflictError)
 
         const tables = await target.readTables()

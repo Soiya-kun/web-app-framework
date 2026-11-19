@@ -1,4 +1,4 @@
-import type { Locale } from '@app/vocabulary'
+import type { Locale } from '@app/vocabulary/text'
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 import { ApiClientProvider, type ApiClient } from './apiClient'

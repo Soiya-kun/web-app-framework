@@ -1,4 +1,4 @@
-import type { Locale } from '@app/vocabulary'
+import type { Locale } from '@app/vocabulary/text'
 
 const yenFormats = {
   ja: new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }),

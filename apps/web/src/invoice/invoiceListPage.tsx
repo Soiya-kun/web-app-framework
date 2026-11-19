@@ -42,7 +42,7 @@ export function InvoiceListPage() {
               <Cell>{invoice.billingCustomerName}</Cell>
               <Cell>{invoice.dueDate}</Cell>
               <Cell align="right">{displayYen(text.locale, invoice.invoiceAmount)}</Cell>
-              <Cell>{invoice.invoiceNumber ?? text.message('unissuedState')}</Cell>
+              <Cell>{invoice.invoiceNumber ?? text.label('unissued')}</Cell>
             </tr>
           ))}
         </tbody>

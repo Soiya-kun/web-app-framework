@@ -33,7 +33,7 @@ afterAll(async () => {
 })
 
 /** 実行した SQL の名前を記録する。テストで、どの SQL が流れたかを確かめる。 */
-function prepareRecordingExecutor(executor: Executor, statementNames: string[]): Executor {
+function prepareTracingExecutor(executor: Executor, statementNames: string[]): Executor {
   return {
     async execute(statement, values) {
       statementNames.push(statement.name)
@@ -146,7 +146,7 @@ async function readTables(): Promise<MemoryDatabase> {
 async function preparePostgresTarget(statementNames: string[] = []): Promise<RepositoryTarget> {
   await pool.query('TRUNCATE customer, payer_name, invoice, invoice_tax, invoice_counter, sales, payment, refund, adjustment CASCADE')
   return {
-    repositories: preparePostgresRepositories(prepareRecordingExecutor(prepareClientExecutor(pool), statementNames)),
+    repositories: preparePostgresRepositories(prepareTracingExecutor(prepareClientExecutor(pool), statementNames)),
     runTransaction: preparePostgresTransaction(pool),
     seedTables,
     readTables,

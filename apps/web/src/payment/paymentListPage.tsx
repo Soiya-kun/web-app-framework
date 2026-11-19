@@ -11,6 +11,7 @@ import { prepareFormFeedback, readField } from '../shared/formFeedback'
 import { useText } from '../shared/text'
 import { displayYen } from '../shared/yen'
 import { paymentQueryKey, postIdentify, preparePaymentListQuery } from './paymentApi'
+import { labelKey } from '@app/vocabulary/text'
 
 type IdentifyRequest = { readonly paymentId: string; readonly customerId: string }
 
@@ -25,7 +26,7 @@ export function PaymentListPage() {
     mutationFn: (identifyRequest: IdentifyRequest) => postIdentify(apiClient, identifyRequest.paymentId, identifyRequest.customerId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: paymentQueryKey }),
   })
-  const feedback = prepareFormFeedback(text, identifyMutation.error, { customerId: 'customer' })
+  const feedback = prepareFormFeedback(text, identifyMutation.error, { customerId: labelKey('customer') })
 
   function submitIdentify(event: FormEvent<HTMLFormElement>, paymentId: string) {
     event.preventDefault()
@@ -64,7 +65,7 @@ export function PaymentListPage() {
                 {payment.customerName ?? (
                   <form onSubmit={(event) => submitIdentify(event, payment.paymentId)} className="flex gap-2">
                     <SelectInput name="customerId" aria-label={text.label('customer')} defaultValue="">
-                      <option value="">{text.message('unidentifiedState')}</option>
+                      <option value="">{text.label('unidentified')}</option>
                       {billingCustomers.map((customer) => (
                         <option key={customer.customerId} value={customer.customerId}>
                           {customer.customerName}
@@ -72,7 +73,7 @@ export function PaymentListPage() {
                       ))}
                     </SelectInput>
                     <Button type="submit" variant="secondary" disabled={identifyMutation.isPending}>
-                      {text.label('identify')}
+                      {text.action('identify')}
                     </Button>
                   </form>
                 )}

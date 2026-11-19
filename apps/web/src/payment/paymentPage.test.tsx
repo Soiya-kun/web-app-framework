@@ -1,6 +1,6 @@
 // 入金の画面の結合テスト。記録・振込依頼人名による顧客の特定・仮受・仮受の特定と、締めへのつながりを確かめる。
 import { prepareMemoryDatabase, type MemoryDatabase } from '@app/backend/testing'
-import { prepareText, type MessageKey, type MessageParams } from '@app/vocabulary'
+import { prepareText, type LabelKey, type MessageKey, type MessageParams } from '@app/vocabulary/text'
 import { screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
 import { customers, issuedOctoberInvoice, preparePayment } from '../../test/billingFixture'
@@ -34,11 +34,11 @@ async function registerOnScreen(seed: Partial<MemoryDatabase>, values: PaymentVa
   if (values.customerId !== '') {
     await user.selectOptions(screen.getByLabelText(text.label('customer')), values.customerId)
   }
-  await user.click(screen.getByRole('button', { name: text.label('register') }))
+  await user.click(screen.getByRole('button', { name: text.action('register') }))
   return { database, user }
 }
 
-async function expectProblem(fieldName: string, messageKey: MessageKey, params: MessageParams = {}) {
+async function expectProblem(fieldName: LabelKey, messageKey: MessageKey, params: MessageParams = {}) {
   const fieldLabel = text.label(fieldName)
   const field = screen.getByLabelText(fieldLabel)
   await waitFor(() => {
@@ -133,7 +133,7 @@ describe('入金の一覧の画面', () => {
     const row = screen.getByRole('row', { name: /ヤマダ タロウ/ })
 
     await user.selectOptions(within(row).getByLabelText(text.label('customer')), 'customer-0001')
-    await user.click(within(row).getByRole('button', { name: text.label('identify') }))
+    await user.click(within(row).getByRole('button', { name: text.action('identify') }))
 
     expect(await screen.findByRole('status')).toHaveTextContent(text.message('identifyCompleted'))
     expect(await within(row).findByText('株式会社親')).toBeVisible()
@@ -172,7 +172,7 @@ test('記録した入金は、次の締めで今回入金額に載る（入金�
   await user.click(screen.getByRole('link', { name: text.label('invoiceClosing') }))
   await user.selectOptions(await screen.findByLabelText(text.label('billingCustomer')), 'customer-0001')
   await user.type(screen.getByLabelText(text.label('closingDate')), '2026-11-30')
-  await user.click(screen.getByRole('button', { name: text.label('close') }))
+  await user.click(screen.getByRole('button', { name: text.action('close') }))
 
   const table = await screen.findByRole('table', { name: text.label('invoiceBreakdown') })
   expect(within(table).getAllByRole('cell').map((cell) => cell.textContent).slice(0, 4)).toEqual(

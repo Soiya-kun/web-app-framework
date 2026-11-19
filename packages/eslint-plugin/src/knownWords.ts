@@ -1,12 +1,10 @@
 // 自分で宣言した名前に、単語帳にない英単語を使わせない。
 // ライブラリの名前を参照するだけの箇所（import した名前、オブジェクトのキー、JSX の属性など）は対象外。
-import { splitWords, wordList } from '@app/vocabulary'
+import { findAvoidedTokens, findUnknownTokens } from '@app/vocabulary'
 import { AST_NODE_TYPES, type TSESTree } from '@typescript-eslint/utils'
 import { createRule } from './createRule'
 import { collectPatternNames } from './patternNames'
 
-const knownForms = new Set(wordList.flatMap((entry) => [entry.word, ...entry.forms]))
-const preferredWord = new Map(wordList.flatMap((entry) => entry.avoid.map((avoided) => [avoided, entry.word] as const)))
 
 export const knownWords = createRule({
   name: 'known-words',
@@ -35,13 +33,14 @@ export const knownWords = createRule({
         return
       }
       reported.add(node)
-      for (const word of splitWords(name)) {
-        const preferred = preferredWord.get(word)
-        if (preferred !== undefined) {
-          context.report({ node, messageId: 'avoidedWord', data: { word, preferred, name } })
-        } else if (!knownForms.has(word)) {
-          context.report({ node, messageId: 'unknownWord', data: { word, name } })
-        }
+      // 単語帳のマスタで名前を読み（複合語・活用形を含む）、読めない単語を報告する。
+      const avoided = findAvoidedTokens(name)
+      for (const { word, preferred } of avoided) {
+        context.report({ node, messageId: 'avoidedWord', data: { word, preferred, name } })
+      }
+      const avoidedWords = new Set(avoided.map((item) => item.word))
+      for (const word of findUnknownTokens(name).filter((token) => !avoidedWords.has(token))) {
+        context.report({ node, messageId: 'unknownWord', data: { word, name } })
       }
     }
 

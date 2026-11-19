@@ -1,0 +1,23 @@
+# 複合語。部分の組合せでは訳が決まらない言い回しを、1つの概念として持つ（en.tokens は名前の中の単語の並び）。
+# 組合せで決まるもの（売上＋金額 →「売上金額」、締め＋取消 →「締めの取消」）は書かない。
+- { id: salesDate, en: { tokens: sales date }, ja: { form: 売上日, attach: direct } }
+- { id: itemName, en: { tokens: item name }, ja: { form: 品名, attach: direct } }
+- { id: billingCustomer, en: { tokens: billing customer }, ja: { form: 請求先 }, description: 請求書を受け取り、入金する顧客。子会社の請求先を親会社にできる。 }
+- { id: closingDay, en: { tokens: closing day }, ja: { form: 締日, attach: direct }, description: 請求先が毎月締める日（31 は月末）。 }
+- { id: closingDate, en: { tokens: closing date }, ja: { form: 請求締め日, attach: direct }, description: 請求に載せる行の区切りの日。 }
+- { id: collectionMonthOffset, en: { tokens: collection month offset, label: Collection Month }, ja: { form: 回収月, attach: direct } }
+- { id: dueDate, en: { tokens: due date }, ja: { form: 入金期日, attach: direct } }
+- { id: paymentDate, en: { tokens: payment date }, ja: { form: 入金日, attach: direct } }
+- { id: issueDate, en: { tokens: issue date }, ja: { form: 発行日, attach: direct } }
+- { id: refundDate, en: { tokens: refund date }, ja: { form: 返金日, attach: direct } }
+- { id: smallDifference, en: { tokens: small difference }, ja: { form: 端数差額 }, description: 調整の区分の1つ。請求と入金の少額の差。 }
+- { id: taxableAmount, en: { tokens: taxable amount }, ja: { form: 課税対象額, attach: direct } }
+- { id: invoiceAmount, en: { tokens: invoice amount }, ja: { form: 請求額, attach: direct } }
+- { id: paymentAmount, en: { tokens: payment amount }, ja: { form: 入金額, attach: direct } }
+- { id: refundAmount, en: { tokens: refund amount }, ja: { form: 返金額, attach: direct } }
+- { id: adjustmentAmount, en: { tokens: adjustment amount }, ja: { form: 調整額, attach: direct } }
+- { id: carriedAmount, en: { tokens: carried amount }, ja: { form: 繰越額, attach: direct }, description: 前回請求額から今回入金額と調整額を引いた残り。負は前受。 }
+- { id: taxAmount, en: { tokens: tax amount }, ja: { form: 消費税額, attach: direct } }
+- { id: invoiceList, en: { tokens: invoice list, label: Invoices }, ja: { form: 請求一覧 } }
+- { id: paymentList, en: { tokens: payment list, label: Payments }, ja: { form: 入金一覧 } }
+- { id: taxBreakdown, en: { tokens: tax breakdown }, ja: { form: 税率ごとの内訳 } }

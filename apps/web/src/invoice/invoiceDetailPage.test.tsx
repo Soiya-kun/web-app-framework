@@ -8,7 +8,7 @@ import {
   type Refund,
   type Stored,
 } from '@app/backend/testing'
-import { prepareText, type MessageKey, type MessageParams } from '@app/vocabulary'
+import { prepareText, type LabelKey, type MessageKey, type MessageParams } from '@app/vocabulary/text'
 import { screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
 import { customers, issuedOctoberInvoice, preparePayment, prepareSales } from '../../test/billingFixture'
@@ -74,10 +74,10 @@ async function issueOnScreen(database: MemoryDatabase, issueDate: string) {
   const issueField = screen.getByLabelText(text.label('issueDate'))
   await user.clear(issueField)
   await user.type(issueField, issueDate)
-  await user.click(screen.getByRole('button', { name: text.label('issue') }))
+  await user.click(screen.getByRole('button', { name: text.action('issue') }))
 }
 
-function readTableTexts(captionName: string): string[][] {
+function readTableTexts(captionName: LabelKey): string[][] {
   const table = screen.getByRole('table', { name: text.label(captionName) })
   return within(table)
     .getAllByRole('row')
@@ -89,7 +89,7 @@ function readTableTexts(captionName: string): string[][] {
     )
 }
 
-async function expectProblem(fieldName: string, messageKey: MessageKey, params: MessageParams = {}) {
+async function expectProblem(fieldName: LabelKey, messageKey: MessageKey, params: MessageParams = {}) {
   const fieldLabel = text.label(fieldName)
   const field = screen.getByLabelText(fieldLabel)
   await waitFor(() => {
@@ -121,7 +121,7 @@ describe('請求の詳細の画面', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(text.message('issueCompleted'))
     expect(await screen.findByText('2026-000005')).toBeVisible()
     expect(database.invoice[0]).toMatchObject({ invoiceNumber: '2026-000005', issueDate: '2026-11-02' })
-    expect(screen.queryByRole('button', { name: text.label('issue') })).toBeNull()
+    expect(screen.queryByRole('button', { name: text.action('issue') })).toBeNull()
     expect(screen.queryByRole('button', { name: text.label('closingCancel') })).toBeNull()
   })
 
@@ -168,7 +168,7 @@ describe('請求の詳細の画面', () => {
     await renderScreen('/invoices/invoice-1001', prepareMemoryDatabase({ customer: customers, invoice: [issuedOctoberInvoice] }))
 
     expect(screen.getByText('2026-000001')).toBeVisible()
-    expect(screen.queryByRole('button', { name: text.label('issue') })).toBeNull()
+    expect(screen.queryByRole('button', { name: text.action('issue') })).toBeNull()
     expect(screen.queryByRole('button', { name: text.label('closingCancel') })).toBeNull()
   })
 
@@ -176,7 +176,7 @@ describe('請求の詳細の画面', () => {
     const { user } = await renderScreen('/invoices', prepareDraftDatabase())
 
     expect(readTableTexts('invoiceList')).toEqual([
-      ['2026-10-31', '株式会社親', '2026-11-30', displayYen('ja', 60_560), text.message('unissuedState')],
+      ['2026-10-31', '株式会社親', '2026-11-30', displayYen('ja', 60_560), text.label('unissued')],
     ])
     await user.click(screen.getByRole('link', { name: '2026-10-31' }))
 

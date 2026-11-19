@@ -6,7 +6,7 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { splitWords, wordList } from '@app/vocabulary'
+import { findUnknownTokens } from '@app/vocabulary'
 import ts from 'typescript'
 
 const repositoryRoot = join(dirname(fileURLToPath(import.meta.url)), '../../..')
@@ -67,14 +67,11 @@ for (const [name, count] of nameCount) {
 }
 
 // マイグレーションの名前の検査。
-const knownForms = new Set(wordList.flatMap((entry) => [entry.word, ...entry.forms]))
 const sqlKeywords = new Set(['primary', 'unique', 'check', 'constraint', 'foreign'])
 
 function checkDatabaseName(name: string, where: string): void {
-  for (const word of splitWords(name)) {
-    if (!knownForms.has(word)) {
-      problems.push(`${where}: 「${name}」の単語「${word}」が単語帳にない`)
-    }
+  for (const word of findUnknownTokens(name)) {
+    problems.push(`${where}: 「${name}」の単語「${word}」が単語帳にない`)
   }
 }
 

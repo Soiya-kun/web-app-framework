@@ -1,12 +1,16 @@
-export type { Locale, MessageEntry, PartOfSpeech, PhraseEntry, WordEntry, WordKind } from './types'
-export { messageList, phraseList, wordList, type MessageKey } from './generated/vocabularyData'
+// 道具（lint・翻訳ツール・バックエンドの型）向けの口。画面は '@app/vocabulary/text' を使う。
+export type { ActionKey, LabelKey, MessageKey } from './generated/catalogKey'
+export type { Category, Concept, Locale, WordKind } from './types'
+export type { MessageParams } from './text'
+export { conceptList } from './generated/conceptData'
 export { splitWords } from './split'
 export {
-  findWord,
-  objectWords,
+  findAvoidedTokens,
+  findUnknownTokens,
+  listMessages,
+  readMessage,
   renderNounPhrase,
   startsWithVerb,
   translateFunctionName,
   translateStep,
-} from './grammar'
-export { prepareText, type MessageParams, type Text } from './text'
+} from './naming'

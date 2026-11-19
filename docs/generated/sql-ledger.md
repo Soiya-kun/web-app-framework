@@ -317,7 +317,7 @@ WHERE invoice_id = $1 AND issue_date IS NULL
 RETURNING invoice_id AS "invoiceId"
 ```
 
-## unbillSales
+## detachSales
 
 [packages/backend/src/repository/postgres/invoiceStatement.ts:295](../../packages/backend/src/repository/postgres/invoiceStatement.ts#L295)
 
@@ -325,7 +325,7 @@ RETURNING invoice_id AS "invoiceId"
 UPDATE sales SET invoice_id = NULL WHERE invoice_id = $1
 ```
 
-## unbillPayments
+## detachPayments
 
 [packages/backend/src/repository/postgres/invoiceStatement.ts:302](../../packages/backend/src/repository/postgres/invoiceStatement.ts#L302)
 
@@ -333,7 +333,7 @@ UPDATE sales SET invoice_id = NULL WHERE invoice_id = $1
 UPDATE payment SET invoice_id = NULL WHERE invoice_id = $1
 ```
 
-## unbillRefunds
+## detachRefunds
 
 [packages/backend/src/repository/postgres/invoiceStatement.ts:309](../../packages/backend/src/repository/postgres/invoiceStatement.ts#L309)
 
@@ -341,7 +341,7 @@ UPDATE payment SET invoice_id = NULL WHERE invoice_id = $1
 UPDATE refund SET invoice_id = NULL WHERE invoice_id = $1
 ```
 
-## unbillAdjustments
+## detachAdjustments
 
 [packages/backend/src/repository/postgres/invoiceStatement.ts:316](../../packages/backend/src/repository/postgres/invoiceStatement.ts#L316)
 

@@ -12,6 +12,7 @@ import { prepareCustomerListQuery } from '../sales/salesApi'
 import { SalesCreatePage } from '../sales/salesCreatePage'
 import type { ApiClient } from './apiClient'
 import { useText } from './text'
+import { labelKey } from '@app/vocabulary/text'
 
 /** loader が使う部品。画面を開く前に、表示に要るデータを取得しておく（Suspense の待ちを入れない）。 */
 export type RouterContext = {
@@ -20,11 +21,11 @@ export type RouterContext = {
 }
 
 const navigationLinks = [
-  { path: '/sales/new', labelName: 'salesCreate' },
-  { path: '/invoices/close', labelName: 'invoiceClosing' },
-  { path: '/invoices', labelName: 'invoiceList' },
-  { path: '/payments/new', labelName: 'paymentCreate' },
-  { path: '/payments', labelName: 'paymentList' },
+  { path: '/sales/new', labelName: labelKey('salesCreate') },
+  { path: '/invoices/close', labelName: labelKey('invoiceClosing') },
+  { path: '/invoices', labelName: labelKey('invoiceList') },
+  { path: '/payments/new', labelName: labelKey('paymentCreate') },
+  { path: '/payments', labelName: labelKey('paymentList') },
 ] as const
 
 function RootLayout() {

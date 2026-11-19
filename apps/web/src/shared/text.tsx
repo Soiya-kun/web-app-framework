@@ -1,4 +1,4 @@
-import { prepareText, type Locale, type Text } from '@app/vocabulary'
+import { prepareText, type Locale, type Text } from '@app/vocabulary/text'
 import { createContext, use, useMemo, type ReactNode } from 'react'
 
 const TextContext = createContext<Text>(prepareText('ja'))

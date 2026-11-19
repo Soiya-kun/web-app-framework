@@ -1,100 +1,55 @@
-# 画面に出す文。{field} は項目の見出し、そのほかの {…} は値で埋める。
+# 画面の文。frame（文の型）で書いた文は、英語・日本語とも単語帳と文法から作る。
+# frame: request（{object}を〜してください）・prompt（〜してください）・done（〜しました）・progress（〜しています…）・missing（{object}が見つかりません）。
+# object は $field のような値（画面で埋める）か、単語帳の名詞の id。型に収まらない文だけ free に両方の言語で書く（数を見張る）。
+- { key: inputRequired, frame: request, verb: enter, object: $field }
+- { key: selectionRequired, frame: request, verb: select, object: $field }
+- { key: selectionPrompt, frame: prompt, verb: select }
+- { key: createCompleted, frame: done, verb: create }
+- { key: closeCompleted, frame: done, verb: close }
+- { key: issueCompleted, frame: done, verb: issue }
+- { key: cancelCompleted, frame: done, verb: cancel }
+- { key: identifyCompleted, frame: done, verb: identify, object: customer }
+- { key: loading, frame: progress, verb: load }
+- { key: missingTarget, frame: missing, object: target }
 - key: invalidInput
-  ja: 入力に問題があります。
-  en: Some input is invalid.
-- key: inputRequired
-  ja: '{field}を入力してください。'
-  en: 'Enter {field}.'
-- key: selectionRequired
-  ja: '{field}を選んでください。'
-  en: 'Select {field}.'
+  free: { ja: 入力に問題があります。, en: Some input is invalid. }
 - key: integerRequired
-  ja: '{field}は整数で入力してください。'
-  en: 'Enter {field} as a whole number.'
+  free: { ja: '{field}は整数で記入してください。', en: 'Enter {field} as a whole number.' }
 - key: invalidRange
-  ja: '{field}は{minimum}から{maximum}までで入力してください。'
-  en: 'Enter {field} between {minimum} and {maximum}.'
+  free: { ja: '{field}は{minimum}から{maximum}までで記入してください。', en: 'Enter {field} between {minimum} and {maximum}.' }
 - key: invalidDate
-  ja: '{field}は実在する日付を YYYY-MM-DD の形で入力してください。'
-  en: 'Enter {field} as a valid date in YYYY-MM-DD.'
-- key: invalidRequest
-  ja: リクエストの形が正しくありません。
-  en: The request is malformed.
-- key: missingTarget
-  ja: 対象が見つかりません。
-  en: The target was not found.
-- key: duplicateTarget
-  ja: 同じ対象がすでにあります。
-  en: The target already exists.
-- key: unexpectedError
-  ja: 予期しないエラーが起きました。
-  en: An unexpected error occurred.
-- key: createCompleted
-  ja: 登録しました。
-  en: Created.
-- key: loading
-  ja: 読み込んでいます…
-  en: Loading…
-- key: selectionPrompt
-  ja: 選んでください
-  en: Select…
+  free: { ja: '{field}は実在する日付を YYYY-MM-DD の形で記入してください。', en: 'Enter {field} as a valid date in YYYY-MM-DD.' }
 - key: longText
-  ja: '{field}は{maximum}文字以内で入力してください。'
-  en: 'Enter {field} in {maximum} characters or fewer.'
+  free: { ja: '{field}は{maximum}文字以内で記入してください。', en: 'Enter {field} in {maximum} characters or fewer.' }
+- key: invalidRequest
+  free: { ja: リクエストの形が正しくありません。, en: The request is malformed. }
+- key: duplicateTarget
+  free: { ja: 同じ対象がすでにあります。, en: The target already exists. }
 - key: changedTarget
-  ja: 対象がほかの操作で変わりました。もう一度やり直してください。
-  en: The target was changed by another operation. Please try again.
+  free: { ja: 対象がほかの操作で変わりました。もう一度やり直してください。, en: The target was changed by another operation. Please try again. }
+- key: unexpectedError
+  free: { ja: 予期しないエラーが起きました。, en: An unexpected error occurred. }
 - key: billingCustomerRequired
-  ja: '{field}は請求先（自分自身が請求先の顧客）を選んでください。'
-  en: 'Select a billing customer for {field}.'
+  free: { ja: '{field}は請求先（自分自身が請求先の顧客）を選んでください。', en: 'Select a billing customer for {field}.' }
 - key: monthEndRequired
-  ja: '{field}は請求先の締日に合わせて月末の日にしてください。'
-  en: 'Set {field} to the end of a month to match the closing day.'
+  free: { ja: '{field}は請求先の締日に合わせて月末の日にしてください。', en: 'Set {field} to the end of a month to match the closing day.' }
 - key: closingDayRequired
-  ja: '{field}は請求先の締日に合わせて{closingDay}日にしてください。'
-  en: 'Set {field} to day {closingDay} to match the closing day.'
+  free: { ja: '{field}は請求先の締日に合わせて{closingDay}日にしてください。', en: 'Set {field} to day {closingDay} to match the closing day.' }
 - key: earlyClosingDate
-  ja: '{field}は前回の請求締め日（{previousDate}）より後にしてください。'
-  en: 'Set {field} after the previous closing date ({previousDate}).'
+  free: { ja: '{field}は前回の請求締め日（{previousDate}）より後にしてください。', en: 'Set {field} after the previous closing date ({previousDate}).' }
 - key: unissuedInvoice
-  ja: 前回の請求がまだ発行されていません。発行してから締めてください。
-  en: The previous invoice has not been issued yet. Issue it before closing.
+  free: { ja: 前回の請求がまだ発行されていません。発行してから締めてください。, en: The previous invoice has not been issued yet. Issue it before closing. }
 - key: emptyClosing
-  ja: 締める対象（前回からの残高・売上・入金・返金・調整）がありません。
-  en: There is nothing to close (no balance, sales, payments, refunds, or adjustments).
+  free: { ja: 締める対象（前回からの残高・売上・入金・返金・調整）がありません。, en: 'There is nothing to close (no balance, sales, payments, refunds, or adjustments).' }
 - key: issuedInvoice
-  ja: この請求はすでに発行されています。発行した請求は変えず、訂正は次の請求で行ってください。
-  en: This invoice has already been issued. Make corrections on the next invoice.
+  free: { ja: この請求はすでに発行されています。発行した請求は変えず、訂正は次の請求で行ってください。, en: This invoice has already been issued. Make corrections on the next invoice. }
 - key: earlyIssueDate
-  ja: '{field}は請求締め日（{closingDate}）以後にしてください。'
-  en: 'Set {field} on or after the closing date ({closingDate}).'
-- key: closeCompleted
-  ja: 締めました。
-  en: Closed.
-- key: issueCompleted
-  ja: 発行しました。
-  en: Issued.
-- key: cancelCompleted
-  ja: 取り消しました。
-  en: Canceled.
-- key: unissuedState
-  ja: 未発行
-  en: Not issued
+  free: { ja: '{field}は請求締め日（{closingDate}）以後にしてください。', en: 'Set {field} on or after the closing date ({closingDate}).' }
 - key: identifiedPayment
-  ja: この入金はすでに顧客を特定済みか、請求に載せています。
-  en: This payment already has a customer or is on an invoice.
+  free: { ja: この入金はすでに顧客を特定済みか、請求に載せています。, en: This payment already has a customer or is on an invoice. }
 - key: paymentIdentified
-  ja: '{customer}の入金として登録しました。'
-  en: 'Registered as a payment from {customer}.'
+  free: { ja: '{customer}の入金として記録しました。', en: 'Registered as a payment from {customer}.' }
 - key: unidentifiedPayment
-  ja: 振込人を特定できなかったため、仮受として登録しました。入金の一覧で顧客を特定してください。
-  en: The payer could not be identified, so the payment was registered as unidentified. Identify the customer in the payment list.
-- key: identifyCompleted
-  ja: 顧客を特定しました。
-  en: The customer was identified.
+  free: { ja: 振込人を特定できなかったため、仮受として記録しました。入金の一覧で顧客を特定してください。, en: 'The payer could not be identified, so the payment was registered as unidentified. Identify the customer in the payment list.' }
 - key: automaticSelection
-  ja: 振込依頼人名から自動で特定
-  en: Identify from the payer name
-- key: unidentifiedState
-  ja: 仮受
-  en: Unidentified
+  free: { ja: 振込依頼人名から自動で特定, en: Identify from the payer name }

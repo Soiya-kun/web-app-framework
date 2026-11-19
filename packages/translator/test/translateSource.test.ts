@@ -51,7 +51,7 @@ describe('translateSource', () => {
 
     expect(translation?.title).toBe('売上金額の解釈')
     expect(translation?.steps).toEqual([
-      { text: 'テキストが空である場合', children: [{ text: 'エラー「{field}を入力してください。」で止める', children: [] }] },
+      { text: 'テキストが空である場合', children: [{ text: 'エラー「{field}を記入してください。」で止める', children: [] }] },
       { text: 'IDで顧客を取得する', children: [] },
       { text: '顧客を返す', children: [] },
     ])

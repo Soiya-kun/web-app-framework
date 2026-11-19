@@ -1,249 +1,71 @@
-# システム向けの動詞。ja は体言止めの形、jaVerb は「〜する」の形。
-- word: create
-  pos: verb
-  ja: 登録
-  jaVerb: 登録する
-  en: Create
-  avoid: [add, insert]
-- word: find
-  pos: verb
-  ja: 取得
-  jaVerb: 取得する
-  avoid: [get]
-- word: list
-  pos: verb
-  ja: 一覧取得
-  jaVerb: 一覧取得する
-- word: interpret
-  pos: verb
-  ja: 解釈
-  jaVerb: 解釈する
-  avoid: [parse]
-- word: validate
-  pos: verb
-  ja: バリデーション
-  jaVerb: バリデーションする
-- word: restore
-  pos: verb
-  ja: 復元
-  jaVerb: 復元する
-- word: plan
-  pos: verb
-  ja: 計画
-  jaVerb: 計画する
-- word: assign
-  pos: verb
-  ja: 割り当て
-  jaVerb: 割り当てる
-- word: generate
-  pos: verb
-  ja: 生成
-  jaVerb: 生成する
-- word: reject
-  pos: verb
-  ja: 拒否
-  jaVerb: 拒否する
-- word: prepare
-  pos: verb
-  ja: 準備
-  jaVerb: 準備する
-  avoid: [make, setup, init, initialize]
-- word: respond
-  pos: verb
-  ja: 応答
-  jaVerb: 応答する
-- word: read
-  pos: verb
-  ja: 読み取り
-  jaVerb: 読み取る
-- word: describe
-  pos: verb
-  ja: 説明
-  jaVerb: 説明する
-- word: submit
-  pos: verb
-  ja: 送信
-  jaVerb: 送信する
-- word: post
-  pos: verb
-  ja: POST 送信
-  jaVerb: POST で送る
-- word: render
-  pos: verb
-  ja: 描画
-  jaVerb: 描画する
-- word: expect
-  pos: verb
-  ja: 確認
-  jaVerb: 確認する
-- word: use
-  pos: verb
-  ja: 使用
-  jaVerb: 使用する
-- word: is
-  pos: verb
-  ja: 判定
-  jaVerb: 判定する
-- word: has
-  pos: verb
-  ja: 有無の判定
-  jaVerb: 有無を判定する
-- word: can
-  pos: verb
-  ja: 可否の判定
-  jaVerb: 可否を判定する
-- word: load
-  pos: verb
-  ja: 読み込み
-  jaVerb: 読み込む
-  forms: [loading]
-- word: issue
-  pos: verb
-  ja: 発行
-  jaVerb: 発行する
-- word: define
-  pos: verb
-  ja: 定義
-  jaVerb: 定義する
-- word: execute
-  pos: verb
-  ja: 実行
-  jaVerb: 実行する
-- word: run
-  pos: verb
-  ja: 実行
-  jaVerb: 実行する
-- word: begin
-  pos: verb
-  ja: 開始
-  jaVerb: 開始する
-- word: commit
-  pos: verb
-  ja: 確定
-  jaVerb: 確定する
-- word: rollback
-  pos: verb
-  ja: 取り消し
-  jaVerb: 取り消す
-- word: apply
-  pos: verb
-  ja: 適用
-  jaVerb: 適用する
-- word: copy
-  pos: verb
-  ja: 写し取り
-  jaVerb: 写し取る
-- word: seed
-  pos: verb
-  ja: 投入
-  jaVerb: 投入する
-- word: close
-  pos: verb
-  ja: 締め処理
-  jaVerb: 締める
-- word: cancel
-  pos: verb
-  ja: 取消
-  jaVerb: 取り消す
-- word: ensure
-  pos: verb
-  ja: 確認
-  jaVerb: 確かめる
-- word: decide
-  pos: verb
-  ja: 決定
-  jaVerb: 決める
-- word: select
-  pos: verb
-  ja: 選択
-  jaVerb: 選ぶ
-- word: take
-  pos: verb
-  ja: 取り出し
-  jaVerb: 取り出す
-- word: compose
-  pos: verb
-  ja: 組み立て
-  jaVerb: 組み立てる
-- word: split
-  pos: verb
-  ja: 分割
-  jaVerb: 分ける
-- word: measure
-  pos: verb
-  ja: 測定
-  jaVerb: 測る
-- word: shift
-  pos: verb
-  ja: ずらし
-  jaVerb: ずらす
-- word: place
-  pos: verb
-  ja: 当てはめ
-  jaVerb: 当てはめる
-- word: attach
-  pos: verb
-  ja: 付与
-  jaVerb: 付ける
-- word: sum
-  pos: verb
-  ja: 合計
-  jaVerb: 合計する
-- word: calculate
-  pos: verb
-  ja: 計算
-  jaVerb: 計算する
-- word: display
-  pos: verb
-  ja: 表示
-  jaVerb: 表示する
-- word: bill
-  pos: verb
-  ja: 請求への計上
-  jaVerb: 請求に載せる
-- word: unbill
-  pos: verb
-  ja: 請求からの取り外し
-  jaVerb: 請求から外す
-- word: compare
-  pos: verb
-  ja: 比較
-  jaVerb: 比べる
-- word: delete
-  pos: verb
-  ja: 削除
-  jaVerb: 削除する
-  avoid: [remove]
-- word: lock
-  pos: verb
-  ja: ロック
-  jaVerb: ロックする
-- word: navigate
-  pos: verb
-  ja: 移動
-  jaVerb: 移動する
-- word: join
-  pos: verb
-  ja: 連結
-  jaVerb: つなぐ
-- word: mark
-  pos: verb
-  ja: 印付け
-  jaVerb: 印を付ける
-- word: identify
-  pos: verb
-  ja: 特定
-  jaVerb: 特定する
-- word: register
-  pos: verb
-  ja: 記録
-  jaVerb: 記録する
-- word: save
-  pos: verb
-  ja: 保存
-  jaVerb: 保存する
-  forms: [saves]
-- word: normalize
-  pos: verb
-  ja: 正規化
-  jaVerb: 正規化する
+# システム向けの動詞。英語は原形（id）から語形（三単現・過去形・-ing・-able・un-過去分詞・名詞形）を作り、不規則なものだけ書く。
+# 日本語は活用の型で持つ。suru は語幹（発行 → 発行する）。ichidan・godan は辞書形（締める・取り消す）と、要れば名詞形（締め・取消）。
+# ja.label は、単独で見出し・ボタンにするときの形（なければ名詞形）。
+- { id: create, en: { noun: creation }, ja: { stem: 登録, class: suru }, avoid: [add, insert] }
+- { id: find, en: { past: found }, ja: { stem: 取得, class: suru }, avoid: [get] }
+- { id: list, en: { noun: listing }, ja: { stem: 一覧取得, class: suru } }
+- { id: interpret, en: { noun: interpretation }, ja: { stem: 解釈, class: suru }, avoid: [parse] }
+- { id: validate, en: { noun: validation }, ja: { stem: バリデーション, class: suru } }
+- { id: restore, en: { noun: restoration }, ja: { stem: 復元, class: suru } }
+- { id: plan, en: { past: planned, gerund: planning }, ja: { stem: 計画, class: suru } }
+- { id: assign, en: { noun: assignment }, ja: { dictionary: 割り当てる, class: ichidan } }
+- { id: generate, en: { noun: generation }, ja: { stem: 生成, class: suru } }
+- { id: reject, en: { noun: rejection }, ja: { stem: 拒否, class: suru } }
+- { id: prepare, en: { noun: preparation }, ja: { stem: 準備, class: suru }, avoid: [make, setup, init, initialize] }
+- { id: respond, ja: { stem: 返答, class: suru } }
+- { id: read, en: { past: read }, ja: { dictionary: 読み取る, class: godan } }
+- { id: describe, en: { noun: description }, ja: { stem: 説明, class: suru } }
+- { id: submit, en: { past: submitted, gerund: submitting, noun: submission }, ja: { stem: 送信, class: suru } }
+- { id: post, ja: { stem: POST 送信, class: suru } }
+- { id: render, ja: { stem: 描画, class: suru } }
+- { id: expect, en: { noun: expectation }, ja: { stem: 期待, class: suru } }
+- { id: use, en: { noun: usage }, ja: { stem: 使用, class: suru } }
+- { id: is, en: { past: was, third: is }, ja: { stem: 判定, class: suru } }
+- { id: has, en: { past: had, third: has }, ja: { stem: 有無判定, class: suru } }
+- { id: can, en: { past: could, third: can }, ja: { stem: 可否判定, class: suru } }
+- { id: load, ja: { dictionary: 読み込む, class: godan, noun: 読み込み } }
+- { id: issue, en: { noun: issuance }, ja: { stem: 発行, class: suru } }
+- { id: define, en: { noun: definition }, ja: { stem: 定義, class: suru } }
+- { id: execute, en: { noun: execution }, ja: { stem: 実行, class: suru } }
+- { id: run, en: { past: ran, participle: run, gerund: running }, ja: { stem: 実施, class: suru } }
+- { id: begin, en: { past: began, participle: begun, gerund: beginning }, ja: { stem: 開始, class: suru } }
+- { id: commit, en: { past: committed, gerund: committing }, ja: { stem: 確定, class: suru } }
+- { id: rollback, ja: { stem: ロールバック, class: suru } }
+- { id: apply, en: { noun: application }, ja: { stem: 適用, class: suru } }
+- { id: copy, ja: { stem: コピー, class: suru } }
+- { id: seed, ja: { stem: 投入, class: suru } }
+- { id: close, en: { noun: closing }, ja: { dictionary: 締める, class: ichidan, noun: 締め, label: 締め処理 } }
+- { id: cancel, en: { past: canceled, gerund: canceling, noun: cancellation }, ja: { dictionary: 取り消す, class: godan, noun: 取消 } }
+- { id: ensure, ja: { dictionary: 確かめる, class: ichidan, noun: 確認 } }
+- { id: decide, en: { noun: decision }, ja: { dictionary: 決める, class: ichidan, noun: 決定 } }
+- { id: select, en: { noun: selection }, ja: { dictionary: 選ぶ, class: godan, noun: 選択 } }
+- { id: take, en: { past: took, participle: taken }, ja: { dictionary: 取り出す, class: godan } }
+- { id: compose, ja: { dictionary: 組み立てる, class: ichidan } }
+- { id: split, en: { past: split, gerund: splitting }, ja: { dictionary: 分ける, class: ichidan, noun: 分割 } }
+- { id: measure, en: { noun: measurement }, ja: { dictionary: 測る, class: godan, noun: 測定 } }
+- { id: shift, ja: { dictionary: ずらす, class: godan } }
+- { id: place, en: { noun: placement }, ja: { dictionary: 当てはめる, class: ichidan } }
+- { id: attach, en: { noun: attachment }, ja: { dictionary: 付ける, class: ichidan, noun: 付与 } }
+- { id: sum, en: { past: summed, gerund: summing }, ja: { stem: 合計, class: suru } }
+- { id: calculate, en: { noun: calculation }, ja: { stem: 計算, class: suru } }
+- { id: display, ja: { stem: 表示, class: suru } }
+- { id: bill, en: { noun: billing }, ja: { dictionary: 請求に載せる, class: ichidan, noun: 請求への計上 } }
+- { id: detach, ja: { dictionary: 請求から外す, class: godan, noun: 請求からの取り外し } }
+- { id: compare, en: { noun: comparison }, ja: { dictionary: 比べる, class: ichidan, noun: 比較 } }
+- { id: delete, en: { noun: deletion }, ja: { stem: 削除, class: suru }, avoid: [remove] }
+- { id: lock, ja: { stem: ロック, class: suru } }
+- { id: navigate, en: { noun: navigation }, ja: { stem: 移動, class: suru } }
+- { id: join, ja: { dictionary: つなぐ, class: godan, noun: 連結 } }
+- { id: mark, ja: { dictionary: 印を付ける, class: ichidan, noun: 印付け } }
+- { id: identify, en: { noun: identification }, ja: { stem: 特定, class: suru } }
+- { id: register, en: { noun: registration }, ja: { stem: 記録, class: suru } }
+- { id: save, ja: { stem: 保存, class: suru } }
+- { id: normalize, en: { noun: normalization }, ja: { stem: 正規化, class: suru } }
+- { id: enter, ja: { stem: 記入, class: suru } }
+- { id: complete, en: { noun: completion }, ja: { stem: 完了, class: suru } }
+- { id: require, ja: { stem: 要求, class: suru } }
+- { id: change, ja: { stem: 変更, class: suru } }
+- { id: match, ja: { stem: 一致, class: suru } }
+- { id: trim, en: { past: trimmed, gerund: trimming }, ja: { dictionary: 前後の空白を除く, class: godan, noun: 前後の空白の除去 } }
+- { id: remain, ja: { dictionary: 残る, class: godan, noun: 残り } }
+- { id: trace, ja: { stem: 追跡, class: suru } }

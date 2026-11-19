@@ -1,44 +1,9 @@
-# 前置詞。ja は名詞句、jaVerb は手順（〜する）、jaName は関数名（体言止め）の型。
+# 前置詞。日本語は、名詞句（noun）・手順（step）・関数の題（title）の型で並べ替える。
 # {head} は前置詞の前の語、{object} は前置詞の後ろの語、{verb} は動詞。
-- word: for
-  pos: preposition
-  ja: '{object}用の{head}'
-  jaVerb: '{object}用の{head}を{verb}'
-  jaName: '{object}用の{head}の{verb}'
-  en: for
-- word: by
-  pos: preposition
-  ja: '{object}別の{head}'
-  jaVerb: '{object}で{head}を{verb}'
-  jaName: '{object}での{head}の{verb}'
-  en: by
-- word: of
-  pos: preposition
-  ja: '{object}の{head}'
-  jaVerb: '{object}の{head}を{verb}'
-  jaName: '{object}の{head}の{verb}'
-  en: of
-- word: from
-  pos: preposition
-  ja: '{object}からの{head}'
-  jaVerb: '{object}から{head}を{verb}'
-  jaName: '{object}からの{head}の{verb}'
-  en: from
-- word: to
-  pos: preposition
-  ja: '{object}への{head}'
-  jaVerb: '{head}を{object}へ{verb}'
-  jaName: '{head}の{object}への{verb}'
-  en: to
-- word: with
-  pos: preposition
-  ja: '{object}付きの{head}'
-  jaVerb: '{object}付きの{head}を{verb}'
-  jaName: '{object}付きの{head}の{verb}'
-  en: with
-- word: on
-  pos: preposition
-  ja: '{object}での{head}'
-  jaVerb: '{object}で{head}を{verb}'
-  jaName: '{object}での{head}の{verb}'
-  en: on
+- { id: for, ja: { noun: '{object}用の{head}', step: '{object}用の{head}を{verb}', title: '{object}用の{head}の{verb}' } }
+- { id: by, ja: { noun: '{object}別の{head}', step: '{object}で{head}を{verb}', title: '{object}での{head}の{verb}' } }
+- { id: of, ja: { noun: '{object}の{head}', step: '{object}の{head}を{verb}', title: '{object}の{head}の{verb}' } }
+- { id: from, ja: { noun: '{object}からの{head}', step: '{object}から{head}を{verb}', title: '{object}からの{head}の{verb}' } }
+- { id: to, ja: { noun: '{object}への{head}', step: '{head}を{object}へ{verb}', title: '{head}の{object}への{verb}' } }
+- { id: with, ja: { noun: '{object}付きの{head}', step: '{object}付きの{head}を{verb}', title: '{object}付きの{head}の{verb}' } }
+- { id: on, ja: { noun: '{object}での{head}', step: '{object}で{head}を{verb}', title: '{object}での{head}の{verb}' } }

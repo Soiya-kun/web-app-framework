@@ -292,29 +292,29 @@ RETURNING invoice_id AS "invoiceId"
 
 // 締めの取消: 載せた行を戻し、発行前の請求を消す
 
-export const unbillSalesStatement = defineStatement<[invoiceId: string]>(
-  'unbillSales',
+export const detachSalesStatement = defineStatement<[invoiceId: string]>(
+  'detachSales',
   `
 UPDATE sales SET invoice_id = NULL WHERE invoice_id = $1
 `,
 )
 
-export const unbillPaymentsStatement = defineStatement<[invoiceId: string]>(
-  'unbillPayments',
+export const detachPaymentsStatement = defineStatement<[invoiceId: string]>(
+  'detachPayments',
   `
 UPDATE payment SET invoice_id = NULL WHERE invoice_id = $1
 `,
 )
 
-export const unbillRefundsStatement = defineStatement<[invoiceId: string]>(
-  'unbillRefunds',
+export const detachRefundsStatement = defineStatement<[invoiceId: string]>(
+  'detachRefunds',
   `
 UPDATE refund SET invoice_id = NULL WHERE invoice_id = $1
 `,
 )
 
-export const unbillAdjustmentsStatement = defineStatement<[invoiceId: string]>(
-  'unbillAdjustments',
+export const detachAdjustmentsStatement = defineStatement<[invoiceId: string]>(
+  'detachAdjustments',
   `
 UPDATE adjustment SET invoice_id = NULL WHERE invoice_id = $1
 `,

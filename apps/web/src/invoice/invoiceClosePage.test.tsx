@@ -1,7 +1,7 @@
 // 請求の締めの画面の結合テスト。画面の操作から handler → usecase → domain → repository までを本物のコードで動かし、
 // DB だけをモック DB にする。残高を繰り越す請求書の金額と、締めの規則を業務の場面ごとに確かめる。
 import { prepareMemoryDatabase, type Adjustment, type Invoice, type MemoryDatabase, type Stored } from '@app/backend/testing'
-import { prepareText, type MessageKey, type MessageParams } from '@app/vocabulary'
+import { prepareText, type LabelKey, type MessageKey, type MessageParams } from '@app/vocabulary/text'
 import { screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
 import { customers, issuedOctoberInvoice, preparePayment, prepareSales } from '../../test/billingFixture'
@@ -20,12 +20,12 @@ async function closeOnScreen(seed: Partial<MemoryDatabase>, billingCustomerId: s
   if (closingDate !== '') {
     await user.type(screen.getByLabelText(text.label('closingDate')), closingDate)
   }
-  await user.click(screen.getByRole('button', { name: text.label('close') }))
+  await user.click(screen.getByRole('button', { name: text.action('close') }))
   return { database }
 }
 
 /** 締めたあとに開く請求の詳細の、請求の内訳の1つの金額。 */
-async function readBreakdown(labelName: string): Promise<string | null | undefined> {
+async function readBreakdown(labelName: LabelKey): Promise<string | null | undefined> {
   const table = await screen.findByRole('table', { name: text.label('invoiceBreakdown') })
   const headers = within(table)
     .getAllByRole('columnheader')
@@ -38,7 +38,7 @@ function findCreatedInvoice(database: MemoryDatabase): Stored<Invoice> | undefin
   return database.invoice.find((row) => row.invoiceId === 'id-0001')
 }
 
-async function expectProblem(fieldName: string, messageKey: MessageKey, params: MessageParams = {}) {
+async function expectProblem(fieldName: LabelKey, messageKey: MessageKey, params: MessageParams = {}) {
   const fieldLabel = text.label(fieldName)
   const field = screen.getByLabelText(fieldLabel)
   await waitFor(() => {

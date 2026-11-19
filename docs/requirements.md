@@ -69,6 +69,7 @@ TypeScript で業務 Web アプリを作るための土台（フレームワー�
 | usecase での呼び出し | 関数と、プロパティをたどった先のメソッド（`a.b.c()`）は呼べる。メソッドチェーン（呼び出しの結果をさらに呼ぶ）は禁止 | 2026-11-18 |
 | 単語帳 | 厳しく当てる（CI でエラー）。DB のテーブル名・列名・区分値にも当てる | 2026-11-18 |
 | 画面の言語 | 多言語を想定（日本語・英語） | 2026-11-18 |
+| 単語帳の形 | 言語に依らない概念 ＋ 言語ごとの語形（活用の型）と文法。英語・日本語とも1対1にし、画面の文言（i18n の文言ファイル）も同じマスタから生成する。編集は開発者だけ（[単語帳の設計](vocabulary-design.md)） | 2026-11-19 |
 | 翻訳ツール | usecase・domain を対象に、制御構文も訳し、CLI で Markdown を作る | 2026-11-18 |
 | コメント | 当面は目的だけ（TSDoc の1行） | 2026-11-18 |
 | 大きなテスト | 当面持たない | 2026-11-18 |
@@ -98,7 +99,7 @@ web-app-framework/
 │  │  ├─ testing.ts           # 画面の結合テスト用の部品（モック DB で組み立てる）
 │  │  └─ production.ts        # 本番の部品（PostgreSQL で組み立てる）
 │  └─ test/repository/        # repository の契約のテスト（モック DB と PostgreSQL に同じテストを流す）
-├─ packages/vocabulary/       # 単語帳（YAML）と、そこから作る辞書・文法・画面の文言
+├─ packages/vocabulary/       # 単語帳（YAML）と、そこから作る辞書・文法・画面の文言ファイル
 ├─ packages/eslint-plugin/    # 単語帳・関数名の文法・usecase の書き方の lint
 ├─ packages/translator/       # 日本語翻訳ツールと SQL の台帳の生成
 ├─ infra/                     # AWS の CDK
@@ -115,7 +116,8 @@ web-app-framework/
 | `pnpm test` | テストだけ（Docker は要らない） |
 | `pnpm test:database` | Docker の PostgreSQL を起動し、repository のテストを流す |
 | `pnpm database:down` | テスト用の PostgreSQL を止める |
-| `pnpm vocabulary:generate` | 単語帳（YAML）を変えたあとに辞書を作り直す |
+| `pnpm vocabulary:generate` | 単語帳（YAML）を変えたあとに、辞書と画面の文言ファイル（`locale/ja.json`・`en.json`）を作り直す |
+| `pnpm vocabulary:find <日本語>` | 日本語の用語から英語の名前を引く |
 | `pnpm translate` | 処理の日本語訳を作り直す |
 | `pnpm sql:ledger` | SQL の台帳を作り直す（DB の名前の単語帳の検査も行う） |
 | `pnpm dev:api` / `pnpm dev:web` | 手元で API サーバー（`DATABASE_URL` が要る）と画面を動かす。画面の `/api` は API サーバーへ中継する |
@@ -126,7 +128,7 @@ web-app-framework/
 | 確かめたこと | 結果 |
 | --- | --- |
 | 画面の操作から usecase まで、通信なしで流せるか | 流せる。画面のコードは本番と同じで、テストでは `fetch` だけを差し替える |
-| 画面の結合テストの速さ | 1件 約 20ms（最初の1件だけ準備込みで約 120ms）。Docker なしのテスト全体（96件）は約 3 秒 |
+| 画面の結合テストの速さ | 1件 約 20ms（最初の1件だけ準備込みで約 120ms）。Docker なしのテスト全体（352件。うち単語帳の往復のテスト 237件）は約 6 秒 |
 | バックエンドの処理の速さ | `app.request` 1回あたり約 0.05ms（モック DB）。画面のテストの時間はほぼ画面側 |
 | 境界値を画面から厚く確かめられるか | 売上金額・売上日・品名の境界、返品・値引の符号、軽減税率、顧客の未選択、複数の項目の同時の誤りを、画面の結合テストだけで確かめた |
 | 業務の場面を画面から確かめられるか | 請求の締めで、初回・親会社への一括請求・分割入金・振込手数料・不足入金・過入金（前受）・返金・一括入金・仮受・締め後の過去日付の売上・締日と入金期日・前回の請求との関係を、画面の操作から確かめた（[業務の作り](domain-model.md) の4章）。発行（年ごとの請求番号）・締めの取消も同じ |
@@ -134,9 +136,10 @@ web-app-framework/
 | 同時の操作 | 同じ請求先を2つのトランザクションで同時に締めても、請求は1件だけできる（PostgreSQL のテスト） |
 | 本番の API サーバー | まとめたサーバー（`apps/server`）を node:22-alpine のイメージで動かし、PostgreSQL に対してマイグレーション・締め・入力の検証・一覧が応答することを確かめた |
 | AWS の CDK | `cdk synth` でテンプレート（64 リソース）を作れる。DB の暗号化と非公開、内部の ALB、/api/* の振り分け、マイグレーションのタスク、prod の Multi-AZ と削除保護をテストで確かめる |
-| モック DB と PostgreSQL の振る舞いがずれないか | 同じ契約のテストを両方に流して確かめる（顧客・売上・締めの対象・請求の保存・先に載った行の検出・採番・発行・締めの取消・トランザクションの取り消し）。PostgreSQL のテストは18件 |
+| モック DB と PostgreSQL の振る舞いがずれないか | 同じ契約のテストを両方に流して確かめる（顧客・売上・締めの対象・請求の保存・先に載った行の検出・採番・発行・締めの取消・トランザクションの取り消し）。PostgreSQL のテストは22件 |
 | 実行される SQL | repository が実行できるのは `defineStatement` で定義した固定の SQL だけ（型で縛る）。全文は [SQL の台帳](generated/sql-ledger.md) に出し、テストで「どの SQL が流れたか」を確かめる |
 | 単語帳の lint | 単語帳にない単語・使わせない単語（`add`・`init`・`parse`・`insert`・`setup` など）・動詞で始まらない関数名を検出する。DB のテーブル名・列名・索引名・区分値も単語帳で検査する |
+| 単語帳の統一 | 英語・日本語とも同じ語形を2つの概念に当てない（生成で止める）。生成した日本語の見出し 237 件がすべて元の名前に1通りに戻る（往復のテスト）。画面は生成した文言ファイルだけを読み、キーは型で検査する。文 31 のうち文の型で作る文 10・自由文 21 |
 | usecase の lint | if・for・throw・try・let・メソッドチェーン・リテラルや計算を渡す引数・層の逆向きの import を検出する |
 | useEffect の禁止 | `useEffect`・`useLayoutEffect`・`useInsertionEffect` の import を検出する |
 | 翻訳ツール | usecase は手順の並びとしてそのまま読める（4.3）。domain は訳せない式がコードのまま残る |
@@ -318,13 +321,18 @@ flowchart LR
 
 ### 5.9 単語帳
 
-- 置き場所: `packages/vocabulary/words/system/*.yaml`（システム向け）、`words/domain/*.yaml`（業務）、`phrases.yaml`（組合せで訳が決まらない並び）、`messages.yaml`（画面の文）。
-- 1語の項目: `word`（原形）・`pos`（品詞）・`ja`（体言止めの形）・`jaVerb`（「〜する」の形。動詞だけ）・`en`（画面の英語）・`forms`（複数形など）・`avoid`（同じ意味で使わせない単語）・`role`（repository など受け手の役割の語）・`description`（業務の単語は必須）。
-- 1つの単語は1つの意味だけにする（例: `issue` は請求の「発行」に使うので、入力の「問題」は `problem` にした）。
-- 単語帳を変えたら `pnpm vocabulary:generate` で辞書を作り直す。CI は作り直し忘れを検出する。
+仕組みの全体は [単語帳の設計](vocabulary-design.md)。
+
+- 1つのマスタから、コードの名前の検査・処理の日本語訳・DB の名前の検査・画面の文言（言語ごとの i18n の文言ファイル）を作る。編集するのは開発者だけ。
+- 置き場所: `packages/vocabulary/words/system/*.yaml`（システム向けの名詞・動詞・形容詞・前置詞・複合語）、`words/domain/*.yaml`（業務）、`messages.yaml`（画面の文）。
+- 1つの概念の項目: `id`（英語の原形。複合語は camelCase）・`en`（不規則な語形・見出しの上書き・複合語の `tokens`）・`ja`（名詞は `form` と `attach`、動詞は活用の型 `class` と `stem` か `dictionary`、形容詞は `class` と `stem`、前置詞は並べ替えの型）・`avoid`（同じ意味で使わせない単語）・`role`（repository など受け手の役割の語）・`description`（業務の概念は必須）。
+- 派生（-able・過去分詞・un-・名詞形）は書かず、活用の型から作る。部分の組合せで訳が決まらない言い回しだけ複合語にする。
+- 1つの概念は1つの意味だけにする（例: `issue` は請求の「発行」に使うので、入力の「問題」は `problem` にした）。英語・日本語とも、同じ語形を2つの概念に当てると生成で止まる。
+- 単語帳を変えたら `pnpm vocabulary:generate` で生成物（`src/generated/`）を作り直す。CI は作り直し忘れを検出する。日本語の用語から名前を引くときは `pnpm vocabulary:find 振込依頼人の顧客`（→ `payerCustomer`）。
 - 検査の範囲: アプリのコード（`apps/**`・`packages/backend/**`）で自分で宣言した名前（関数・変数・引数・型・型の項目・クラス・import の別名）と、DB のテーブル名・列名・索引名・区分値。ライブラリの名前を参照するだけの箇所と、道具（lint・翻訳・単語帳の生成）は対象外。
 - 関数名は動詞で始める（PascalCase のコンポーネント・型は名詞として扱う）。
-- 画面の文言: 見出しは単語の並びから作る（`text.label('salesAmount')` →「売上金額」/ "Sales Amount"）。文は `text.message('invalidRange', { … })` で引く。言語は `TextProvider` の `locale` で切り替える。
+- 画面の文言: `@app/vocabulary/text` の `text.label('salesAmount')`（見出し）・`text.action('issue')`（ボタン）・`text.message('invalidRange', { … })`（文）で、生成した文言ファイルから引く。項目の対応表などでキーだけを持つときは `labelKey('…')`。キーは生成した型で検査する。言語は `TextProvider` の `locale` で切り替える。
+- 画面の文は文の型（依頼・完了など）で書き、型に収まらない文だけ自由文として両方の言語で書く（数を見張る）。
 - まだ当てていない範囲: ファイル名・API のパス。
 
 ### 5.10 日本語翻訳ツール
@@ -334,7 +342,7 @@ flowchart LR
 | 関数名 | `動詞 + 残り` →「残りの訳」+「の」+「動詞の体言止めの形」 | `createNewTransportSales` →「新輸送売上の登録」 |
 | 手順 | 呼び出し先の名前 →「残りの訳」+「を」+「動詞のする形」 | `validateSalesRequest(…)` →「売上リクエストをバリデーションする」 |
 | メソッドの呼び出し | メソッド名で訳す。動詞だけのときは、受け手の名前から役割の語を除いて目的語にする | `salesRepository.create(x)` →「売上を登録する」 |
-| 前置詞 | 単語帳の型で並べ替える | `findCustomerById` →「IDで顧客を取得する」 |
+| 前置詞 | 単語帳の前置詞の型で並べ替える | `findCustomerById` →「IDで顧客を取得する」 |
 | `return` | 「〜を返す」 | `return salesId` →「売上IDを返す」 |
 | `if` | 「〜場合」の下に入れ子にする | `if (text === '')` →「テキストが空である場合」 |
 | `throw` | メッセージ帳の文で「エラー「…」で止める」 | `throw rejectValue('inputRequired')` |
@@ -389,8 +397,7 @@ flowchart LR
 
 サンプルの業務は、売上の登録・請求の締めと発行・入金の記録と仮受の特定で区切った（返金・調整の登録・顧客・残高の画面は作らない）。次は土台の側を詰める。
 
-1. 単語帳を、英語と日本語で構造的に統一する（[単語帳の設計](vocabulary-design.md)）。
-2. CI（GitHub Actions で `pnpm check` と `pnpm test:database`）と、配備の自動化（GitHub Actions から CDK とマイグレーション）。
-3. 認証（Cognito のユーザープールと、API での ID トークンの検証）。
-4. 請求書の PDF の出力と、自社の情報（名前・登録番号など）の設定。
-5. 単語帳をファイル名・API のパスにも当てる。
+1. CI（GitHub Actions で `pnpm check` と `pnpm test:database`）と、配備の自動化（GitHub Actions から CDK とマイグレーション）。
+2. 認証（Cognito のユーザープールと、API での ID トークンの検証）。
+3. 請求書の PDF の出力と、自社の情報（名前・登録番号など）の設定。
+4. 単語帳をファイル名・API のパスにも当てる。翻訳ツールで英語の訳も作る。

@@ -1,5 +1,2 @@
-- word: customer
-  pos: noun
-  ja: 顧客
-  forms: [customers]
-  description: 売上を計上する相手。
+# 業務の単語。description は用語集に出す。
+- { id: customer, category: noun, en: { plural: customers }, ja: { form: 顧客 }, description: 売上を計上する相手（得意先）。 }

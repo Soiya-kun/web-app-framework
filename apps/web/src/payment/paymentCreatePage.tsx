@@ -9,16 +9,17 @@ import { AlertMessage, PageTitle, Section, StatusMessage } from '../shared/compo
 import { prepareFormFeedback, readField } from '../shared/formFeedback'
 import { useText } from '../shared/text'
 import { paymentQueryKey, postPayment } from './paymentApi'
+import { labelKey, type LabelKey } from '@app/vocabulary/text'
 
 type PaymentField = keyof PaymentRequest
 
 const fieldLabelNames = {
-  paymentDate: 'paymentDate',
-  paymentMethod: 'paymentMethod',
-  paymentAmount: 'paymentAmount',
-  payerName: 'payerName',
-  customerId: 'customer',
-} as const satisfies Record<PaymentField, string>
+  paymentDate: labelKey('paymentDate'),
+  paymentMethod: labelKey('paymentMethod'),
+  paymentAmount: labelKey('paymentAmount'),
+  payerName: labelKey('payerName'),
+  customerId: labelKey('customer'),
+} as const satisfies Record<PaymentField, LabelKey>
 
 const paymentMethodOptions = ['transfer', 'cash', 'other'] as const
 
@@ -82,7 +83,7 @@ export function PaymentCreatePage() {
           </FormField>
           <div className="sm:col-span-2">
             <Button type="submit" disabled={paymentMutation.isPending}>
-              {text.label('register')}
+              {text.action('register')}
             </Button>
           </div>
         </form>

@@ -8,18 +8,19 @@ import { AlertMessage, PageTitle, Section, StatusMessage } from '../shared/compo
 import { prepareFormFeedback, readField } from '../shared/formFeedback'
 import { useText } from '../shared/text'
 import { postSales, prepareCustomerListQuery } from './salesApi'
+import { labelKey, type LabelKey } from '@app/vocabulary/text'
 
 type SalesField = keyof SalesRequest
 
 /** 項目ごとの見出しに使う単語帳の名前。 */
 const fieldLabelNames = {
-  customerId: 'customer',
-  salesDate: 'salesDate',
-  salesKind: 'salesKind',
-  itemName: 'itemName',
-  salesAmount: 'salesAmount',
-  taxRate: 'taxRate',
-} as const satisfies Record<SalesField, string>
+  customerId: labelKey('customer'),
+  salesDate: labelKey('salesDate'),
+  salesKind: labelKey('salesKind'),
+  itemName: labelKey('itemName'),
+  salesAmount: labelKey('salesAmount'),
+  taxRate: labelKey('taxRate'),
+} as const satisfies Record<SalesField, LabelKey>
 
 /** 売上区分の選択肢。返品・値引も金額は正で入力し、保存のときに負にする。 */
 const salesKindOptions = ['normal', 'return', 'discount'] as const
@@ -93,7 +94,7 @@ export function SalesCreatePage() {
           </FormField>
           <div className="sm:col-span-2">
             <Button type="submit" disabled={salesMutation.isPending}>
-              {text.label('create')}
+              {text.action('create')}
             </Button>
           </div>
         </form>

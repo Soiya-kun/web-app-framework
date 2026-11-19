@@ -1,68 +1,43 @@
-# システム向けの形容詞・分詞。名詞の前に付く（new + sales →「新売上」）。
-- { word: completed, pos: adjective, ja: 完了 }
-- { word: duplicate, pos: adjective, ja: 重複した }
-- { word: forbidden, pos: adjective, ja: 禁止 }
-- { word: found, pos: adjective, ja: 検出 }
-- { word: general, pos: adjective, ja: 全般の }
-- { word: invalid, pos: adjective, ja: 不正な }
-- { word: matched, pos: adjective, ja: 一致した }
-- { word: maximum, pos: adjective, ja: 最大 }
-- { word: minimum, pos: adjective, ja: 最小 }
-- { word: missing, pos: adjective, ja: 見つからない }
-- { word: new, pos: adjective, ja: 新 }
-- { word: not, pos: adjective, ja: 未 }
-- { word: random, pos: adjective, ja: ランダムな }
-- { word: required, pos: adjective, ja: 必須の }
-- { word: sample, pos: adjective, ja: 見本の }
-- { word: saved, pos: adjective, ja: 保存済みの }
-- { word: trimmed, pos: adjective, ja: 前後の空白を除いた }
-- { word: unexpected, pos: adjective, ja: 予期しない }
-- { word: valid, pos: adjective, ja: 有効な }
-- { word: applied, pos: adjective, ja: 適用済みの }
-- { word: last, pos: adjective, ja: 最終 }
-- { word: left, pos: adjective, ja: 左の }
-- { word: long, pos: adjective, ja: 長すぎる }
-- { word: normal, pos: adjective, ja: 通常 }
-- { word: other, pos: adjective, ja: その他 }
-- { word: plain, pos: adjective, ja: 素の }
-- { word: recording, pos: adjective, ja: 記録する }
-- { word: reduced, pos: adjective, ja: 軽減 }
-- { word: right, pos: adjective, ja: 右の }
-- { word: safe, pos: adjective, ja: 安全な }
-- { word: small, pos: adjective, ja: 少額の }
-- { word: stored, pos: adjective, ja: 保存形の }
-- { word: unique, pos: adjective, ja: 一意の }
-- { word: billed, pos: adjective, ja: 請求に載せた }
-- { word: changed, pos: adjective, ja: 変わった }
-- { word: current, pos: adjective, ja: 今回 }
-- { word: early, pos: adjective, ja: 早すぎる }
-- { word: empty, pos: adjective, ja: 空の }
-- { word: issued, pos: adjective, ja: 発行済みの }
-- { word: latest, pos: adjective, ja: 最新の }
-- { word: next, pos: adjective, ja: 次の }
-- { word: previous, pos: adjective, ja: 前回 }
-- { word: remaining, pos: adjective, ja: 残りの }
-- { word: unbilled, pos: adjective, ja: 請求に載せていない }
-- { word: unissued, pos: adjective, ja: 未発行の }
-- { word: primary, pos: adjective, ja: 主な }
-- { word: secondary, pos: adjective, ja: 補助の }
-- { word: danger, pos: adjective, ja: 危険な }
-- { word: all, pos: adjective, ja: すべての }
-- { word: allowed, pos: adjective, ja: 許される }
-- { word: conflicting, pos: adjective, ja: 競合する }
-- { word: created, pos: adjective, ja: 作った }
-- { word: draft, pos: adjective, ja: 発行前の }
-- { word: earlier, pos: adjective, ja: より前の }
-- { word: later, pos: adjective, ja: 後の }
-- { word: twentieth, pos: adjective, ja: 20日締めの }
-- { word: unknown, pos: adjective, ja: 不明な }
-- { word: closable, pos: adjective, ja: 締められること }
-- { word: issuable, pos: adjective, ja: 発行できること }
-- { word: cancelable, pos: adjective, ja: の取消ができること }
-- { word: automatic, pos: adjective, ja: 自動の }
-- { word: identifiable, pos: adjective, ja: 特定できること }
-- { word: identified, pos: adjective, ja: 特定済みの }
-- { word: unidentified, pos: adjective, ja: 仮受の }
-- { word: selected, pos: adjective, ja: 選んだ }
-- { word: normalized, pos: adjective, ja: 正規化した }
-- { word: registered, pos: adjective, ja: 記録した }
+# システム向けの形容詞。過去分詞（issued）・-able（closable）・un-（unbilled）は動詞の活用から作るので、ここには書かない。
+# ja.class: no（発行前の）・na（有効な）・i（見つからない）・prefix（今回・新 のように「の」なしで前に付く）。
+- { id: duplicate, ja: { stem: 重複, class: no } }
+- { id: forbidden, ja: { stem: 禁止, class: prefix } }
+- { id: general, ja: { stem: 全般, class: no } }
+- { id: invalid, ja: { stem: 不正, class: na } }
+- { id: maximum, ja: { stem: 最大, class: prefix } }
+- { id: minimum, ja: { stem: 最小, class: prefix } }
+- { id: missing, ja: { stem: 見つからない, class: i } }
+- { id: new, ja: { stem: 新, class: prefix, predicative: 新しい } }
+- { id: not, ja: { stem: 未, class: prefix } }
+- { id: random, ja: { stem: ランダム, class: na } }
+- { id: sample, ja: { stem: 見本, class: no } }
+- { id: unexpected, ja: { stem: 予期しない, class: i } }
+- { id: valid, ja: { stem: 有効, class: na } }
+- { id: last, ja: { stem: 最終, class: prefix } }
+- { id: left, ja: { stem: 左, class: no } }
+- { id: long, ja: { stem: 長すぎる, class: i } }
+- { id: normal, ja: { stem: 通常, class: no } }
+- { id: other, ja: { stem: その他, class: no } }
+- { id: plain, ja: { stem: 素, class: no } }
+- { id: reduced, ja: { stem: 軽減, class: no } }
+- { id: right, ja: { stem: 右, class: no } }
+- { id: safe, ja: { stem: 安全, class: na } }
+- { id: small, ja: { stem: 少額, class: no } }
+- { id: stored, ja: { stem: 保存形, class: no } }
+- { id: unique, ja: { stem: 一意, class: no } }
+- { id: current, ja: { stem: 今回, class: prefix } }
+- { id: early, ja: { stem: 早すぎる, class: i } }
+- { id: empty, ja: { stem: 空, class: no } }
+- { id: latest, ja: { stem: 最新, class: no } }
+- { id: next, ja: { stem: 次, class: no } }
+- { id: previous, ja: { stem: 前回, class: prefix } }
+- { id: primary, ja: { stem: 主, class: na } }
+- { id: secondary, ja: { stem: 補助, class: no } }
+- { id: danger, ja: { stem: 危険, class: na } }
+- { id: all, ja: { stem: すべて, class: no } }
+- { id: draft, ja: { stem: 発行前, class: no } }
+- { id: earlier, ja: { stem: より前, class: no } }
+- { id: later, ja: { stem: 後, class: no } }
+- { id: twentieth, ja: { stem: 20日締め, class: no } }
+- { id: unknown, ja: { stem: 不明, class: na } }
+- { id: automatic, ja: { stem: 自動, class: no } }

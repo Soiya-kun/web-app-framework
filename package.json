@@ -21,7 +21,8 @@
     "sql:ledger": "pnpm --filter @app/translator sql:ledger",
     "sql:ledger:check": "pnpm --filter @app/translator sql:ledger --check",
     "dev:api": "pnpm --filter @app/server dev",
-    "dev:web": "pnpm --filter @app/web dev"
+    "dev:web": "pnpm --filter @app/web dev",
+    "vocabulary:find": "pnpm --silent --filter @app/vocabulary run find"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
