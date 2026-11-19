@@ -353,10 +353,6 @@ export async function registerPayment(repositories: RepositorySet, idGenerator: 
 
 判断・計算は domain に置き、名前の形で役割を表します（`interpret…Request`・`ensure…`・`decide…`・`plan…`）。値はブランド型で区別し、`PaymentAmount` と `SalesAmount` を取り違えられないようにしています。業務エラーは例外で投げ、Hono の `onError` で HTTP の応答に変えます。
 
-### 5.3 画面
-
-React は `useEffect`・`useLayoutEffect`・`useInsertionEffect` を lint で禁止しています。データの取得はルーターの loader、外部の状態は `useSyncExternalStore`、DOM の初期化は ref コールバックで行います。
-
 ## 6. SQL を TypeSafe にする
 
 SQL は文字列なので、何を書いても型は通ります。そこで SQL は手で書き、固定した定義（`defineStatement`）としてしか流せないようにしました。
