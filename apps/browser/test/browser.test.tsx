@@ -1,7 +1,7 @@
 // コードのブラウザの画面のテスト。このリポジトリのソースを解析したモデルを渡し、業務フローから SQL までたどれることを確かめる。
 import { buildModel } from '@app/translator/model'
 import { createMemoryHistory } from '@tanstack/react-router'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { PointerEventsCheckLevel, userEvent } from '@testing-library/user-event'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -113,5 +113,61 @@ describe('キャンバス', () => {
     fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 160, clientY: 130 })
     fireEvent.pointerUp(canvas, { pointerId: 1 })
     expect(board.style.transform).not.toBe(initialStyle)
+  })
+
+  test('開いた段・カードとフレームの位置を保存し、開き直しても同じところから続ける', async () => {
+    const { user } = await launchBrowser('/')
+    const frame = screen.getByRole('region', { name: '月次の請求' })
+    await user.click(within(frame).getByRole('button', { name: '4 請求を締める' }))
+    await user.click(within(within(frame).getByRole('article', { name: '請求を締める' })).getByRole('button', { name: /請求の締め/ }))
+    cleanup()
+
+    await launchBrowser('/')
+
+    const restoredFrame = screen.getByRole('region', { name: '月次の請求' })
+    expect(within(restoredFrame).getByRole('article', { name: '請求を締める' })).toBeVisible()
+    expect(within(restoredFrame).getByRole('article', { name: '請求の締め' })).toBeVisible()
+  })
+
+  test('フレームの名前をドラッグすると動き、押しただけなら開閉する', async () => {
+    await launchBrowser('/')
+    const title = screen.getByRole('button', { name: /^月次の請求/, expanded: true })
+    const frameElement = title.closest('[data-frame]') as HTMLElement
+
+    fireEvent.pointerDown(title, { button: 0, pointerId: 2, clientX: 10, clientY: 10 })
+    fireEvent.pointerMove(title, { pointerId: 2, clientX: 110, clientY: 60 })
+    fireEvent.pointerUp(title, { pointerId: 2 })
+    fireEvent.click(title)
+
+    expect(frameElement.style.transform).toBe('translate(100px, 50px)')
+    expect(title).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  test('名前で探すと、その段（拡張の中の段も）のカードを開く', async () => {
+    const { user } = await launchBrowser('/')
+
+    await user.type(screen.getByRole('combobox', { name: '検索' }), '締めを取り消す')
+    await user.click(screen.getByRole('option', { name: /締めを取り消す/ }))
+
+    const frame = screen.getByRole('region', { name: '月次の請求' })
+    expect(within(frame).getByRole('article', { name: '請求を閲覧する' })).toBeVisible()
+    expect(within(frame).getByRole('article', { name: '締めを取り消す' })).toBeVisible()
+  })
+
+  test('初期化すると、開いたカードとフレームの位置を最初に戻す', async () => {
+    const { user } = await launchBrowser('/')
+    const frame = screen.getByRole('region', { name: '月次の請求' })
+    await user.click(within(frame).getByRole('button', { name: '2 売上を登録する' }))
+    expect(within(frame).getByRole('article', { name: '売上を登録する' })).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: '初期化' }))
+
+    expect(within(frame).queryByRole('article', { name: '売上を登録する' })).toBeNull()
+  })
+
+  test('ミニマップを出す', async () => {
+    await launchBrowser('/')
+
+    expect(screen.getByRole('img', { name: 'ミニマップ' })).toBeVisible()
   })
 })

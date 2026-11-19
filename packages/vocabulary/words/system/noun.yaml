@@ -213,3 +213,12 @@
 - { id: curve, ja: { form: 曲線 } }
 - { id: factor, ja: { form: 係数 } }
 - { id: limit, ja: { form: 上限 } }
+- { id: minimap, ja: { form: ミニマップ } }
+- { id: store, ja: { form: ストア } }
+- { id: action, ja: { form: 動作 } }
+- { id: storage, ja: { form: 保存先 } }
+- { id: bound, en: { plural: bounds }, ja: { form: 境界 } }
+- { id: listener, en: { plural: listeners }, ja: { form: 聞き手 } }
+- { id: timer, ja: { form: タイマー } }
+- { id: threshold, ja: { form: しきい値 } }
+- { id: observer, ja: { form: 監視役 } }

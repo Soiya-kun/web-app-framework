@@ -1,5 +1,6 @@
 // キャンバスのカードと、その中の折りたためる区画。
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { useCanvasState, useCanvasStore } from './canvasStore'
 import { ChevronIcon } from './icon'
 
 export type CardTone = 'scenario' | 'work' | 'statement' | 'table' | 'note'
@@ -14,12 +15,15 @@ const toneStyle: Readonly<Record<CardTone, string>> = {
 
 /** カード。見出しの高さは 54px にそろえ、線が見出しの中心に当たるようにする。 */
 export function Card({
+  path,
   tone,
   kind,
   title,
   width,
   children,
 }: {
+  /** キャンバスの中での道筋（探したカードへ寄せるときに使う）。 */
+  readonly path: string
   readonly tone: CardTone
   readonly kind: string
   readonly title: string
@@ -29,8 +33,9 @@ export function Card({
   return (
     <article
       data-card
+      data-path={path}
       aria-label={title}
-      className="cursor-auto rounded-xl border border-line/70 bg-surface shadow-[var(--shadow-card)]"
+      className="animate-appear cursor-auto rounded-xl border border-line/70 bg-surface shadow-[var(--shadow-card)]"
       style={{ width }}
     >
       <header className="flex h-[54px] items-center gap-2 border-b border-line/60 px-4">
@@ -42,25 +47,30 @@ export function Card({
   )
 }
 
-/** カードの中の、押すと開く区画。 */
+/** カードの中の、押すと開く区画。開閉はキャンバスの状態に保存する（path ごと）。 */
 export function Fold({
+  path,
   title,
   count,
   initialOpened = false,
   children,
 }: {
+  readonly path: string
   readonly title: ReactNode
   readonly count?: number
   readonly initialOpened?: boolean
   readonly children: ReactNode
 }) {
-  const [opened, setOpened] = useState(initialOpened)
+  const store = useCanvasStore()
+  const opened = useCanvasState((state) => state.folds[path] ?? initialOpened)
+  const changeOpened = (toggle: (current: boolean) => boolean) =>
+    store.update((state) => ({ ...state, folds: { ...state.folds, [path]: toggle(state.folds[path] ?? initialOpened) } }))
   return (
     <section className="flex flex-col gap-1.5">
       <button
         type="button"
         aria-expanded={opened}
-        onClick={() => setOpened((current) => !current)}
+        onClick={() => changeOpened((current) => !current)}
         className="flex items-center gap-1.5 rounded-md text-left text-xs font-bold text-muted hover:text-ink"
       >
         <ChevronIcon opened={opened} />

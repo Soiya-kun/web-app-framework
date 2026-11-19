@@ -6,4 +6,6 @@ window.scrollTo = () => undefined
 
 afterEach(() => {
   cleanup()
+  // キャンバスの状態はブラウザに保存されるので、テストごとに消す。
+  window.localStorage.clear()
 })

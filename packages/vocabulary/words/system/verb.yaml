@@ -98,3 +98,8 @@
 - { id: clamp, ja: { dictionary: 収める, class: ichidan } }
 - { id: arrange, en: { noun: arrangement }, ja: { stem: 配置, class: suru } }
 - { id: animate, en: { noun: animation }, ja: { stem: アニメーション, class: suru } }
+- { id: reset, ja: { dictionary: 戻す, class: godan, label: 初期化 } }
+- { id: update, ja: { stem: 更新, class: suru } }
+- { id: subscribe, ja: { stem: 購読, class: suru } }
+- { id: observe, ja: { stem: 監視, class: suru } }
+- { id: notify, ja: { stem: 通知, class: suru } }

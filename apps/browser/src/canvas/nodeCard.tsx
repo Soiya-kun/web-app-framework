@@ -1,18 +1,19 @@
 // キャンバスで開くカード。シナリオ → 処理 → SQL → テーブルと、右へ開いていく。
+// 開いた子のカードはキャンバスの状態に保存する（カードの道筋 path ごと。子は work:… のように種類を頭に付ける）。
 import type { CaseNode, FlowStepNode, StepTranslationNode } from '@app/translator/model-types'
 import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
 import { kindLabel } from '../component/laneLayout'
 import { useModel } from '../model'
 import { text } from '../text'
-import { Branch } from './branch'
+import { Branch, type BranchChild } from './branch'
 import { BranchToggle, Card, Fold, StepLines } from './card'
+import { emptyList, toggleBranch, useCanvasState, useCanvasStore } from './canvasStore'
 
-/** 開いた子のカードの ID（開いた順）。押すたびに開く・閉じるを切り替える。 */
-function useOpenedList() {
-  const [opened, setOpened] = useState<readonly string[]>([])
-  const toggle = (id: string) => setOpened((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
-  return { opened, toggle }
+/** カードの右に開いた子（開いた順）と、開閉の切り替え。 */
+function useBranches(path: string) {
+  const store = useCanvasStore()
+  const opened = useCanvasState((state) => state.branches[path] ?? emptyList)
+  return { opened, toggle: (child: string) => toggleBranch(store, path, child) }
 }
 
 function DetailLink({ to, params }: { readonly to: string; readonly params: Readonly<Record<string, string>> }) {
@@ -42,10 +43,11 @@ const caseKindLabel: Readonly<Record<CaseNode['kind'], string>> = {
   extend: text.label('extension'),
 }
 
-function CaseFold({ caseNode }: { readonly caseNode: CaseNode }) {
+function CaseFold({ path, caseNode }: { readonly path: string; readonly caseNode: CaseNode }) {
   const columns = [...new Set(caseNode.rows.flatMap((row) => Object.keys(row)))]
   return (
     <Fold
+      path={path}
       title={
         <>
           <span className="mr-1 rounded bg-canvas px-1 text-[10px] font-medium">{caseKindLabel[caseNode.kind]}</span>
@@ -85,14 +87,14 @@ function CaseFold({ caseNode }: { readonly caseNode: CaseNode }) {
   )
 }
 
-export function TableCard({ tableId }: { readonly tableId: string }) {
+export function TableCard({ path, tableId }: { readonly path: string; readonly tableId: string }) {
   const { tables } = useModel()
   const table = tables.get(tableId)
   if (table === undefined) {
     return null
   }
   return (
-    <Card tone="table" kind={text.label('table')} title={table.title} width={340}>
+    <Card path={path} tone="table" kind={text.label('table')} title={table.title} width={340}>
       <p className="font-mono text-xs text-muted">{table.id}</p>
       {table.note === '' ? null : <p className="text-xs text-muted">{table.note}</p>}
       <table aria-label={`${table.title}の${text.label('column')}`} className="w-full border-collapse text-xs">
@@ -111,21 +113,21 @@ export function TableCard({ tableId }: { readonly tableId: string }) {
   )
 }
 
-export function StatementCard({ statementId }: { readonly statementId: string }) {
+export function StatementCard({ path, statementId }: { readonly path: string; readonly statementId: string }) {
   const { statements, tables } = useModel()
-  const { opened, toggle } = useOpenedList()
+  const { opened, toggle } = useBranches(path)
   const statement = statements.get(statementId)
   if (statement === undefined) {
     return null
   }
   const card = (
-    <Card tone="statement" kind={text.label('statement')} title={statement.id} width={480}>
+    <Card path={path} tone="statement" kind={text.label('statement')} title={statement.id} width={480}>
       <pre aria-label={statement.id} className="overflow-x-auto rounded-lg bg-canvas p-3 font-mono text-[11px] leading-relaxed">
         {statement.text}
       </pre>
       <div className="flex flex-col gap-1.5">
         {statement.tableIds.map((tableId) => (
-          <BranchToggle key={tableId} opened={opened.includes(tableId)} onToggle={() => toggle(tableId)}>
+          <BranchToggle key={tableId} opened={opened.includes(`table:${tableId}`)} onToggle={() => toggle(`table:${tableId}`)}>
             <span className="rounded bg-table px-1 text-[10px] font-bold text-white">{text.label('table')}</span>
             {tables.get(tableId)?.title ?? tableId}
           </BranchToggle>
@@ -133,29 +135,37 @@ export function StatementCard({ statementId }: { readonly statementId: string })
       </div>
     </Card>
   )
-  return <Branch parent={card} branches={opened.map((tableId) => ({ key: tableId, node: <TableCard tableId={tableId} /> }))} />
+  return (
+    <Branch
+      parent={card}
+      branches={opened.map((child) => ({
+        key: child,
+        node: <TableCard path={`${path}/${child}`} tableId={child.slice('table:'.length)} />,
+      }))}
+    />
+  )
 }
 
-export function WorkCard({ workId }: { readonly workId: string }) {
+export function WorkCard({ path, workId }: { readonly path: string; readonly workId: string }) {
   const { works, rules } = useModel()
-  const { opened, toggle } = useOpenedList()
+  const { opened, toggle } = useBranches(path)
   const work = works.get(workId)
   if (work === undefined) {
     return null
   }
   const card = (
-    <Card tone="work" kind={text.label('work')} title={work.title} width={380}>
+    <Card path={path} tone="work" kind={text.label('work')} title={work.title} width={380}>
       <p className="font-mono text-xs text-muted">{work.id}</p>
       {work.purpose === '' ? null : <p>{work.purpose}</p>}
-      <Fold title={text.label('step')} count={work.steps.length} initialOpened>
+      <Fold path={`${path}#step`} title={text.label('step')} count={work.steps.length} initialOpened>
         <StepTree label={`${work.title}の${text.label('step')}`} steps={work.steps} />
       </Fold>
-      <Fold title={text.label('rule')} count={work.ruleIds.length}>
+      <Fold path={`${path}#rule`} title={text.label('rule')} count={work.ruleIds.length}>
         <div className="flex flex-col gap-1">
           {work.ruleIds.map((ruleId) => {
             const rule = rules.get(ruleId)
             return rule === undefined ? null : (
-              <Fold key={ruleId} title={<span className="font-medium text-ink">{rule.title}</span>}>
+              <Fold key={ruleId} path={`${path}#rule:${ruleId}`} title={<span className="font-medium text-ink">{rule.title}</span>}>
                 {rule.purpose === '' ? null : <p className="text-muted">{rule.purpose}</p>}
                 <StepTree label={rule.title} steps={rule.steps} />
               </Fold>
@@ -169,7 +179,11 @@ export function WorkCard({ workId }: { readonly workId: string }) {
           <div key={`${call.repository}.${call.method}`} className="flex flex-col gap-1">
             <span className="text-xs">{call.title}</span>
             {call.statementIds.map((statementId) => (
-              <BranchToggle key={statementId} opened={opened.includes(statementId)} onToggle={() => toggle(statementId)}>
+              <BranchToggle
+                key={statementId}
+                opened={opened.includes(`statement:${statementId}`)}
+                onToggle={() => toggle(`statement:${statementId}`)}
+              >
                 <span className="rounded bg-statement px-1 text-[10px] font-bold text-white">{text.label('statement')}</span>
                 <span className="font-mono text-xs">{statementId}</span>
               </BranchToggle>
@@ -183,14 +197,22 @@ export function WorkCard({ workId }: { readonly workId: string }) {
   return (
     <Branch
       parent={card}
-      branches={opened.map((statementId) => ({ key: statementId, node: <StatementCard statementId={statementId} /> }))}
+      branches={opened.map((child) => ({
+        key: child,
+        node: <StatementCard path={`${path}/${child}`} statementId={child.slice('statement:'.length)} />,
+      }))}
     />
   )
 }
 
-export function ScenarioCard({ step }: { readonly step: FlowStepNode }) {
+/** 段の拡張の流れ（then の段）を、名前で引けるようにする。 */
+function listExtensionSteps(step: FlowStepNode): ReadonlyMap<string, FlowStepNode> {
+  return new Map(step.extensions.flatMap((extension) => extension.then.map((following) => [following.number, following] as const)))
+}
+
+export function ScenarioCard({ path, step }: { readonly path: string; readonly step: FlowStepNode }) {
   const { scenarios, endpoints, works } = useModel()
-  const { opened, toggle } = useOpenedList()
+  const { opened, toggle } = useBranches(path)
   const scenario = step.scenarioId === null ? undefined : scenarios.get(step.scenarioId)
   if (scenario === undefined) {
     return null
@@ -200,8 +222,9 @@ export function ScenarioCard({ step }: { readonly step: FlowStepNode }) {
   ]
   const buttonWorks = listWorks(scenario.actionEndpointIds)
   const queryWorks = listWorks(scenario.queryEndpointIds).filter((workId) => !buttonWorks.includes(workId))
+  const extensionSteps = listExtensionSteps(step)
   const card = (
-    <Card tone="scenario" kind={text.label('scenario')} title={scenario.title} width={400}>
+    <Card path={path} tone="scenario" kind={text.label('scenario')} title={scenario.title} width={400}>
       <div className="flex flex-wrap items-center gap-1.5 text-xs">
         <span className="rounded-full bg-canvas px-2 py-0.5">
           {text.label('actor')}: {scenario.actorTitle}
@@ -210,7 +233,7 @@ export function ScenarioCard({ step }: { readonly step: FlowStepNode }) {
       </div>
       {scenario.purpose === '' ? null : <p>{scenario.purpose}</p>}
       {step.inputs.length === 0 ? null : (
-        <Fold title={text.label('input')} count={step.inputs.length} initialOpened>
+        <Fold path={`${path}#input`} title={text.label('input')} count={step.inputs.length} initialOpened>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
             {step.inputs.map((input) => (
               <div key={input.label} className="contents">
@@ -221,13 +244,13 @@ export function ScenarioCard({ step }: { readonly step: FlowStepNode }) {
           </dl>
         </Fold>
       )}
-      <Fold title={text.label('primarySuccessScenario')} count={scenario.steps.length} initialOpened>
+      <Fold path={`${path}#main`} title={text.label('primarySuccessScenario')} count={scenario.steps.length} initialOpened>
         <StepLines label={text.label('primarySuccessScenario')} steps={scenario.steps} />
       </Fold>
-      <Fold title={text.label('successGuarantee')} count={scenario.guarantee.length}>
+      <Fold path={`${path}#guarantee`} title={text.label('successGuarantee')} count={scenario.guarantee.length}>
         <StepLines label={text.label('successGuarantee')} steps={scenario.guarantee} />
       </Fold>
-      <Fold title={text.label('extension')} count={scenario.extensions.length}>
+      <Fold path={`${path}#extension`} title={text.label('extension')} count={scenario.extensions.length}>
         <ul className="flex flex-col gap-1.5">
           {scenario.extensions.map((extension) => (
             <li key={extension.name}>
@@ -244,20 +267,43 @@ export function ScenarioCard({ step }: { readonly step: FlowStepNode }) {
           ))}
         </ul>
       </Fold>
-      <Fold title={text.label('case')} count={scenario.cases.length}>
+      <Fold path={`${path}#case`} title={text.label('case')} count={scenario.cases.length}>
         <div className="flex flex-col gap-1.5">
           {scenario.cases.map((caseNode) => (
-            <CaseFold key={`${caseNode.file}:${caseNode.line}`} caseNode={caseNode} />
+            <CaseFold key={`${caseNode.file}:${caseNode.line}`} path={`${path}#case:${caseNode.line}`} caseNode={caseNode} />
           ))}
         </div>
       </Fold>
+      {step.extensions.length === 0 ? null : (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs font-bold text-muted">{text.label('flowExtension')}</p>
+          {step.extensions.map((extension) => (
+            <div key={extension.key} className="flex flex-col gap-1 rounded-lg bg-canvas/70 p-2">
+              <p className="text-xs font-medium">
+                {extension.key}. {extension.condition}
+              </p>
+              {extension.then.map((following) => (
+                <BranchToggle
+                  key={following.number}
+                  opened={opened.includes(`step:${following.number}`)}
+                  onToggle={() => toggle(`step:${following.number}`)}
+                >
+                  <span className="text-[10px] text-muted">{following.number}</span>
+                  {following.title}
+                </BranchToggle>
+              ))}
+              <p className="text-[11px] text-muted">{extension.resume ? text.message('returnMainline') : text.message('endCourse')}</p>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="flex flex-col gap-1.5">
         <p className="text-xs font-bold text-muted">{text.label('work')}</p>
         {[
           ...buttonWorks.map((workId) => [workId, text.label('button')] as const),
           ...queryWorks.map((workId) => [workId, text.label('screen')] as const),
         ].map(([workId, origin]) => (
-          <BranchToggle key={workId} opened={opened.includes(workId)} onToggle={() => toggle(workId)}>
+          <BranchToggle key={workId} opened={opened.includes(`work:${workId}`)} onToggle={() => toggle(`work:${workId}`)}>
             <span className="rounded bg-work px-1 text-[10px] font-bold text-white">{origin}</span>
             {works.get(workId)?.title ?? workId}
           </BranchToggle>
@@ -266,7 +312,28 @@ export function ScenarioCard({ step }: { readonly step: FlowStepNode }) {
       <DetailLink to="/scenario/$scenarioId" params={{ scenarioId: scenario.id }} />
     </Card>
   )
-  return <Branch parent={card} branches={opened.map((workId) => ({ key: workId, node: <WorkCard workId={workId} /> }))} />
+  const branches: BranchChild[] = opened.flatMap((child) => {
+    const childPath = `${path}/${child}`
+    if (child.startsWith('work:')) {
+      return [{ key: child, node: <WorkCard path={childPath} workId={child.slice('work:'.length)} /> }]
+    }
+    const following = extensionSteps.get(child.slice('step:'.length))
+    if (following === undefined) {
+      return []
+    }
+    return [
+      {
+        key: child,
+        node:
+          following.kind === 'operate' ? (
+            <ScenarioCard path={childPath} step={following} />
+          ) : (
+            <NoteCard path={childPath} step={following} />
+          ),
+      },
+    ]
+  })
+  return <Branch parent={card} branches={branches} />
 }
 
 const noteMessage = {
@@ -276,10 +343,10 @@ const noteMessage = {
 } as const
 
 /** システムの外の業務・外のイベント・時の経過のカード。 */
-export function NoteCard({ step }: { readonly step: FlowStepNode }) {
+export function NoteCard({ path, step }: { readonly path: string; readonly step: FlowStepNode }) {
   const note = step.kind === 'outside' || step.kind === 'occur' || step.kind === 'elapse' ? noteMessage[step.kind] : ''
   return (
-    <Card tone="note" kind={kindLabel[step.kind]} title={step.title} width={320}>
+    <Card path={path} tone="note" kind={kindLabel[step.kind]} title={step.title} width={320}>
       {step.actorTitle === null ? null : (
         <p className="text-xs">
           {text.label('actor')}: {step.actorTitle}
