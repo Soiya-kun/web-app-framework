@@ -1,11 +1,13 @@
 // キャンバスに置く業務フローのフレーム。上に担当ごとのレーン図を出し、段を押すと、その下にカードを開く。
 // 開いたカードは、右の段のものほど上に並べる。こうすると、下のカードへの線（レール）が上のカードと重ならない。
 import type { FlowNode, FlowStepNode } from '@app/translator/model-types'
-import { useState, type Ref } from 'react'
-import { kindLabel, laneSize, arrangeLanes } from '../component/laneLayout'
+import { useRef, type PointerEvent, type Ref } from 'react'
+import { arrangeLanes, kindLabel, laneSize } from '../component/laneLayout'
 import { useModel } from '../model'
 import { text } from '../text'
-import { ChevronIcon } from './icon'
+import { useCanvasAction } from './canvasAction'
+import { emptyFrame, toggleItem, updateFrame, useCanvasState, useCanvasStore, type FrameState } from './canvasStore'
+import { ChevronIcon, FitIcon } from './icon'
 import { NoteCard, ScenarioCard } from './nodeCard'
 
 const kindStyle: Readonly<Record<FlowStepNode['kind'], string>> = {
@@ -21,9 +23,8 @@ const railMargin = 28
 /** レールがカードの上に着くまでの高さ。 */
 const railHeight = 28
 
-function toggleItem(items: readonly string[], item: string): readonly string[] {
-  return items.includes(item) ? items.filter((current) => current !== item) : [...items, item]
-}
+/** 名前の帯を、この長さより動かしたらドラッグ（それより短ければ押しただけ）。 */
+const dragThreshold = 4
 
 export function FlowFrame({
   flow,
@@ -35,9 +36,66 @@ export function FlowFrame({
   readonly attachFrame: Ref<HTMLDivElement>
 }) {
   const table = useModel()
-  const [folded, setFolded] = useState(initialFolded)
-  const [openedNests, setOpenedNests] = useState<readonly string[]>([])
-  const [openedSteps, setOpenedSteps] = useState<readonly string[]>([])
+  const store = useCanvasStore()
+  const action = useCanvasAction()
+  const frame = useCanvasState((state) => state.frames[flow.id] ?? emptyFrame)
+  const folded = frame.folded ?? initialFolded
+  const { openedNests, openedSteps } = frame
+  const change = (next: (current: FrameState) => FrameState) => updateFrame(store, flow.id, next)
+  const changeFolded = (toggle: (current: boolean) => boolean) =>
+    change((current) => ({ ...current, folded: toggle(current.folded ?? initialFolded) }))
+  const changeOpenedNests = (toggle: (current: readonly string[]) => readonly string[]) =>
+    change((current) => ({ ...current, openedNests: toggle(current.openedNests) }))
+  const changeOpenedSteps = (toggle: (current: readonly string[]) => readonly string[]) =>
+    change((current) => ({ ...current, openedSteps: toggle(current.openedSteps) }))
+  // 名前の帯のドラッグ。動かした量はキャンバスの倍率で割って、キャンバスの上の長さにする。
+  const titleDrag = useRef<{
+    readonly pointerId: number
+    readonly pointerLeft: number
+    readonly pointerTop: number
+    readonly frame: FrameState
+    dragged: boolean
+  } | null>(null)
+  const beginTitleDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) {
+      return
+    }
+    titleDrag.current = { pointerId: event.pointerId, pointerLeft: event.clientX, pointerTop: event.clientY, frame, dragged: false }
+    if ('setPointerCapture' in event.currentTarget) {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    }
+  }
+  const followTitleDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    const drag = titleDrag.current
+    if (drag === null || drag.pointerId !== event.pointerId) {
+      return
+    }
+    const shiftLeft = event.clientX - drag.pointerLeft
+    const shiftTop = event.clientY - drag.pointerTop
+    if (!drag.dragged && Math.hypot(shiftLeft, shiftTop) < dragThreshold) {
+      return
+    }
+    drag.dragged = true
+    const scale = action.readScale()
+    change((current) => ({
+      ...current,
+      offsetLeft: drag.frame.offsetLeft + shiftLeft / scale,
+      offsetTop: drag.frame.offsetTop + shiftTop / scale,
+    }))
+  }
+  // ドラッグで動かしたあとの click では開閉しない（押しただけ・キーボードの操作なら開閉する）。
+  const draggedTitle = useRef(false)
+  const finishTitleDrag = () => {
+    draggedTitle.current = titleDrag.current?.dragged === true
+    titleDrag.current = null
+  }
+  const pressTitle = () => {
+    if (draggedTitle.current) {
+      draggedTitle.current = false
+      return
+    }
+    changeFolded((current) => !current)
+  }
   const layout = arrangeLanes(table, flow, (number) => openedNests.includes(number))
   const stepIndex = new Map(layout.steps.map((laneStep, index) => [laneStep.number, index]))
   const measureRailLeft = (index: number) => laneSize.label + layout.measureBoxLeft(index) + laneSize.boxWidth / 2
@@ -54,21 +112,43 @@ export function FlowFrame({
   const pendingCount = layout.steps.filter((laneStep) => laneStep.pending).length
 
   return (
-    <div ref={attachFrame} className="flex w-max flex-col gap-2">
-      <button
-        type="button"
-        aria-expanded={!folded}
-        onClick={() => setFolded((current) => !current)}
-        className="flex items-center gap-1.5 self-start rounded-md px-1 text-sm font-medium text-muted hover:text-ink"
-      >
-        <ChevronIcon opened={!folded} />
-        <span className="font-bold text-ink">{flow.title}</span>
-        <span className="text-xs">
-          {flow.parentIds.length === 0 ? text.label('summary') : text.label('childFlow')}・{text.label('step')} {flow.steps.length}・
-          {text.label('scenario')} {scenarioCount}
-          {pendingCount === 0 ? '' : `・${text.label('pending')} ${pendingCount}`}
-        </span>
-      </button>
+    <div
+      ref={attachFrame}
+      data-frame={flow.id}
+      className="flex w-max flex-col gap-2"
+      style={{ transform: `translate(${frame.offsetLeft}px, ${frame.offsetTop}px)` }}
+    >
+      {/* 名前の帯: 押すと開閉、ドラッグで動かす。横の印で、このフレームを画面に収める。 */}
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          aria-expanded={!folded}
+          onPointerDown={beginTitleDrag}
+          onPointerMove={followTitleDrag}
+          onPointerUp={finishTitleDrag}
+          onPointerCancel={() => {
+            titleDrag.current = null
+          }}
+          onClick={pressTitle}
+          className="flex cursor-move items-center gap-1.5 self-start rounded-md px-1 text-sm font-medium text-muted hover:text-ink"
+        >
+          <ChevronIcon opened={!folded} />
+          <span className="font-bold text-ink">{flow.title}</span>
+          <span className="text-xs">
+            {flow.parentIds.length === 0 ? text.label('summary') : text.label('childFlow')}・{text.label('step')} {flow.steps.length}・
+            {text.label('scenario')} {scenarioCount}
+            {pendingCount === 0 ? '' : `・${text.label('pending')} ${pendingCount}`}
+          </span>
+        </button>
+        <button
+          type="button"
+          aria-label={`${text.action('focus')}: ${flow.title}`}
+          onClick={() => action.focusFrame(flow.id)}
+          className="rounded-md p-1 text-muted hover:bg-surface hover:text-ink"
+        >
+          <FitIcon />
+        </button>
+      </div>
       <section
         aria-label={flow.title}
         data-card
@@ -112,7 +192,7 @@ export function FlowFrame({
                   key={group.number}
                   type="button"
                   aria-expanded
-                  onClick={() => setOpenedNests((current) => toggleItem(current, group.number))}
+                  onClick={() => changeOpenedNests((current) => toggleItem(current, group.number))}
                   className="absolute flex items-center gap-1 rounded-md border border-dashed border-nest bg-nest/5 px-2 text-[11px] font-medium text-nest hover:bg-nest/10"
                   style={{
                     left: layout.measureBoxLeft(group.first) - 8,
@@ -171,8 +251,8 @@ export function FlowFrame({
                     aria-label={`${laneStep.number} ${step.title}`}
                     onClick={() =>
                       laneStep.folded
-                        ? setOpenedNests((current) => toggleItem(current, laneStep.number))
-                        : setOpenedSteps((current) => toggleItem(current, laneStep.number))
+                        ? changeOpenedNests((current) => toggleItem(current, laneStep.number))
+                        : changeOpenedSteps((current) => toggleItem(current, laneStep.number))
                     }
                     className={`absolute flex flex-col justify-center gap-0.5 rounded-lg border border-l-[3px] border-line/80 bg-surface px-2 text-left shadow-sm transition-shadow hover:shadow-md ${kindStyle[step.kind]} ${
                       opened ? 'ring-2 ring-select' : ''
@@ -216,7 +296,11 @@ export function FlowFrame({
                   <span className="absolute top-0 w-0.5 bg-select" style={{ left: railLeft - 1, height: railHeight }} />
                   <span className="absolute size-2 rounded-full bg-select" style={{ left: railLeft - 4, top: railHeight - 4 }} />
                   <div style={{ marginLeft: Math.max(8, railLeft - railMargin) }}>
-                    {row.step.kind === 'operate' ? <ScenarioCard step={row.step} /> : <NoteCard step={row.step} />}
+                    {row.step.kind === 'operate' ? (
+                      <ScenarioCard path={`${flow.id}:${row.number}`} step={row.step} />
+                    ) : (
+                      <NoteCard path={`${flow.id}:${row.number}`} step={row.step} />
+                    )}
                   </div>
                 </div>
               )

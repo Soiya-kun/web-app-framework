@@ -47,3 +47,6 @@
 - { id: first, ja: { stem: 最初, class: no } }
 - { id: middle, ja: { stem: 中間, class: no } }
 - { id: initial, ja: { stem: 初期, class: no } }
+- { id: lazy, ja: { stem: 遅延, class: no } }
+- { id: active, ja: { stem: 選択中, class: no } }
+- { id: visible, ja: { stem: 表示中, class: no } }
