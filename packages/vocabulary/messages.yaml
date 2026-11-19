@@ -53,3 +53,9 @@
   free: { ja: 振込人を特定できなかったため、仮受として記録しました。入金の一覧で顧客を特定してください。, en: 'The payer could not be identified, so the payment was registered as unidentified. Identify the customer in the payment list.' }
 - key: automaticSelection
   free: { ja: 振込依頼人名から自動で特定, en: Identify from the payer name }
+- key: searchPrompt
+  free: { ja: 名前の一部を入れてください（日本語でも英語でも探せます）。, en: Enter part of a name (Japanese or English). }
+- key: returnMainline
+  free: { ja: そのあと、本線の次の段へ戻る。, en: Then return to the next step of the mainline. }
+- key: endCourse
+  free: { ja: この経路はここで終える（本線へ戻らない）。, en: This course ends here without returning to the mainline. }

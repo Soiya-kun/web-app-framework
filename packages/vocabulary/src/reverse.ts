@@ -53,7 +53,9 @@ export function readJapanese(concepts: readonly Concept[], text: string): Japane
   }
   const readings = segment(text)
   const fewest = Math.min(...readings.map((reading) => reading.length))
-  return readings.filter((reading) => reading.length === fewest)
+  // 「外の」と「外」＋つなぎの「の」のように、分け方が違っても同じ概念の並びになる読みは1つにまとめる。
+  const unique = new Map(readings.filter((reading) => reading.length === fewest).map((reading) => [reading.map((part) => `${part.concept.id}:${part.english}`).join(' '), reading]))
+  return [...unique.values()]
 }
 
 /** 概念の並びを、英語の名前（camelCase）にする。 */

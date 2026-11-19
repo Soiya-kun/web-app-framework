@@ -80,3 +80,6 @@
 - { id: elapse, ja: { stem: 経過, class: suru } }
 - { id: nest, ja: { stem: 入れ子に, class: suru } }
 - { id: launch, ja: { stem: 起動, class: suru } }
+- { id: search, ja: { stem: 検索, class: suru } }
+- { id: expand, en: { noun: expansion }, ja: { stem: 展開, class: suru } }
+- { id: call, ja: { dictionary: 呼び出す, class: godan, noun: 呼び出し } }
