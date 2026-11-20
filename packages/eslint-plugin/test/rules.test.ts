@@ -1,6 +1,8 @@
 import { RuleTester } from '@typescript-eslint/rule-tester'
 import { afterAll, describe, it } from 'vitest'
 import { flatSteps } from '../src/flatSteps'
+import { knownFileName } from '../src/knownFileName'
+import { knownPath } from '../src/knownPath'
 import { knownWords } from '../src/knownWords'
 import { verbFirst } from '../src/verbFirst'
 
@@ -24,6 +26,32 @@ ruleTester.run('known-words', knownWords, {
     { code: 'const foo = 1', errors: [{ messageId: 'unknownWord' }] },
     { code: 'type SalesRow = { readonly salesFoo: string }', errors: [{ messageId: 'unknownWord' }] },
     { code: "import { useState as useFoo } from 'react'", errors: [{ messageId: 'unknownWord' }] },
+  ],
+})
+
+ruleTester.run('known-file-name', knownFileName, {
+  valid: [
+    { code: 'export {}', filename: 'apps/web/src/invoice/invoiceDetailPage.tsx' },
+    { code: 'export {}', filename: 'packages/backend/test/repository/postgresRepository.database.test.ts' },
+    { code: 'export {}', filename: 'apps/web/e2e/flow.e2e.test.ts' },
+    { code: 'export {}', filename: 'apps/web/e2e/browserSetup.ts' },
+  ],
+  invalid: [
+    { code: 'export {}', filename: 'apps/web/src/invoice/invoiceHelper.ts', errors: [{ messageId: 'unknownWord', data: { word: 'helper', part: 'invoiceHelper' } }] },
+    { code: 'export {}', filename: 'apps/web/test/salesFoo.test.ts', errors: [{ messageId: 'unknownWord' }] },
+  ],
+})
+
+ruleTester.run('known-path', knownPath, {
+  valid: [
+    "app.basePath('/api').route('/invoices', invoiceHandler)",
+    "new Hono().post('/:invoiceId/issue', handler)",
+    "createRoute({ path: '/invoices/$invoiceId' })",
+    "const value = salesMap.get('salesId')",
+  ],
+  invalid: [
+    { code: "new Hono().get('/:invoiceFoo', handler)", errors: [{ messageId: 'unknownWord', data: { word: 'foo', path: '/:invoiceFoo' } }] },
+    { code: "createRoute({ path: '/sales/helper' })", errors: [{ messageId: 'unknownWord' }] },
   ],
 })
 

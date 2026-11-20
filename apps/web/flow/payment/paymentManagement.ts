@@ -1,6 +1,6 @@
 import { defineFlow, occur, operate, outside } from '@app/flow'
 import type { MemoryDatabase } from '@app/backend/testing'
-import { customers } from '../../test/billingFixture'
+import { customers } from '../../test/billingSeed'
 import { browsePayments } from '../../scenario/payment/browsePayments'
 import { createRefund } from '../../scenario/payment/createRefund'
 import { identifyPayment } from '../../scenario/payment/identifyPayment'

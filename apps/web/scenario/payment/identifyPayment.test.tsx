@@ -2,7 +2,7 @@
 import { confirmScenario, operateScenario } from '@app/flow'
 import { describeScenario } from '@app/flow/vitest'
 import { expect } from 'vitest'
-import { customers, preparePayment } from '../../test/billingFixture'
+import { customers, preparePayment } from '../../test/billingSeed'
 import { launchApp } from '../../test/launchApp'
 import { identifyPayment } from './identifyPayment'
 

@@ -9,6 +9,7 @@ export default defineConfig(
   tseslint.configs.recommended,
 
   // 単語帳と命名の文法は、アプリのコード（画面・バックエンド）に当てる。道具（lint・翻訳・単語帳の生成）は対象外。
+  // 名前（変数・関数・型）だけでなく、ファイル名と、API・画面のパスも単語帳の言葉にする。
   {
     files: ['apps/**/*.{ts,tsx}', 'packages/backend/**/*.ts'],
     ignores: ['**/*.config.ts'],
@@ -16,6 +17,8 @@ export default defineConfig(
     rules: {
       'app/known-words': 'error',
       'app/verb-first': 'error',
+      'app/known-file-name': 'error',
+      'app/known-path': 'error',
     },
   },
 

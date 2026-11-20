@@ -222,3 +222,6 @@
 - { id: timer, ja: { form: タイマー } }
 - { id: threshold, ja: { form: しきい値 } }
 - { id: observer, ja: { form: 監視役 } }
+- { id: policy, ja: { form: 方針 }, description: domain のファイルの名前で使う。業務の判断（〜してよいか、どれにするか）を置く（closingPolicy）。 }
+- { id: knowledge, ja: { form: 知識 }, description: domain のファイルの名前で使う。業務の計算や選び方の知識を置く（invoiceTaxKnowledge）。 }
+- { id: health, ja: { form: 稼働状況 }, description: API の /api/health で使う。ロードバランサーが API サーバーの稼働を確かめる。 }

@@ -2,10 +2,10 @@
 import { confirmScenario, operateScenario } from '@app/flow'
 import { describeScenario } from '@app/flow/vitest'
 import { prepareText } from '@app/vocabulary/text'
-import { customers, issuedOctoberInvoice } from '../../test/billingFixture'
+import { customers, issuedOctoberInvoice } from '../../test/billingSeed'
 import { launchApp } from '../../test/launchApp'
 import { browseInvoice } from './browseInvoice'
-import { draftTarget, prepareDraftSeed } from './invoiceFixture'
+import { draftTarget, prepareDraftSeed } from './invoiceSeed'
 
 const text = prepareText('ja')
 

@@ -3,7 +3,7 @@ import { confirmExtension, confirmScenario, operateScenario } from '@app/flow'
 import { describeScenario } from '@app/flow/vitest'
 import type { MemoryDatabase } from '@app/backend/testing'
 import { expect } from 'vitest'
-import { customers } from '../../test/billingFixture'
+import { customers } from '../../test/billingSeed'
 import { launchApp } from '../../test/launchApp'
 import { registerPayment, type PaymentInput } from './registerPayment'
 

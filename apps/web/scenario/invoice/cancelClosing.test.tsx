@@ -4,7 +4,7 @@ import { describeScenario } from '@app/flow/vitest'
 import { expect } from 'vitest'
 import { launchApp } from '../../test/launchApp'
 import { cancelClosing } from './cancelClosing'
-import { draftTarget, prepareDraftSeed } from './invoiceFixture'
+import { draftTarget, prepareDraftSeed } from './invoiceSeed'
 
 describeScenario(cancelClosing, (cases) => {
   cases.main('請求を消し、載せた行を請求に載せる前へ戻して一覧へ移る', async () => {
