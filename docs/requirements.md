@@ -90,7 +90,7 @@ web-app-framework/
 ├─ apps/web/                  # React の画面（Vite・TanStack Router・TanStack Query）
 │  ├─ src/                    # 画面（sales・invoice・payment）と、API クライアント・ルーター・文言・画面の土台（shared）
 │  ├─ scenario/               # シナリオ（*.ts）と、そのケース＝画面の結合テスト（*.test.tsx）
-│  ├─ flow/                   # 業務フローと、その E2E（flow.test.tsx）
+│  ├─ flow/                   # 業務フロー（領域ごとのフォルダ: invoice・payment・sales・customer）と、その E2E（flow.test.tsx）
 │  ├─ e2e/                    # 業務フローを実ブラウザ・API サーバー・PostgreSQL で流す E2E（pnpm test:e2e）
 │  └─ test/launchApp.tsx      # 画面をインプロセスで開く道具
 ├─ apps/browser/              # コードのブラウザ（モデルを読む静的な画面）
@@ -387,7 +387,7 @@ flowchart LR
 - DB の接続情報は Secrets Manager に置き、ECS が環境変数に入れる。RDS とは証明書を確かめる TLS で接続する（証明書はイメージに入れる）。
 - マイグレーションは API と同じイメージを ECS の単発のタスクで動かす（実行のコマンドは CDK の出力に出る）。配備のたびに、API の更新の前に実行する。
 - 環境は `-c stage=…` で選ぶ。prod は NAT と API を2つずつ、DB を Multi-AZ にし、削除から守る。それ以外（dev・stg など）は費用を抑えた設定にする。
-- まだ入れていないもの: 独自のドメインと証明書、WAF、認証（Cognito。3章で決定）、配備の自動化（CI）。
+- まだ入れていないもの: 独自のドメインと証明書、WAF、認証（Cognito。3章で決定）、配備の自動化。
 
 ## 6. 業務の作り
 
@@ -410,7 +410,7 @@ flowchart LR
 サンプルの業務は、売上の登録・請求の締めと発行・入金の記録と仮受の特定で区切った（返金・調整の登録・顧客・残高の画面は作らない）。次は土台の側を詰める。
 
 1. ブラウザの英語の表示。
-2. CI（GitHub Actions で `pnpm check`・`pnpm test:database`・`pnpm test:e2e`）と、配備の自動化（GitHub Actions から CDK とマイグレーション）。
+2. 配備の自動化（GitHub Actions から CDK とマイグレーション）。CI は `.github/workflows/check.yml` で、main への push と Pull Request ごとに `pnpm check`・DB の契約テスト・実ブラウザの E2E を流す。
 3. 認証（Cognito のユーザープールと、API での ID トークンの検証）。
 4. 請求書の PDF の出力と、自社の情報（名前・登録番号など）の設定。
 5. 単語帳をファイル名・API のパスにも当てる。翻訳ツールで英語の訳も作る。

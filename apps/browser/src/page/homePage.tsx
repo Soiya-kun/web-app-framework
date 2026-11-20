@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { arrangeFlowAreas, sumPendingSteps } from '../component/flowArea'
 import { Badge, Cell, HeaderCell, PageTitle, Section, Table, TextLink } from '../component/part'
 import { useModel } from '../model'
 import { text } from '../text'
@@ -8,8 +9,6 @@ export function HomePage() {
   const { model, scenarios } = useModel()
   const [query, setQuery] = useState('')
   const { progress } = model
-  const topFlows = model.flows.filter((flow) => flow.parentIds.length === 0)
-  const childFlows = model.flows.filter((flow) => flow.parentIds.length > 0)
   const trimmedQuery = query.trim()
   const results =
     trimmedQuery === ''
@@ -102,22 +101,38 @@ export function HomePage() {
         </Section>
       )}
       <Section title={text.label('flow')}>
-        <ul className="flex flex-col gap-3 text-sm">
-          {[...topFlows, ...childFlows].map((flow) => (
-            <li key={flow.id} className="flex flex-col gap-0.5">
-              <span>
-                {flow.parentIds.length > 0 ? (
-                  <Badge>{text.label('childFlow')}</Badge>
-                ) : (
-                  <Badge tone="primary">{text.label('summary')}</Badge>
-                )}{' '}
-                <TextLink to="/flow/$flowId" params={{ flowId: flow.id }}>
-                  {flow.title}
-                </TextLink>
-              </span>
-            </li>
+        <div className="grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
+          {arrangeFlowAreas(model.flows).map((area) => (
+            <div key={area.id} className="flex flex-col gap-2">
+              <h3 className="text-xs font-bold text-muted">{area.title}</h3>
+              <ul className="flex flex-col gap-1.5">
+                {area.flows.map((flow) => {
+                  const pendingCount = sumPendingSteps(flow, scenarios)
+                  return (
+                    <li key={flow.id}>
+                      {flow.parentIds.length > 0 ? (
+                        <Badge>{text.label('childFlow')}</Badge>
+                      ) : (
+                        <Badge tone="primary">{text.label('summary')}</Badge>
+                      )}{' '}
+                      <TextLink to="/flow/$flowId" params={{ flowId: flow.id }}>
+                        {flow.title}
+                      </TextLink>
+                      {pendingCount === 0 ? null : (
+                        <>
+                          {' '}
+                          <Badge tone="pending">
+                            {text.label('pending')} {pendingCount}
+                          </Badge>
+                        </>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       </Section>
       <Section title={text.label('scenario')}>
         <Table caption={text.label('scenario')}>

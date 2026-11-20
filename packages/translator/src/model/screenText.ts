@@ -126,11 +126,25 @@ function keyLabel(node: ts.Expression | undefined): string {
   return key === undefined ? (node === undefined ? '' : valueOf(node)) : labelOf(key)
 }
 
-/** screen.row('a', 'b') の受け手を「「a」・「b」の行で、」にする。 */
+/**
+ * screen.row('a', 'b') の受け手を「「a」・「b」の行で、」にする。
+ * screen.rowOf('invoiceList', { closingDate: x }) の受け手は「「請求一覧」の、請求締め日が〈請求締め日〉の行で、」にする。
+ */
 function scopeOf(receiver: ts.Expression, constants: ReadonlyMap<string, ts.Expression>): string | undefined {
   const inner = unwrap(receiver)
   if (ts.isCallExpression(inner) && ts.isPropertyAccessExpression(inner.expression) && inner.expression.name.text === 'row') {
     return `${inner.arguments.map((argument) => valueOf(argument, constants)).join('・')}の行で、`
+  }
+  if (ts.isCallExpression(inner) && ts.isPropertyAccessExpression(inner.expression) && inner.expression.name.text === 'rowOf') {
+    const [table, cells] = inner.arguments
+    const cellNode = cells === undefined ? undefined : unwrap(cells)
+    const conditions =
+      cellNode !== undefined && ts.isObjectLiteralExpression(cellNode)
+        ? cellNode.properties.flatMap((property) =>
+            ts.isPropertyAssignment(property) && ts.isIdentifier(property.name) ? [`${labelOf(property.name.text)}が${valueOf(property.initializer, constants)}`] : [],
+          )
+        : []
+    return `「${keyLabel(table)}」の、${conditions.join('・')}の行で、`
   }
   if (ts.isIdentifier(inner) || ts.isPropertyAccessExpression(inner)) {
     return ''

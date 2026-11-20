@@ -24,3 +24,5 @@
 - { id: outsideWork, en: { tokens: outside work }, ja: { form: システムの外の業務 } }
 - { id: childFlow, en: { tokens: child flow }, ja: { form: 子フロー, attach: direct } }
 - { id: timeLapse, en: { tokens: time lapse }, ja: { form: 時の経過 } }
+- { id: installmentPayment, en: { tokens: installment payment }, ja: { form: 分割入金 }, description: 1つの請求の代金を、何回かに分けて入金すること。入金は合計して今回入金額に載る。 }
+- { id: bulkPayment, en: { tokens: bulk payment }, ja: { form: 一括入金 }, description: 未入金を繰り越した請求の今回請求額を、まとめて1回で入金すること。 }

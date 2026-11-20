@@ -10,7 +10,7 @@ export const browseInvoice = defineScenario('browseInvoice', {
   actor: 'accountant',
   operate: async (screen, invoice: InvoiceTarget) => {
     await screen.go('invoiceList')
-    await screen.row(invoice.closingDate, invoice.billingCustomer).follow(invoice.closingDate)
+    await screen.rowOf('invoiceList', { closingDate: invoice.closingDate, billingCustomer: invoice.billingCustomer }).follow(invoice.closingDate)
   },
   confirm: async (screen) => {
     await screen.expectHeading('invoiceDetail')

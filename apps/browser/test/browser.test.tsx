@@ -73,6 +73,18 @@ describe('キャンバス', () => {
     expect(screen.getByRole('button', { name: /^入金管理/, expanded: false })).toBeVisible()
   })
 
+  test('業務フローを業務の領域ごとにまとめ、未着手のシナリオのある業務フローに印を付ける', async () => {
+    await launchBrowser('/')
+
+    const layer = screen.getByRole('complementary', { name: 'レイヤー' })
+    expect(within(layer).getAllByRole('heading', { level: 3 }).map((title) => title.textContent)).toEqual(['請求', '入金', '売上', '顧客'])
+    expect(within(layer).getByRole('button', { name: /^過入金の返金/ })).toHaveTextContent('未着手 1')
+    expect(within(layer).getByRole('button', { name: /^分割入金/ })).not.toHaveTextContent('未着手')
+    const paymentArea = screen.getByRole('region', { name: '入金' })
+    expect(within(paymentArea).getByRole('region', { name: '分割入金' })).toBeInTheDocument()
+    expect(within(paymentArea).queryByRole('region', { name: '月次の請求' })).toBeNull()
+  })
+
   test('子フローを開き、段 → シナリオ → 処理 → SQL → テーブルとカードを開いていける', async () => {
     const { user } = await launchBrowser('/')
     const frame = screen.getByRole('region', { name: '月次の請求' })

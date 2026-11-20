@@ -16,6 +16,7 @@ import {
   type CanvasView,
 } from '../canvas/canvasStore'
 import { FlowFrame } from '../canvas/flowFrame'
+import { arrangeFlowAreas, sumPendingSteps } from '../component/flowArea'
 import { FitIcon, MinusIcon, PlusIcon } from '../canvas/icon'
 import { CanvasMinimap, type FrameArea } from '../canvas/minimap'
 import { useModel } from '../model'
@@ -70,17 +71,21 @@ function splitStepNumber(number: string): { readonly base: string; readonly foll
   return extension?.[1] === undefined ? { base: number, following: null } : { base: extension[1], following: number }
 }
 
-/** フレームを並べた板（キャンバスの中身）。視点が変わっても描き直さない。 */
+/**
+ * フレームを並べた板（キャンバスの中身）。視点が変わっても描き直さない。
+ * 業務の領域（請求・入金など）ごとに列にし、列の中に業務フローのフレームを縦に積む。
+ */
 const CanvasBoard = memo(function CanvasBoard({ registerFrame }: { readonly registerFrame: (flowId: string) => Ref<HTMLDivElement> }) {
   const { model } = useModel()
-  const frameFlows = [
-    ...model.flows.filter((flow) => flow.parentIds.length === 0),
-    ...model.flows.filter((flow) => flow.parentIds.length > 0),
-  ]
   return (
-    <div className="flex w-max items-start gap-24 p-12">
-      {frameFlows.map((flow) => (
-        <FlowFrame key={flow.id} flow={flow} initialFolded={flow.parentIds.length > 0} attachFrame={registerFrame(flow.id)} />
+    <div className="flex w-max items-start gap-32 p-12">
+      {arrangeFlowAreas(model.flows).map((area) => (
+        <section key={area.id} aria-label={area.title} className="flex flex-col items-start gap-12">
+          <h2 className="px-1 text-7xl font-bold text-muted/70">{area.title}</h2>
+          {area.flows.map((flow) => (
+            <FlowFrame key={flow.id} flow={flow} initialFolded={flow.parentIds.length > 0} attachFrame={registerFrame(flow.id)} />
+          ))}
+        </section>
       ))}
     </div>
   )
@@ -371,7 +376,7 @@ function CanvasScreen({ store }: { readonly store: CanvasStore }) {
     [],
   )
   const board = useMemo(() => <CanvasBoard registerFrame={registerFrame} />, [registerFrame])
-  const topFlows = model.flows.filter((flow) => flow.parentIds.length === 0)
+  const flowAreas = useMemo(() => arrangeFlowAreas(model.flows), [model.flows])
   const { progress } = model
 
   return (
@@ -477,27 +482,27 @@ function CanvasScreen({ store }: { readonly store: CanvasStore }) {
         >
           <section className="flex flex-col gap-1">
             <h2 className="px-1 text-xs font-bold text-muted">{text.label('flow')}</h2>
-            {topFlows.map((flow) => (
-              <div key={flow.id} className="flex flex-col">
-                <button
-                  type="button"
-                  onClick={() => openTarget({ kind: 'flow', flowId: flow.id })}
-                  className="rounded-md px-2 py-1 text-left font-medium hover:bg-canvas"
-                >
-                  {flow.title}
-                </button>
-                {model.flows
-                  .filter((child) => child.parentIds.includes(flow.id))
-                  .map((child) => (
+            {flowAreas.map((area) => (
+              <div key={area.id} className="flex flex-col">
+                <h3 className="px-2 pb-0.5 pt-1 text-[11px] font-bold text-muted">{area.title}</h3>
+                {area.flows.map((flow) => {
+                  const pendingCount = sumPendingSteps(flow, scenarios)
+                  return (
                     <button
-                      key={child.id}
+                      key={flow.id}
                       type="button"
-                      onClick={() => openTarget({ kind: 'flow', flowId: child.id })}
-                      className="rounded-md py-1 pl-6 pr-2 text-left text-muted hover:bg-canvas hover:text-ink"
+                      onClick={() => openTarget({ kind: 'flow', flowId: flow.id })}
+                      className={`flex items-center justify-between gap-2 rounded-md py-1 pr-2 text-left hover:bg-canvas ${flow.parentIds.length === 0 ? 'pl-3 font-medium' : 'pl-6 text-muted hover:text-ink'}`}
                     >
-                      {child.title}
+                      <span>{flow.title}</span>
+                      {pendingCount === 0 ? null : (
+                        <span className="shrink-0 rounded-full bg-pending px-1.5 text-[10px] font-normal text-pending-line">
+                          {text.label('pending')} {pendingCount}
+                        </span>
+                      )}
                     </button>
-                  ))}
+                  )
+                })}
               </div>
             ))}
           </section>

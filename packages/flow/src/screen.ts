@@ -21,6 +21,8 @@ export interface Screen {
   press(button: ActionKey | LabelKey): Promise<void>
   /** 表の、指定した文字をすべて含む1つの行の中だけを操作する。 */
   row(...rowTexts: readonly string[]): Screen
+  /** 表の、列ごとの値がすべて合う1つの行の中だけを操作する（ほかの列に同じ文字がある行と取り違えない）。 */
+  rowOf(table: LabelKey, cells: CellExpectation): Screen
   /** 知らせ（role=status）に文が出ている。 */
   expectMessage(message: MessageKey, params?: MessageParams): Promise<void>
   /** 警告（role=alert）に文が出ている。 */

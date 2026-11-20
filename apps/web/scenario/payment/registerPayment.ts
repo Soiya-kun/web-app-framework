@@ -28,6 +28,12 @@ export const registerPayment = defineScenario('registerPayment', {
         await screen.expectMessage('unidentifiedPayment')
       },
     },
+    mistakenPayment: {
+      condition: '当社あてでない振込（他社宛の誤入金）で、振込依頼人名から顧客を特定できない',
+      confirm: async (screen) => {
+        await screen.expectMessage('unidentifiedPayment')
+      },
+    },
     invalidPaymentAmount: { condition: '入金額が空か、1 から 999,999,999 の整数でない' },
     invalidPayerName: { condition: '振込依頼人名が空か、100 文字を超える' },
     invalidPaymentDate: { condition: '入金日が実在する日付でない' },

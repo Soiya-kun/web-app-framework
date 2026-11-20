@@ -5,7 +5,7 @@ export const cancelClosing = defineScenario('cancelClosing', {
   actor: 'accountant',
   operate: async (screen, invoice: InvoiceTarget) => {
     await screen.go('invoiceList')
-    await screen.row(invoice.closingDate, invoice.billingCustomer).follow(invoice.closingDate)
+    await screen.rowOf('invoiceList', { closingDate: invoice.closingDate, billingCustomer: invoice.billingCustomer }).follow(invoice.closingDate)
     await screen.press('closingCancel')
   },
   confirm: async (screen) => {

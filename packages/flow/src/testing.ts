@@ -86,6 +86,31 @@ function prepareScope(option: TestingScreenOption, readScope: () => Promise<Scop
         return within(rows[0] as HTMLElement)
       })
     },
+    rowOf(table, cells) {
+      return prepareScope(option, async () => {
+        const scope = await readScope()
+        const row = await waitFor(() => {
+          const tableElement = scope.getByRole('table', { name: text.label(table), hidden: true })
+          const headers = within(tableElement)
+            .queryAllByRole('columnheader', { hidden: true })
+            .map((header) => header.textContent ?? '')
+          const expected = Object.entries(cells).map(([column, value]) => [headers.indexOf(text.label(column as LabelKey)), formatCell(value as CellValue)] as const)
+          const matched = within(tableElement)
+            .getAllByRole('row', { hidden: true })
+            .filter((rowElement: HTMLElement) => {
+              const values = within(rowElement)
+                .queryAllByRole('cell', { hidden: true })
+                .map((cell) => cell.textContent ?? '')
+              return values.length > 0 && expected.every(([index, value]) => values[index] === value)
+            })
+          if (matched.length !== 1) {
+            throw new Error(`「${text.label(table)}」に ${JSON.stringify(cells)} の行が ${matched.length} 行ある（1行にする）`)
+          }
+          return matched[0] as HTMLElement
+        })
+        return within(row)
+      })
+    },
     async expectMessage(message, params) {
       const expected = text.message(message, params)
       await waitFor(() => ensureEqual(documentScreen.getByRole('status', { hidden: true }).textContent, expected, '知らせ'))

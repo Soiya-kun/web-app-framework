@@ -10,3 +10,9 @@
 - { id: carried, category: adjective, ja: { stem: 繰越, class: prefix }, description: 繰越額（carried amount）で使う。 }
 - { id: correction, category: noun, ja: { form: 訂正 }, description: 調整の区分の1つ。発行した請求に載せた入金などの誤りを、次の請求で直す（正負どちらも）。 }
 - { id: unidentified, category: adjective, ja: { stem: 仮受, class: no }, description: 振込人を特定できていない入金の状態（仮受）。identify の否定からは作らず、業務の言葉にする。 }
+- { id: overpayment, category: noun, ja: { form: 過入金 }, description: 請求より多い入金（二重入金を含む）。負の繰越額（前受）として次の請求で差し引くか、振込人へ返金する。 }
+- { id: underpayment, category: noun, ja: { form: 不足入金 }, description: 請求より少ない入金。足りない分は繰越額として次の請求に載る。 }
+- { id: installment, category: noun, ja: { form: 分割払い }, description: 1つの請求の代金を、何回かに分けて支払うこと。 }
+- { id: bulk, category: noun, ja: { form: 一括 }, description: 何か月分かの請求の代金を、まとめて1回で支払うこと（一括入金）。 }
+- { id: deduction, category: noun, ja: { form: 差引 }, description: 顧客が振込手数料などを入金額から差し引くこと。差し引いた分は調整（振込手数料）で残高から減らす。 }
+- { id: reminder, category: noun, ja: { form: 督促状 }, description: 入金期日を過ぎても入金がない請求先へ送る、支払いを促す知らせ（システムの外）。 }

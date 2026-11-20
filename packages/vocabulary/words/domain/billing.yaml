@@ -6,3 +6,5 @@
 - { id: offset, category: noun, ja: { form: 月数 }, description: 回収月（collection month offset）で使う。締め日から何か月後に回収するか。 }
 - { id: return, category: noun, ja: { form: 返品 }, description: 売上区分の1つ。売った品の返品。負の金額で持つ。 }
 - { id: discount, category: noun, ja: { form: 値引 }, description: 売上区分の1つ。売った後の値引き。負の金額で持つ。 }
+- { id: backdated, category: adjective, ja: { stem: 過去日付, class: no }, description: 締めた後に、締め日以前の日付で登録した売上など。まだどの請求にも載っていないので、次の締めで載る。 }
+- { id: overdue, category: adjective, ja: { stem: 期日超過, class: no }, description: 入金期日を過ぎても、請求の代金を受け取っていないこと。次の請求の繰越額と入金期日から求める。 }
