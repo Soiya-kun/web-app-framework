@@ -1,6 +1,7 @@
 // 画面の小さな部品。色・余白はここと style.css のトークンだけで決める。
 import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
+import { readOtherLocale, useLocale } from '../text'
 
 export function PageTitle({ level, children }: { readonly level?: string; readonly children: ReactNode }) {
   return (
@@ -86,4 +87,21 @@ export function HeaderCell({ children }: { readonly children: ReactNode }) {
 
 export function Cell({ children }: { readonly children: ReactNode }) {
   return <td className="border-b border-line px-2 py-1.5 align-top">{children}</td>
+}
+
+/** 言語の切り替え。押すと、もう一方の言語（日本語・English）にする。 */
+export function LocaleToggle({ className = '' }: { readonly className?: string }) {
+  const { locale, selectLocale, text } = useLocale()
+  const other = readOtherLocale(locale)
+  return (
+    <button
+      type="button"
+      lang={other.locale}
+      aria-label={`${text.label('locale')}: ${other.title}`}
+      onClick={() => selectLocale(other.locale)}
+      className={`rounded-lg px-2.5 py-1 text-muted hover:bg-canvas hover:text-ink ${className}`}
+    >
+      {other.title}
+    </button>
+  )
 }

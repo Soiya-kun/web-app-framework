@@ -1,7 +1,8 @@
 import type { Model } from '@app/translator/model-types'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import model from '../generated/model.json'
+import englishModel from '../generated/model.en.json'
+import japaneseModel from '../generated/model.ja.json'
 import { AppRoot } from './appRoot'
 import { prepareRouter } from './router'
 import './style.css'
@@ -13,6 +14,6 @@ if (rootElement === null) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <AppRoot model={model as Model} router={prepareRouter()} />
+    <AppRoot models={{ ja: japaneseModel as Model, en: englishModel as Model }} router={prepareRouter()} />
   </StrictMode>,
 )

@@ -9,13 +9,14 @@ import { describe, expect, test } from 'vitest'
 import { AppRoot } from '../src/appRoot'
 import { prepareRouter } from '../src/router'
 
-const model = buildModel(join(dirname(fileURLToPath(import.meta.url)), '../../..'))
+const repositoryRoot = join(dirname(fileURLToPath(import.meta.url)), '../../..')
+const models = { ja: buildModel(repositoryRoot, 'ja'), en: buildModel(repositoryRoot, 'en') }
 
 async function launchBrowser(path: string) {
   const router = prepareRouter(createMemoryHistory({ initialEntries: [path] }))
   await router.load()
   const user = userEvent.setup({ delay: null, pointerEventsCheck: PointerEventsCheckLevel.Never })
-  render(<AppRoot model={model} router={router} />)
+  render(<AppRoot models={models} router={router} />)
   return { user }
 }
 
@@ -83,6 +84,23 @@ describe('キャンバス', () => {
     const paymentArea = screen.getByRole('region', { name: '入金' })
     expect(within(paymentArea).getByRole('region', { name: '分割入金' })).toBeInTheDocument()
     expect(within(paymentArea).queryByRole('region', { name: '月次の請求' })).toBeNull()
+  })
+
+  test('言語を英語に切り替えると、画面の文言と、業務フロー・シナリオの見出し・手順が英語になり、ブラウザに覚える', async () => {
+    const { user } = await launchBrowser('/')
+
+    await user.click(screen.getByRole('button', { name: '言語: English' }))
+
+    const layer = screen.getByRole('complementary', { name: 'Layer' })
+    expect(within(layer).getAllByRole('heading', { level: 3 }).map((title) => title.textContent)).toEqual(['Invoice', 'Payment', 'Sales', 'Customer'])
+    expect(within(layer).getByRole('button', { name: /^Overpayment Refund/ })).toHaveTextContent('Pending 1')
+    const frame = screen.getByRole('region', { name: 'Monthly Invoice' })
+    await user.click(within(frame).getByRole('button', { name: '2 Create sales' }))
+    expect(within(within(frame).getByRole('article', { name: 'Create sales' })).getByRole('list', { name: 'Primary Success Scenario' })).toHaveTextContent('Press “Create”')
+    expect(window.localStorage.getItem('code-browser:locale')).toBe('en')
+
+    await user.click(screen.getByRole('button', { name: 'Locale: 日本語' }))
+    expect(screen.getByRole('region', { name: '月次の請求' })).toBeInTheDocument()
   })
 
   test('子フローを開き、段 → シナリオ → 処理 → SQL → テーブルとカードを開いていける', async () => {

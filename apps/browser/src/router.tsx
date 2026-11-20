@@ -16,9 +16,11 @@ import { ScenarioPage } from './page/scenarioPage'
 import { StatementPage } from './page/statementPage'
 import { TablePage } from './page/tablePage'
 import { WorkPage } from './page/workPage'
-import { text } from './text'
+import { LocaleToggle } from './component/part'
+import { useText } from './text'
 
 function RootLayout() {
+  const text = useText()
   const routePath = useRouterState({ select: (state) => state.location.pathname })
   // キャンバスは画面いっぱいに出す（自分でツールバーを持つ）。
   if (routePath === '/') {
@@ -40,6 +42,7 @@ function RootLayout() {
           <Link to="/glossary" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
             {text.label('glossary')}
           </Link>
+          <LocaleToggle className="ml-auto" />
         </nav>
       </header>
       <main className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-6">

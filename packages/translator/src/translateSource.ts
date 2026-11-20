@@ -1,13 +1,8 @@
-// TypeScript のソースを読み、export した関数ごとに「関数名の体言止め」と「処理の手順（〜する）」を作る。
-// 訳は単語帳の品詞と日本語から機械的に作る。訳せない式は、コードのまま `…` で示す。
-import {
-  listMessages,
-  renderNounPhrase,
-  splitWords,
-  translateFunctionName,
-  translateStep,
-} from '@app/vocabulary'
+// TypeScript のソースを読み、export した関数ごとに「関数名の見出し」と「処理の手順」を作る（日本語は体言止めと「〜する」、英語は命令形）。
+// 訳は単語帳の品詞と語形から機械的に作る。訳せない式は、コードのまま `…` で示す。
+import { splitWords } from '@app/vocabulary'
 import ts from 'typescript'
+import { prepareLanguage, type Comparison, type Language } from './language'
 
 export type StepTranslation = {
   readonly text: string
@@ -22,10 +17,9 @@ export type FunctionTranslation = {
   readonly line: number
 }
 
-const messageText = new Map<string, string>(Object.entries(listMessages('ja')))
-
-export function translateSource(sourceText: string, fileName: string): FunctionTranslation[] {
+export function translateSource(sourceText: string, fileName: string, language: Language = prepareLanguage('ja')): FunctionTranslation[] {
   const sourceFile = ts.createSourceFile(fileName, sourceText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+  const { noun, phrase, step: translateStep, sentence } = language
 
   function code(node: ts.Node): string {
     return `\`${node.getText(sourceFile).replace(/\s+/g, ' ')}\``
@@ -49,10 +43,10 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
   function nounOf(expression: ts.Expression): string {
     const inner = unwrap(expression)
     if (ts.isIdentifier(inner)) {
-      return renderNounPhrase(inner.text, 'ja')
+      return phrase(inner.text)
     }
     if (ts.isPropertyAccessExpression(inner)) {
-      return `${nounOf(inner.expression)}の${renderNounPhrase(inner.name.text, 'ja')}`
+      return sentence.owned(nounOf(inner.expression), phrase(inner.name.text))
     }
     if (ts.isNumericLiteral(inner)) {
       return inner.text
@@ -60,7 +54,7 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
     if (ts.isObjectLiteralExpression(inner)) {
       const shorthands = inner.properties.filter(ts.isShorthandPropertyAssignment)
       if (shorthands.length === inner.properties.length) {
-        return shorthands.map((property) => renderNounPhrase(property.name.text, 'ja')).join('・')
+        return sentence.list(shorthands.map((property) => phrase(property.name.text)))
       }
     }
     return code(inner)
@@ -89,7 +83,7 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
   }
 
   function stepOf(expression: ts.Expression): string {
-    return translateCall(expression) ?? `${code(unwrap(expression))}を実行する`
+    return translateCall(expression) ?? sentence.run(code(unwrap(expression)))
   }
 
   /** is・has・can で始まる名前を、条件の句にする。 */
@@ -97,23 +91,23 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
     const [first, ...rest] = splitWords(name)
     const restName = joinCamel(rest)
     if (first === 'is' && rest.length > 0) {
-      return `${renderNounPhrase(restName, 'ja')}${negated ? 'でない' : 'である'}`
+      return sentence.isName(phrase(restName), negated)
     }
     if (first === 'has' && rest.length > 0) {
-      return `${renderNounPhrase(restName, 'ja')}が${negated ? 'ない' : 'ある'}`
+      return sentence.hasName(phrase(restName), negated)
     }
     if (first === 'can' && rest.length > 0) {
       const step = translateStep(restName)
-      return step === undefined ? undefined : `${step}ことが${negated ? 'できない' : 'できる'}`
+      return step === undefined ? undefined : sentence.canName(step, negated)
     }
     return undefined
   }
 
-  const comparisonText: Partial<Record<ts.SyntaxKind, string>> = {
-    [ts.SyntaxKind.LessThanToken]: 'より小さい',
-    [ts.SyntaxKind.GreaterThanToken]: 'より大きい',
-    [ts.SyntaxKind.LessThanEqualsToken]: '以下である',
-    [ts.SyntaxKind.GreaterThanEqualsToken]: '以上である',
+  const comparisons: Partial<Record<ts.SyntaxKind, Comparison>> = {
+    [ts.SyntaxKind.LessThanToken]: 'less',
+    [ts.SyntaxKind.GreaterThanToken]: 'greater',
+    [ts.SyntaxKind.LessThanEqualsToken]: 'atMost',
+    [ts.SyntaxKind.GreaterThanEqualsToken]: 'atLeast',
   }
 
   function isEmptyValue(expression: ts.Expression): boolean {
@@ -124,7 +118,7 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
     )
   }
 
-  /** if の条件を「〜」の句にする（後ろに「場合」を付ける）。 */
+  /** if の条件を句にする（日本語は後ろに「場合」、英語は前に If を付ける）。 */
   function conditionOf(expression: ts.Expression, negated = false): string {
     const inner = unwrap(expression)
     if (ts.isPrefixUnaryExpression(inner) && inner.operator === ts.SyntaxKind.ExclamationToken) {
@@ -133,23 +127,24 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
     if (!negated && ts.isBinaryExpression(inner)) {
       const operator = inner.operatorToken.kind
       if (operator === ts.SyntaxKind.BarBarToken || operator === ts.SyntaxKind.AmpersandAmpersandToken) {
-        const joiner = operator === ts.SyntaxKind.BarBarToken ? '、または' : '、かつ'
-        return `${conditionOf(inner.left)}${joiner}${conditionOf(inner.right)}`
+        return operator === ts.SyntaxKind.BarBarToken
+          ? sentence.either(conditionOf(inner.left), conditionOf(inner.right))
+          : sentence.both(conditionOf(inner.left), conditionOf(inner.right))
       }
       if (operator === ts.SyntaxKind.EqualsEqualsEqualsToken || operator === ts.SyntaxKind.ExclamationEqualsEqualsToken) {
         const isEqual = operator === ts.SyntaxKind.EqualsEqualsEqualsToken
         if (isEmptyValue(inner.right)) {
-          return `${nounOf(inner.left)}が${isEqual ? '空である' : '空でない'}`
+          return sentence.isEmpty(nounOf(inner.left), !isEqual)
         }
-        return `${nounOf(inner.left)}が${nounOf(inner.right)}と${isEqual ? '等しい' : '等しくない'}`
+        return sentence.equals(nounOf(inner.left), nounOf(inner.right), !isEqual)
       }
-      const comparison = comparisonText[operator]
+      const comparison = comparisons[operator]
       if (comparison !== undefined) {
-        return `${nounOf(inner.left)}が${nounOf(inner.right)}${comparison}`
+        return sentence.compare(nounOf(inner.left), nounOf(inner.right), comparison)
       }
     }
     if (ts.isIdentifier(inner)) {
-      return conditionOfName(inner.text, negated) ?? `${code(inner)}が${negated ? '偽である' : '真である'}`
+      return conditionOfName(inner.text, negated) ?? sentence.truth(code(inner), negated)
     }
     if (ts.isCallExpression(inner) && ts.isIdentifier(inner.expression)) {
       const condition = conditionOfName(inner.expression.text, negated)
@@ -157,7 +152,7 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
         return condition
       }
     }
-    return negated ? `${code(inner)}が偽である` : `${code(inner)}が真である`
+    return sentence.truth(code(inner), negated)
   }
 
   function throwOf(expression: ts.Expression): string {
@@ -165,24 +160,24 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
     if (ts.isCallExpression(inner) || ts.isNewExpression(inner)) {
       const [first] = inner.arguments ?? []
       if (first !== undefined && ts.isStringLiteral(first)) {
-        const message = messageText.get(first.text)
+        const message = language.messages.get(first.text)
         if (message !== undefined) {
-          return `エラー「${message}」で止める`
+          return sentence.stopWithMessage(message)
         }
       }
     }
-    return `エラー（${code(inner)}）で止める`
+    return sentence.stopWithCode(code(inner))
   }
 
   function returnOf(expression: ts.Expression | undefined): string {
     if (expression === undefined) {
-      return '終える'
+      return sentence.finish
     }
     const call = translateCall(expression)
     if (call !== undefined) {
-      return `${call}（その結果を返す）`
+      return sentence.returnCall(call)
     }
-    return `${nounOf(expression)}を返す`
+    return sentence.returnValue(nounOf(expression))
   }
 
   function translateBlock(statement: ts.Statement): StepTranslation[] {
@@ -200,9 +195,9 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
         if (call !== undefined) {
           return [{ text: call, children: [] }]
         }
-        const target = ts.isIdentifier(declaration.name) ? renderNounPhrase(declaration.name.text, 'ja') : code(declaration.name)
-        const verb = ts.isCallExpression(unwrap(initializer)) || ts.isNewExpression(unwrap(initializer)) ? 'で求める' : 'にする'
-        return [{ text: `${target}を${code(unwrap(initializer))}${verb}`, children: [] }]
+        const target = ts.isIdentifier(declaration.name) ? phrase(declaration.name.text) : code(declaration.name)
+        const isComputed = ts.isCallExpression(unwrap(initializer)) || ts.isNewExpression(unwrap(initializer))
+        return [{ text: isComputed ? sentence.compute(target, code(unwrap(initializer))) : sentence.assign(target, code(unwrap(initializer))), children: [] }]
       })
     }
     if (ts.isExpressionStatement(statement)) {
@@ -216,15 +211,15 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
     }
     if (ts.isIfStatement(statement)) {
       const steps: StepTranslation[] = [
-        { text: `${conditionOf(statement.expression)}場合`, children: translateBlock(statement.thenStatement) },
+        { text: sentence.when(conditionOf(statement.expression)), children: translateBlock(statement.thenStatement) },
       ]
       if (statement.elseStatement !== undefined) {
-        steps.push({ text: 'それ以外の場合', children: translateBlock(statement.elseStatement) })
+        steps.push({ text: sentence.otherwise, children: translateBlock(statement.elseStatement) })
       }
       return steps
     }
     if (ts.isForOfStatement(statement)) {
-      return [{ text: `${nounOf(statement.expression)}の1件ごとに`, children: translateBlock(statement.statement) }]
+      return [{ text: sentence.each(nounOf(statement.expression)), children: translateBlock(statement.statement) }]
     }
     if (ts.isBlock(statement)) {
       return translateStatements(statement.statements)
@@ -254,10 +249,8 @@ export function translateSource(sourceText: string, fileName: string): FunctionT
           : [{ text: returnOf(body), children: [] }]
     return {
       name,
-      title: translateFunctionName(name),
-      parameters: node.parameters.map((parameter) =>
-        ts.isIdentifier(parameter.name) ? renderNounPhrase(parameter.name.text, 'ja') : code(parameter.name),
-      ),
+      title: language.title(name),
+      parameters: node.parameters.map((parameter) => (ts.isIdentifier(parameter.name) ? noun(parameter.name.text) : code(parameter.name))),
       steps,
       line: sourceFile.getLineAndCharacterOfPosition(documentNode.getStart(sourceFile)).line + 1,
     }

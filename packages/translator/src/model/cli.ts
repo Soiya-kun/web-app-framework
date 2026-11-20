@@ -6,10 +6,11 @@ import { fileURLToPath } from 'node:url'
 import { buildModel } from './buildModel'
 
 const repositoryRoot = join(dirname(fileURLToPath(import.meta.url)), '../../../..')
-const outputFile = join(repositoryRoot, 'apps/browser/generated/model.json')
+const outputDirectory = join(repositoryRoot, 'apps/browser/generated')
 
 const started = performance.now()
-const model = buildModel(repositoryRoot)
+// 書き方の規則の問題と数は、日本語のモデルで確かめる（英語のモデルも同じ解析から作る）。
+const model = buildModel(repositoryRoot, 'ja')
 const elapsed = Math.round(performance.now() - started)
 const { progress } = model
 const summary = `業務フロー ${progress.flows}（段 ${progress.flowSteps}）・シナリオ ${progress.scenarios}（未着手 ${progress.pendingScenarios}）・拡張 ${progress.extensions}（未着手 ${progress.pendingExtensions}）・ケース ${progress.cases}（未着手 ${progress.pendingCases}）・処理 ${model.works.length}・SQL ${model.statements.length}`
@@ -21,9 +22,10 @@ if (model.problems.length > 0) {
   }
 }
 if (!process.argv.includes('--check')) {
-  mkdirSync(dirname(outputFile), { recursive: true })
-  writeFileSync(outputFile, `${JSON.stringify(model, null, 2)}\n`)
-  console.log(`apps/browser/generated/model.json を作りました（${summary}。${elapsed}ms）。`)
+  mkdirSync(outputDirectory, { recursive: true })
+  writeFileSync(join(outputDirectory, 'model.ja.json'), `${JSON.stringify(model, null, 2)}\n`)
+  writeFileSync(join(outputDirectory, 'model.en.json'), `${JSON.stringify(buildModel(repositoryRoot, 'en'), null, 2)}\n`)
+  console.log(`apps/browser/generated/model.ja.json・model.en.json を作りました（${summary}。${elapsed}ms）。`)
 } else {
   console.log(`業務フローの書き方を確かめました（${summary}。${elapsed}ms）。`)
 }

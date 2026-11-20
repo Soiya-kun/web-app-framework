@@ -1,7 +1,7 @@
 // コードの名前を扱う道具（lint・翻訳ツール・SQL の台帳の検査が使う）。すべて既定の索引（単語帳のマスタ）で読む。
 import { findUnknownWords, readName, type NounPhrase } from './analyze'
 import { defaultLexicon } from './defaultLexicon'
-import { renderEnglishLabel } from './english'
+import { renderEnglishLabel, renderEnglishStep, renderEnglishTitle } from './english'
 import en from './generated/locale/en.json'
 import ja from './generated/locale/ja.json'
 import type { MessageKey } from './generated/catalogKey'
@@ -37,13 +37,16 @@ export function renderNounPhrase(name: string, locale: Locale): string {
   return locale === 'ja' ? renderJapaneseLabel(reading.phrase) : renderEnglishLabel(reading.phrase)
 }
 
-/** 関数名を体言止めにする（createNewTransportSales →「新輸送売上の登録」）。 */
-export function translateFunctionName(name: string): string {
+/** 関数名を見出しにする。日本語は体言止め（createNewTransportSales →「新輸送売上の登録」）、英語は命令形（"Create New Transport Sales"）。 */
+export function translateFunctionName(name: string, locale: Locale = 'ja'): string {
   const { reading } = readName(defaultLexicon, name, 'verb')
   if (reading === null) {
-    return renderNounPhrase(name, 'ja')
+    return renderNounPhrase(name, locale)
   }
-  return reading.kind === 'verbPhrase' ? renderJapaneseTitle(reading.phrase) : renderJapaneseLabel(reading.phrase)
+  if (reading.kind === 'verbPhrase') {
+    return locale === 'ja' ? renderJapaneseTitle(reading.phrase) : renderEnglishTitle(reading.phrase)
+  }
+  return locale === 'ja' ? renderJapaneseLabel(reading.phrase) : renderEnglishLabel(reading.phrase)
 }
 
 /** 受け手の名前から、役割の語（repository など）を除いた名詞句（salesRepository →「売上」）。 */
@@ -56,11 +59,11 @@ function readReceiver(receiverName: string): NounPhrase | undefined {
 }
 
 /**
- * 呼び出しを「〜する」の手順にする（validateSalesRequest →「売上リクエストをバリデーションする」）。
+ * 呼び出しを手順にする。日本語は「〜する」（validateSalesRequest →「売上リクエストをバリデーションする」）、英語は命令形（"Validate sales request"）。
  * メソッド名が動詞だけのときは、受け手の名前を目的語にする（salesRepository.create →「売上を登録する」）。
  * 動詞で始まらない名前は訳せないので undefined を返す。
  */
-export function translateStep(name: string, receiverName?: string): string | undefined {
+export function translateStep(name: string, receiverName?: string, locale: Locale = 'ja'): string | undefined {
   const { reading } = readName(defaultLexicon, name, 'verb')
   if (reading?.kind !== 'verbPhrase') {
     return undefined
@@ -69,7 +72,7 @@ export function translateStep(name: string, receiverName?: string): string | und
   const isBare = object.units.length === 0 && object.modifiers.length === 0 && object.relations.length === 0 && object.predicate === null
   const receiver = receiverName === undefined ? undefined : readReceiver(receiverName)
   const phrase = isBare && receiver !== undefined ? { ...reading.phrase, object: receiver } : reading.phrase
-  return renderJapaneseStep(phrase)
+  return locale === 'ja' ? renderJapaneseStep(phrase) : renderEnglishStep(phrase)
 }
 
 const catalogs = { ja, en } as const

@@ -44,6 +44,19 @@ describe('このリポジトリのモデル', () => {
     expect(monthly?.steps.find((step) => step.number === '5')?.extensions.map((extension) => [extension.key, extension.resume])).toEqual([['5a', false]])
     expect(nested?.parentIds).toEqual(['monthlyInvoice'])
   })
+
+  test('英語のモデルは、同じつながりを英語の見出し・手順で持つ（人が書いた拡張の条件は書いたまま）', () => {
+    const englishModel = buildModel(repositoryRoot, 'en')
+    const scenario = englishModel.scenarios.find((candidate) => candidate.id === 'registerPayment')
+    const monthly = englishModel.flows.find((flow) => flow.id === 'monthlyInvoice')
+
+    expect(englishModel.locale).toBe('en')
+    expect(scenario).toMatchObject({ title: 'Register payment', actorTitle: 'Accountant', actionEndpointIds: ['POST /api/payments'] })
+    expect(scenario?.steps.at(-1)).toBe('Press “Register”')
+    expect(monthly?.steps.slice(0, 3).map((step) => step.title)).toEqual(['Deliver product', 'Create sales', 'Closing Date arrives (2026-10-31)'])
+    expect(scenario?.extensions[0]?.condition).toBe(model.scenarios.find((candidate) => candidate.id === 'registerPayment')?.extensions[0]?.condition)
+    expect(englishModel.problems).toEqual(model.problems)
+  })
 })
 
 describe('書き方の規則の検査', () => {

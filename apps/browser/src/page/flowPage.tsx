@@ -3,7 +3,8 @@ import { getRouteApi } from '@tanstack/react-router'
 import { FlowDiagram } from '../component/flowDiagram'
 import { Badge, Cell, HeaderCell, PageTitle, Section, SourcePlace, Table, TextLink } from '../component/part'
 import { useModel, type ModelTable } from '../model'
-import { text } from '../text'
+import { readStepKindLabels } from '../component/kindLabel'
+import { useText, useLabelFormat } from '../text'
 
 const flowRoute = getRouteApi('/flow/$flowId')
 
@@ -26,14 +27,6 @@ function StepTitle({ step }: { readonly step: FlowStepNode }) {
   return <>{step.title}</>
 }
 
-const kindLabel: Readonly<Record<FlowStepNode['kind'], string>> = {
-  operate: text.label('screenOperation'),
-  outside: text.label('outsideWork'),
-  occur: text.label('externalEvent'),
-  elapse: text.label('timeLapse'),
-  nest: text.label('childFlow'),
-}
-
 /** テストで流す経路（本線と、子フローを含む拡張ごと）。 */
 function listCourses(table: ModelTable, flow: FlowNode, prefix = '', depth = 0): { key: string; condition: string }[] {
   return flow.steps.flatMap((step) => {
@@ -44,6 +37,9 @@ function listCourses(table: ModelTable, flow: FlowNode, prefix = '', depth = 0):
 }
 
 export function FlowPage() {
+  const text = useText()
+  const labelFormat = useLabelFormat()
+  const kindLabel = readStepKindLabels(text)
   const { flowId } = flowRoute.useParams()
   const table = useModel()
   const flow = table.flows.get(flowId)
@@ -55,7 +51,7 @@ export function FlowPage() {
 
   return (
     <>
-      <PageTitle level={`${text.label('summary')}（${text.label('flow')}）`}>{flow.title}</PageTitle>
+      <PageTitle level={labelFormat.joinNote(text.label('summary'), text.label('flow'))}>{flow.title}</PageTitle>
       <SourcePlace file={flow.file} line={flow.line} />
       {flow.precondition === null ? null : (
         <Section title={text.label('precondition')}>
@@ -77,7 +73,7 @@ export function FlowPage() {
       )}
       <FlowDiagram flow={flow} />
       <Section title={text.label('step')}>
-        <Table caption={`${flow.title}の${text.label('step')}`}>
+        <Table caption={labelFormat.joinItem(flow.title, text.label('step'))}>
           <thead>
             <tr>
               <HeaderCell>{text.label('number')}</HeaderCell>
@@ -122,7 +118,7 @@ export function FlowPage() {
                   </span>
                   <ol className="flex list-decimal flex-col gap-0.5 pl-6">
                     <li>
-                      {step.title}（{extension.inputs.map((input) => `${input.label} ${input.value}`).join('、')}）
+                      {labelFormat.joinNote(step.title, labelFormat.joinSequence(extension.inputs.map((input) => `${input.label} ${input.value}`)))}
                     </li>
                     {extension.then.map((followingStep) => (
                       <li key={followingStep.number}>

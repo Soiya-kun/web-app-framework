@@ -2,12 +2,11 @@
 import ts from 'typescript'
 import { collectCalls, collectIdentifiers, isExported, lineOf, readProperty, readString, unwrap, type ParsedSource, type SourceReader } from './source'
 import type { PageActionNode, PageNode } from './types'
-import { renderNounPhrase } from '@app/vocabulary'
-import { prepareText, type ActionKey, type LabelKey } from '@app/vocabulary/text'
+import type { ActionKey, LabelKey, Text } from '@app/vocabulary/text'
+import { prepareLanguage, type Language } from '../language'
 
 const webRoot = 'apps/web/src'
 const routerFile = `${webRoot}/shared/router.tsx`
-const text = prepareText('ja')
 
 export type WebModel = {
   readonly pages: PageNode[]
@@ -96,7 +95,7 @@ function attributeExpression(attribute: ts.JsxAttribute | undefined): ts.Node | 
 }
 
 /** ボタンの文言（text.action('issue') →「発行」、text.label('closingCancel') →「締めの取消」）。 */
-function buttonNameOf(node: ts.Node): string | undefined {
+function buttonNameOf(text: Text, node: ts.Node): string | undefined {
   for (const call of collectCalls(node)) {
     if (ts.isPropertyAccessExpression(call.expression) && ts.isIdentifier(call.expression.expression) && call.expression.expression.text === 'text') {
       const key = readString(call.arguments[0])
@@ -111,7 +110,7 @@ function buttonNameOf(node: ts.Node): string | undefined {
   return undefined
 }
 
-function readPage(reader: SourceReader, file: string, component: string, apiFunctions: ReadonlyMap<string, string[]>) {
+function readPage(text: Text, reader: SourceReader, file: string, component: string, apiFunctions: ReadonlyMap<string, string[]>) {
   const parsed = reader.read(file)
   const componentNode = parsed.source.statements.find(
     (statement): statement is ts.FunctionDeclaration => ts.isFunctionDeclaration(statement) && statement.name?.text === component,
@@ -160,7 +159,7 @@ function readPage(reader: SourceReader, file: string, component: string, apiFunc
     const tag = tagNameOf(node)
     if ((ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) && tag !== undefined) {
       if (tag === 'Button' || tag === 'button') {
-        const button = buttonNameOf(node)
+        const button = buttonNameOf(text, node)
         const onClick = attributeExpression(attributeOf(node, 'onClick'))
         const form = [...ancestors].reverse().find((ancestor) => tagNameOf(ancestor) === 'form')
         const handler = onClick ?? (form === undefined ? undefined : attributeExpression(attributeOf(form, 'onSubmit')))
@@ -184,7 +183,8 @@ function readPage(reader: SourceReader, file: string, component: string, apiFunc
   return { queryEndpointIds: [...new Set(queries)], actions, links, line: lineOf(parsed, componentNode) }
 }
 
-export function readWebModel(reader: SourceReader): WebModel {
+export function readWebModel(reader: SourceReader, language: Language = prepareLanguage('ja')): WebModel {
+  const { text } = language
   if (!reader.exists(routerFile)) {
     return { pages: [], navigation: new Map() }
   }
@@ -215,11 +215,11 @@ export function readWebModel(reader: SourceReader): WebModel {
         continue
       }
       const pageFile = router.imports.get(component.text)?.file
-      const page = pageFile === null || pageFile === undefined ? null : readPage(reader, pageFile, component.text, apiFunctions)
+      const page = pageFile === null || pageFile === undefined ? null : readPage(text, reader, pageFile, component.text, apiFunctions)
       const loaderEndpoints = loader === undefined ? [] : apiEndpointsIn(router, loader, apiFunctions)
       pages.push({
         id: path,
-        title: navigationTitles.get(path) ?? renderNounPhrase(component.text.replace(/Page$/, '').replace(/^./, (letter) => letter.toLowerCase()), 'ja'),
+        title: navigationTitles.get(path) ?? language.noun(component.text.replace(/Page$/, '').replace(/^./, (letter) => letter.toLowerCase())),
         component: component.text,
         queryEndpointIds: [...new Set([...loaderEndpoints, ...(page?.queryEndpointIds ?? [])])],
         actions: page?.actions ?? [],

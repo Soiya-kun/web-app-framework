@@ -3,8 +3,9 @@
 import type { FlowNode, FlowStepNode } from '@app/translator/model-types'
 import { Link } from '@tanstack/react-router'
 import { useModel } from '../model'
-import { text } from '../text'
-import { kindLabel, laneSize, arrangeLanes } from './laneLayout'
+import { useText, useLabelFormat } from '../text'
+import { readStepKindLabels } from './kindLabel'
+import { laneSize, arrangeLanes } from './laneLayout'
 
 const boxStyle: Readonly<Record<FlowStepNode['kind'], string>> = {
   operate: 'border-primary bg-surface',
@@ -17,12 +18,15 @@ const boxStyle: Readonly<Record<FlowStepNode['kind'], string>> = {
 const { column: columnWidth, boxWidth, boxHeight, lane: laneHeight, label: labelWidth, group: groupHeight } = laneSize
 
 export function FlowDiagram({ flow }: { readonly flow: FlowNode }) {
+  const text = useText()
+  const labelFormat = useLabelFormat()
+  const kindLabel = readStepKindLabels(text)
   const table = useModel()
   // ページのレーン図は、子フローをすべて開く。
-  const { steps, groups, lanes, top, width, height, measureBoxLeft, measureBoxTop } = arrangeLanes(table, flow, () => true)
+  const { steps, groups, lanes, top, width, height, measureBoxLeft, measureBoxTop } = arrangeLanes(text, table, flow, () => true)
 
   return (
-    <figure aria-label={`${flow.title}の${text.label('laneDiagram')}`} className="flex rounded-control border border-line bg-surface">
+    <figure aria-label={labelFormat.joinItem(flow.title, text.label('laneDiagram'))} className="flex rounded-control border border-line bg-surface">
       {/* 担当の名前の列は固定し、図だけを横に動かす。 */}
       <div className="relative shrink-0 border-r border-line" style={{ width: labelWidth, height }}>
         {lanes.map(([laneKey, laneTitle], index) => (
@@ -98,9 +102,11 @@ export function FlowDiagram({ flow }: { readonly flow: FlowNode }) {
             const boxBody = (
               <>
                 <span className="text-[10px] text-muted">
-                  {diagramStep.number}・{kindLabel[step.kind]}
-                  {diagramStep.pending ? `・${text.label('pending')}` : ''}
-                  {step.extensions.length > 0 ? `・${text.label('extension')}` : ''}
+                  {diagramStep.number}
+                  {labelFormat.mark}
+                  {kindLabel[step.kind]}
+                  {diagramStep.pending ? `${labelFormat.mark}${text.label('pending')}` : ''}
+                  {step.extensions.length > 0 ? `${labelFormat.mark}${text.label('extension')}` : ''}
                 </span>
                 <span className="text-xs font-medium leading-snug">{step.title}</span>
               </>

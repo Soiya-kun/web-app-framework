@@ -11,7 +11,7 @@ TypeScript（React + Hono）で業務 Web アプリを作るための土台（�
 
 業務フロー・シナリオ・ケースの書き方は [docs/flow-rules.md](docs/flow-rules.md)。
 
-要求と方針は [docs/requirements.md](docs/requirements.md)、業務の作りは [docs/domain-model.md](docs/domain-model.md)、単語帳の設計は [docs/vocabulary-design.md](docs/vocabulary-design.md)、処理の日本語訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)、SQL の台帳は [docs/generated/sql-ledger.md](docs/generated/sql-ledger.md)。
+要求と方針は [docs/requirements.md](docs/requirements.md)、業務の作りは [docs/domain-model.md](docs/domain-model.md)、単語帳の設計は [docs/vocabulary-design.md](docs/vocabulary-design.md)、処理の訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)（英語は [backend-process.en.md](docs/generated/backend-process.en.md)）、SQL の台帳は [docs/generated/sql-ledger.md](docs/generated/sql-ledger.md)。
 
 ## 使い方
 
@@ -26,7 +26,7 @@ Node.js（`.node-version`）と pnpm（`package.json` の `packageManager`）を
 | `pnpm test:e2e` | Docker の PostgreSQL を起動し、業務フローを実ブラウザ（Chromium）・API サーバーで流す |
 | `pnpm vocabulary:generate` | 単語帳（`packages/vocabulary/words` など）を変えたあとに、辞書と画面の文言ファイルを作り直す |
 | `pnpm vocabulary:find <日本語>` | 日本語の用語から英語の名前を引く（`振込依頼人の顧客` → `payerCustomer`） |
-| `pnpm translate` | 処理の日本語訳を作り直す |
+| `pnpm translate` | 処理の訳（日本語・英語）を作り直す |
 | `pnpm sql:ledger` | SQL の台帳を作り直す（DB の名前の単語帳の検査も行う） |
 | `pnpm flow:check` | 業務フローの書き方の規則を確かめる |
 | `pnpm dev:browser` | コードのブラウザを開く（ソースを保存するたびにモデルを作り直す） |

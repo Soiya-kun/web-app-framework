@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Cell, HeaderCell, PageTitle, Section, Table } from '../component/part'
 import { useModel } from '../model'
-import { text } from '../text'
+import { useText, useLabelFormat } from '../text'
 
 /** 業務の言葉（単語帳の業務の概念）。日本語・英語・名前のどれでも探せる。 */
 export function GlossaryPage() {
+  const text = useText()
+  const labelFormat = useLabelFormat()
   const { model } = useModel()
   const [query, setQuery] = useState('')
   const trimmedQuery = query.trim().toLowerCase()
@@ -25,7 +27,7 @@ export function GlossaryPage() {
           className="rounded-control border border-line bg-surface px-3 py-2"
         />
       </label>
-      <Section title={`${text.label('glossary')}（${entries.length}）`}>
+      <Section title={labelFormat.joinNote(text.label('glossary'), String(entries.length))}>
         <Table caption={text.label('glossary')}>
           <thead>
             <tr>

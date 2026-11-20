@@ -1,7 +1,7 @@
 // キャンバスの上で名前を探す（Ctrl（⌘）＋K）。業務フロー・シナリオ・処理を選ぶと、その段のカードを開いて寄せる。
 import { useState, type KeyboardEvent, type Ref } from 'react'
 import { useModel } from '../model'
-import { text } from '../text'
+import { useText, useLabelFormat } from '../text'
 
 export type SearchTarget =
   | { readonly kind: 'flow'; readonly flowId: string }
@@ -19,6 +19,8 @@ export function CanvasSearch({
   readonly attachInput: Ref<HTMLInputElement>
   readonly onSelect: (target: SearchTarget) => void
 }) {
+  const text = useText()
+  const labelFormat = useLabelFormat()
   const { model } = useModel()
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
@@ -87,7 +89,7 @@ export function CanvasSearch({
           setActiveIndex(0)
         }}
         onKeyDown={pressKey}
-        placeholder={`${text.label('search')}（Ctrl＋K）`}
+        placeholder={labelFormat.joinNote(text.label('search'), 'Ctrl+K')}
         className="w-64 rounded-lg border border-line/70 bg-canvas px-3 py-1.5 text-sm outline-none focus:border-select focus:bg-surface"
       />
       {results.length === 0 ? null : (

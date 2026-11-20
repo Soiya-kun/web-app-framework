@@ -1,8 +1,8 @@
 // 業務フローのレーン図の配置。担当ごとの横の帯（レーン）に、段を左から順に置く。
 // 子フローは、開いたものだけ中の段を並べる（ページのレーン図はすべて開き、キャンバスは押して開く）。
 import type { FlowNode, FlowStepNode } from '@app/translator/model-types'
+import type { Text } from '@app/vocabulary/text'
 import type { ModelTable } from '../model'
-import { text } from '../text'
 
 export type LaneStep = {
   /** フローの中の番号（子フローの中は 8.2 のように親の番号を付ける）。 */
@@ -47,6 +47,7 @@ export type LaneLayout = {
 
 /** 子フローを開いて（openedNests に入っている番号の子フローだけ）、段を1列に並べる。 */
 function expandSteps(
+  text: Text,
   table: ModelTable,
   flow: FlowNode,
   isOpened: (number: string) => boolean,
@@ -60,7 +61,7 @@ function expandSteps(
     const child = step.flowId === null ? undefined : table.flows.get(step.flowId)
     if (step.kind === 'nest' && child !== undefined && depth < 3 && isOpened(number)) {
       const first = steps.length
-      expandSteps(table, child, isOpened, `${number}.`, depth + 1, steps, groups)
+      expandSteps(text, table, child, isOpened, `${number}.`, depth + 1, steps, groups)
       groups.push({ number, flowId: child.id, title: child.title, first, last: steps.length - 1, depth })
       continue
     }
@@ -72,10 +73,10 @@ function expandSteps(
   }
 }
 
-export function arrangeLanes(table: ModelTable, flow: FlowNode, isOpened: (number: string) => boolean): LaneLayout {
+export function arrangeLanes(text: Text, table: ModelTable, flow: FlowNode, isOpened: (number: string) => boolean): LaneLayout {
   const steps: LaneStep[] = []
   const groups: LaneGroup[] = []
-  expandSteps(table, flow, isOpened, '', 0, steps, groups)
+  expandSteps(text, table, flow, isOpened, '', 0, steps, groups)
   const lanes = [...new Map(steps.map((step) => [step.laneKey, step.laneTitle])).entries()]
   const laneIndex = new Map(lanes.map(([laneKey], index) => [laneKey, index]))
   const groupDepth = groups.reduce((depth, group) => Math.max(depth, group.depth + 1), 0)
@@ -90,12 +91,4 @@ export function arrangeLanes(table: ModelTable, flow: FlowNode, isOpened: (numbe
     measureBoxLeft: (index) => laneSize.margin + index * laneSize.column + (laneSize.column - laneSize.boxWidth) / 2,
     measureBoxTop: (laneKey) => top + (laneIndex.get(laneKey) ?? 0) * laneSize.lane + (laneSize.lane - laneSize.boxHeight) / 2,
   }
-}
-
-export const kindLabel: Readonly<Record<FlowStepNode['kind'], string>> = {
-  operate: text.label('screenOperation'),
-  outside: text.label('outsideWork'),
-  occur: text.label('externalEvent'),
-  elapse: text.label('timeLapse'),
-  nest: text.label('childFlow'),
 }

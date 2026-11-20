@@ -1,11 +1,13 @@
 import { getRouteApi } from '@tanstack/react-router'
 import { Badge, Cell, HeaderCell, PageTitle, Section, SourcePlace, Table, TextLink } from '../component/part'
 import { useModel } from '../model'
-import { text } from '../text'
+import { useText, useLabelFormat } from '../text'
 
 const tableRoute = getRouteApi('/table/$tableId')
 
 export function TablePage() {
+  const text = useText()
+  const labelFormat = useLabelFormat()
   const { tableId } = tableRoute.useParams()
   const { tables } = useModel()
   const table = tables.get(tableId)
@@ -20,7 +22,7 @@ export function TablePage() {
       <p className="text-sm">{table.note}</p>
       <SourcePlace file={table.file} line={table.line} />
       <Section title={text.label('column')}>
-        <Table caption={`${table.title}の${text.label('column')}`}>
+        <Table caption={labelFormat.joinItem(table.title, text.label('column'))}>
           <thead>
             <tr>
               <HeaderCell>{text.label('column')}</HeaderCell>

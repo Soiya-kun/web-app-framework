@@ -2,9 +2,9 @@
 // 開いた子のカードはキャンバスの状態に保存する（カードの道筋 path ごと。子は work:… のように種類を頭に付ける）。
 import type { CaseNode, FlowStepNode, StepTranslationNode } from '@app/translator/model-types'
 import { Link } from '@tanstack/react-router'
-import { kindLabel } from '../component/laneLayout'
+import { readCaseKindLabels, readStepKindLabels } from '../component/kindLabel'
 import { useModel } from '../model'
-import { text } from '../text'
+import { useText, useLabelFormat } from '../text'
 import { Branch, type BranchChild } from './branch'
 import { BranchToggle, Card, Fold, StepLines } from './card'
 import { emptyList, toggleBranch, useCanvasState, useCanvasStore } from './canvasStore'
@@ -17,6 +17,7 @@ function useBranches(path: string) {
 }
 
 function DetailLink({ to, params }: { readonly to: string; readonly params: Readonly<Record<string, string>> }) {
+  const text = useText()
   return (
     <Link to={to} params={params} className="self-start text-xs text-primary underline underline-offset-2">
       {text.label('detailPage')}
@@ -37,13 +38,9 @@ function StepTree({ label, steps }: { readonly label: string; readonly steps: re
   )
 }
 
-const caseKindLabel: Readonly<Record<CaseNode['kind'], string>> = {
-  main: text.label('primarySuccessScenario'),
-  vary: text.label('variation'),
-  extend: text.label('extension'),
-}
-
 function CaseFold({ path, caseNode }: { readonly path: string; readonly caseNode: CaseNode }) {
+  const text = useText()
+  const caseKindLabel = readCaseKindLabels(text)
   const columns = [...new Set(caseNode.rows.flatMap((row) => Object.keys(row)))]
   return (
     <Fold
@@ -88,6 +85,8 @@ function CaseFold({ path, caseNode }: { readonly path: string; readonly caseNode
 }
 
 export function TableCard({ path, tableId }: { readonly path: string; readonly tableId: string }) {
+  const text = useText()
+  const labelFormat = useLabelFormat()
   const { tables } = useModel()
   const table = tables.get(tableId)
   if (table === undefined) {
@@ -97,7 +96,7 @@ export function TableCard({ path, tableId }: { readonly path: string; readonly t
     <Card path={path} tone="table" kind={text.label('table')} title={table.title} width={340}>
       <p className="font-mono text-xs text-muted">{table.id}</p>
       {table.note === '' ? null : <p className="text-xs text-muted">{table.note}</p>}
-      <table aria-label={`${table.title}の${text.label('column')}`} className="w-full border-collapse text-xs">
+      <table aria-label={labelFormat.joinItem(table.title, text.label('column'))} className="w-full border-collapse text-xs">
         <tbody>
           {table.columns.map((column) => (
             <tr key={column.name}>
@@ -114,6 +113,7 @@ export function TableCard({ path, tableId }: { readonly path: string; readonly t
 }
 
 export function StatementCard({ path, statementId }: { readonly path: string; readonly statementId: string }) {
+  const text = useText()
   const { statements, tables } = useModel()
   const { opened, toggle } = useBranches(path)
   const statement = statements.get(statementId)
@@ -147,6 +147,8 @@ export function StatementCard({ path, statementId }: { readonly path: string; re
 }
 
 export function WorkCard({ path, workId }: { readonly path: string; readonly workId: string }) {
+  const text = useText()
+  const labelFormat = useLabelFormat()
   const { works, rules } = useModel()
   const { opened, toggle } = useBranches(path)
   const work = works.get(workId)
@@ -157,7 +159,7 @@ export function WorkCard({ path, workId }: { readonly path: string; readonly wor
     <Card path={path} tone="work" kind={text.label('work')} title={work.title} width={380}>
       <p className="font-mono text-xs text-muted">{work.id}</p>
       <Fold path={`${path}#step`} title={text.label('step')} count={work.steps.length} initialOpened>
-        <StepTree label={`${work.title}の${text.label('step')}`} steps={work.steps} />
+        <StepTree label={labelFormat.joinItem(work.title, text.label('step'))} steps={work.steps} />
       </Fold>
       <Fold path={`${path}#rule`} title={text.label('rule')} count={work.ruleIds.length}>
         <div className="flex flex-col gap-1">
@@ -209,6 +211,8 @@ function listExtensionSteps(step: FlowStepNode): ReadonlyMap<string, FlowStepNod
 }
 
 export function ScenarioCard({ path, step }: { readonly path: string; readonly step: FlowStepNode }) {
+  const text = useText()
+  const labelFormat = useLabelFormat()
   const { scenarios, endpoints, works } = useModel()
   const { opened, toggle } = useBranches(path)
   const scenario = step.scenarioId === null ? undefined : scenarios.get(step.scenarioId)
@@ -258,7 +262,7 @@ export function ScenarioCard({ path, step }: { readonly path: string; readonly s
               {extension.handling === null ? null : <p className="text-xs text-muted">{extension.handling.join(' ')}</p>}
               <p className="text-xs text-muted">
                 {text.label('caseCount')} {extension.caseCount}
-                {extension.flowPaths.length === 0 ? '' : `・${extension.flowPaths.join('・')}`}
+                {extension.flowPaths.length === 0 ? '' : `${labelFormat.mark}${labelFormat.joinList(extension.flowPaths)}`}
               </p>
             </li>
           ))}
@@ -333,14 +337,11 @@ export function ScenarioCard({ path, step }: { readonly path: string; readonly s
   return <Branch parent={card} branches={branches} />
 }
 
-const noteMessage = {
-  outside: text.message('outsideWorkNote'),
-  occur: text.message('occurNote'),
-  elapse: text.message('elapseNote'),
-} as const
-
 /** システムの外の業務・外のイベント・時の経過のカード。 */
 export function NoteCard({ path, step }: { readonly path: string; readonly step: FlowStepNode }) {
+  const text = useText()
+  const kindLabel = readStepKindLabels(text)
+  const noteMessage = { outside: text.message('outsideWorkNote'), occur: text.message('occurNote'), elapse: text.message('elapseNote') } as const
   const note = step.kind === 'outside' || step.kind === 'occur' || step.kind === 'elapse' ? noteMessage[step.kind] : ''
   return (
     <Card path={path} tone="note" kind={kindLabel[step.kind]} title={step.title} width={320}>
