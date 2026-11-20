@@ -44,22 +44,43 @@ export function describeScenario<Input, ExtensionName extends string>(
   })
 }
 
-export type FlowApp = { readonly screen: Screen }
+export type FlowApp = {
+  readonly screen: Screen
+  /**
+   * 今日の日付を変える（時の経過の段）。実ブラウザではブラウザの時計を変える。
+   * 渡さなければ、同じプロセスの Date を差し替える（インプロセスのテスト）。
+   */
+  readonly setToday?: (date: string) => Promise<void>
+  /** 経路を流し終えたら、ブラウザなどを閉じる。 */
+  readonly close?: () => Promise<void>
+}
 
 /** 業務フローを、経路（本線と拡張）ごとの E2E として流す。未着手のシナリオに来たら、そこまで流して skip にする。 */
 export function describeFlow<Seed>(flow: Flow<Seed>, startApp: (seed: Seed | undefined) => Promise<FlowApp>): void {
   describe(`業務フロー: ${renderNounPhrase(flow.name, 'ja')}`, () => {
     for (const path of listFlowPaths(flow as Flow<unknown>)) {
       test(path.title, async (context) => {
-        vi.useFakeTimers({ toFake: ['Date'] })
+        const app = await startApp(flow.precondition?.seed)
+        const setToday = app.setToday
+        if (setToday === undefined) {
+          vi.useFakeTimers({ toFake: ['Date'] })
+        }
         try {
-          const app = await startApp(flow.precondition?.seed)
-          const result = await runFlowPath(path, app.screen, (date) => vi.setSystemTime(new Date(`${date}T09:00:00+09:00`)))
+          const result = await runFlowPath(path, app.screen, async (date) => {
+            if (setToday === undefined) {
+              vi.setSystemTime(new Date(`${date}T09:00:00+09:00`))
+              return
+            }
+            await setToday(date)
+          })
           if (result.pendingAt !== undefined) {
             context.skip(`未着手のシナリオ: ${result.pendingAt}`)
           }
         } finally {
-          vi.useRealTimers()
+          if (setToday === undefined) {
+            vi.useRealTimers()
+          }
+          await app.close?.()
         }
       })
     }

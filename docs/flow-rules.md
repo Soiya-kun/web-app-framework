@@ -130,7 +130,7 @@ export const registerPayment = defineScenario('registerPayment', {
 | `expectRows(表, 行)` | 表の全ての行 | 「請求の内訳」の行を確かめる |
 | `expectText(文字)` / `expectNoButton(ボタン)` / `expectOptions(項目, 選択肢)` | 文字が出ている／ボタンが出ていない／選択肢の並び | — |
 
-インプロセスのテストでは Testing Library で動かす（`@app/flow/testing`）。同じシナリオを、実ブラウザ（Playwright）で動かす部品に差し替えられる形にしてある（まだ作っていない）。
+インプロセスのテストでは Testing Library で動かす（`@app/flow/testing`）。同じシナリオを、実ブラウザでは Playwright で動かす（`@app/flow/playwright`、`pnpm test:e2e`）。シナリオの中身は変えない。
 
 ## 4. ケース
 
@@ -204,7 +204,7 @@ describeScenario(registerPayment, (cases) => {
 | `case-place` | ケースはシナリオの隣の `.test.tsx` に、`describeScenario` だけで書く |
 | `case-main` | 主成功シナリオのケースは1つ |
 | `case-extension` | 拡張のケースは、シナリオにある拡張を指す |
-| `test-place` | `apps/web` の画面のテストは、`scenario` と `flow` にだけ置く |
+| `test-place` | `apps/web` の画面のテストは、`scenario` と `flow` にだけ置く（`e2e` は、同じ業務フローを実ブラウザで流すだけ） |
 
 ほかに、型（未着手のシナリオに値を渡さない、拡張のキー、画面にない文言のキー）と lint（単語帳・動詞で始まる関数名）でも止まる。
 
@@ -243,5 +243,4 @@ describeScenario(registerPayment, (cases) => {
 
 ## 8. まだしていないこと
 
-- 実ブラウザ（Playwright）と実 DB で、最上位の業務フローを流す部品。
 - ブラウザの英語の表示（モデルの日本語の訳は単語帳から作っているので、英語の訳を足せば出せる）。

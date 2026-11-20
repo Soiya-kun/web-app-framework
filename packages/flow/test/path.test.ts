@@ -51,7 +51,9 @@ describe('runFlowPath', () => {
     const days: string[] = []
     const [, extensionPath] = listFlowPaths(parent)
 
-    const result = await runFlowPath(extensionPath!, {} as Screen, (date) => days.push(date))
+    const result = await runFlowPath(extensionPath!, {} as Screen, async (date) => {
+      days.push(date)
+    })
 
     expect(calls).toEqual(['registerPayment:unknown', 'unidentified:unknown', 'identifyPayment:later'])
     expect(days).toEqual(['2026-10-31'])

@@ -11,7 +11,7 @@ import { prepareFormFeedback, readField } from '../shared/formFeedback'
 import { useText } from '../shared/text'
 import { readTodayText } from '../shared/today'
 import { displayYen } from '../shared/yen'
-import { deleteClosing, invoiceQueryKey, postIssue, prepareInvoiceDetailQuery } from './invoiceApi'
+import { deleteClosing, invoiceQueryKey, postIssue, prepareInvoiceDetailQuery, prepareInvoiceListQuery } from './invoiceApi'
 import { labelKey, type LabelKey } from '@app/vocabulary/text'
 
 /** 調整の区分の見出し（区分値を画面の文言のキーにつなぐ）。 */
@@ -52,8 +52,11 @@ export function InvoiceDetailPage() {
   const cancelMutation = useMutation({
     mutationFn: () => deleteClosing(apiClient, invoiceId),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: invoiceQueryKey })
+      // 消した請求の明細は取り直さない（取り直すと見つからず、再試行の分だけ一覧へ戻るのが遅れる）。
+      // 一覧は捨てておき、開くときに取り直す。明細は一覧へ移ってから捨てる。
+      queryClient.removeQueries({ queryKey: prepareInvoiceListQuery(apiClient).queryKey })
       await navigate({ to: '/invoices' })
+      queryClient.removeQueries({ queryKey: prepareInvoiceDetailQuery(apiClient, invoiceId).queryKey })
     },
   })
   const issueFeedback = prepareFormFeedback(text, issueMutation.error, issueFieldLabelNames)
