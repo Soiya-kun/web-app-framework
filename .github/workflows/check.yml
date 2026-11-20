@@ -1,0 +1,43 @@
+# main への push と Pull Request で、検査・DB の契約テスト・業務フローの実ブラウザの E2E を流す。
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      # docker-compose.yaml の test-database と同じ PostgreSQL。
+      test-database:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: app
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: 検査（単語帳・lint・型・テスト・生成物・業務フローの書き方）
+        run: pnpm check
+      - name: DB の契約テスト
+        run: pnpm --filter @app/backend test:database
+      - name: Chromium を入れる
+        run: pnpm --filter @app/web exec playwright install --with-deps chromium
+      - name: 業務フローの実ブラウザの E2E
+        run: pnpm --filter @app/web test:e2e
