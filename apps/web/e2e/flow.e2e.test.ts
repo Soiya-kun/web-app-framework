@@ -7,7 +7,7 @@ import { chromium } from 'playwright'
 import { afterAll, beforeAll, inject } from 'vitest'
 import { launchBrowserApp, type BrowserTarget } from './launchBrowserApp'
 
-const flowFiles = import.meta.glob<Readonly<Record<string, unknown>>>(['../flow/*.ts', '!../flow/*.test.ts'], { eager: true })
+const flowFiles = import.meta.glob<Readonly<Record<string, unknown>>>(['../flow/**/*.ts', '!../flow/**/*.test.ts'], { eager: true })
 
 function isFlow(value: unknown): value is Flow<Partial<MemoryDatabase>> {
   return typeof value === 'object' && value !== null && (value as { kind?: unknown }).kind === 'flow'

@@ -479,10 +479,20 @@ function readFlows(reader: SourceReader, scenarios: readonly ScenarioDraft[], pr
     const precondition = readProperty(options, 'precondition')
     const stepsNode = readProperty(options, 'steps')
     const constants = topLevelConstants(parsed)
+    // 業務フローは apps/web/flow/<領域>/ に置く。領域はフォルダの名前（単語帳の名詞）。
+    const folders = file.slice(flowRoot.length + 1).split('/')
+    const area = folders.length === 2 ? (folders[0] ?? '') : ''
+    if (area === '') {
+      problems.push({ ...place, rule: 'flow-place', message: `業務フロー「${name}」を、${flowRoot}/<領域>/ のフォルダに置く` })
+    } else {
+      checkName(problems, place, 'flow-place', area, false)
+    }
     return [
       {
         id: name,
         title: renderNounPhrase(name, 'ja'),
+        area,
+        areaTitle: area === '' ? '' : renderNounPhrase(area, 'ja'),
         precondition: precondition !== undefined && ts.isObjectLiteralExpression(precondition) ? (readString(readProperty(precondition, 'summary')) ?? null) : null,
         steps:
           stepsNode !== undefined && ts.isArrayLiteralExpression(stepsNode)

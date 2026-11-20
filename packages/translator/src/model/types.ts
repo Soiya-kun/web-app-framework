@@ -32,6 +32,9 @@ export type FlowExtensionNode = {
 export type FlowNode = SourcePlace & {
   readonly id: string
   readonly title: string
+  /** 業務の領域（apps/web/flow/<領域>/ のフォルダの名前。invoice など）と、その日本語（請求）。 */
+  readonly area: string
+  readonly areaTitle: string
   readonly precondition: string | null
   readonly steps: readonly FlowStepNode[]
   /** この業務フローを子フローにしている業務フロー。 */

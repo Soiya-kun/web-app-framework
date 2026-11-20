@@ -1,12 +1,12 @@
 import { defineFlow, elapse, nest, operate, outside } from '@app/flow'
 import type { MemoryDatabase } from '@app/backend/testing'
-import { customers } from '../test/billingFixture'
-import { browseInvoice } from '../scenario/invoice/browseInvoice'
-import { cancelClosing } from '../scenario/invoice/cancelClosing'
-import { closeInvoice } from '../scenario/invoice/closeInvoice'
-import { issueInvoice } from '../scenario/invoice/issueInvoice'
-import { createSales } from '../scenario/sales/createSales'
-import { paymentManagement } from './paymentManagement'
+import { customers } from '../../test/billingFixture'
+import { browseInvoice } from '../../scenario/invoice/browseInvoice'
+import { cancelClosing } from '../../scenario/invoice/cancelClosing'
+import { closeInvoice } from '../../scenario/invoice/closeInvoice'
+import { issueInvoice } from '../../scenario/invoice/issueInvoice'
+import { createSales } from '../../scenario/sales/createSales'
+import { paymentManagement } from '../payment/paymentManagement'
 
 const october = { billingCustomer: '株式会社親', closingDate: '2026-10-31' }
 

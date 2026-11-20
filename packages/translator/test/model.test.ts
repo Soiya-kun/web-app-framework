@@ -79,8 +79,8 @@ describe('書き方の規則の検査', () => {
     expect(rules('apps/web/scenario/sales/createSales.test.tsx')).toEqual(['case-main', 'case-place'])
   })
 
-  test('業務フロー: 名前は名詞句、時の経過の日付は YYYY-MM-DD', () => {
-    expect(rules('apps/web/flow/registerSales.ts')).toEqual(['flow-name', 'elapse'])
+  test('業務フロー: 名前は名詞句、領域のフォルダに置く、時の経過の日付は YYYY-MM-DD', () => {
+    expect(rules('apps/web/flow/registerSales.ts')).toEqual(['flow-name', 'flow-place', 'elapse'])
   })
 
   test('画面のテストは scenario と flow にだけ置く', () => {

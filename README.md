@@ -33,6 +33,8 @@ Node.js（`.node-version`）と pnpm（`package.json` の `packageManager`）を
 | `pnpm dev:api` / `pnpm dev:web` | 手元で API サーバー（環境変数 `DATABASE_URL` が要る）と画面を動かす |
 | `pnpm --filter @app/infra synth` | AWS の CloudFormation のテンプレートを作る（`-c stage=dev` などで環境を選ぶ） |
 
+CI（`.github/workflows/check.yml`）は、main への push と Pull Request ごとに、`pnpm check`・DB の契約テスト・実ブラウザの E2E を流す。
+
 ## 構成
 
 | 場所 | 内容 |

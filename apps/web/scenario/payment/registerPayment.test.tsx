@@ -68,6 +68,15 @@ describeScenario(registerPayment, (cases) => {
     expect(app.database.payerName).toEqual([])
   })
 
+  cases.extend('mistakenPayment', '他社宛の誤入金も、画面では仮受として記録する（返金するまで請求に載せない）', async () => {
+    const payment = { ...validPayment, payerName: 'カ)タシャ', customer: '' }
+    const app = await registerOnScreen(payment)
+
+    await confirmExtension(registerPayment, 'mistakenPayment', app.screen, payment)
+    expect(app.database.payment.map((row) => [row.payerName, row.customerId, row.invoiceId])).toEqual([['カ)タシャ', null, null]])
+    expect(app.database.payerName).toEqual([])
+  })
+
   cases.extendEach(
     'invalidPaymentAmount',
     [

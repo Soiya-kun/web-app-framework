@@ -4,7 +4,7 @@ import { describeFlow } from '@app/flow/vitest'
 import type { MemoryDatabase } from '@app/backend/testing'
 import { launchApp } from '../test/launchApp'
 
-const flowFiles = import.meta.glob<Readonly<Record<string, unknown>>>(['./*.ts', '!./*.test.ts'], { eager: true })
+const flowFiles = import.meta.glob<Readonly<Record<string, unknown>>>(['./**/*.ts', '!./**/*.test.ts'], { eager: true })
 
 function isFlow(value: unknown): value is Flow<Partial<MemoryDatabase>> {
   return typeof value === 'object' && value !== null && (value as { kind?: unknown }).kind === 'flow'
