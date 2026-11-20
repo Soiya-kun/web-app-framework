@@ -4,7 +4,7 @@ import { describeScenario } from '@app/flow/vitest'
 import type { Adjustment, Invoice, MemoryDatabase, Stored } from '@app/backend/testing'
 import { prepareText } from '@app/vocabulary/text'
 import { expect } from 'vitest'
-import { customers, issuedOctoberInvoice, preparePayment, prepareSales } from '../../test/billingFixture'
+import { customers, issuedOctoberInvoice, preparePayment, prepareSales } from '../../test/billingSeed'
 import { launchApp } from '../../test/launchApp'
 import { closeInvoice, type ClosingInput } from './closeInvoice'
 

@@ -1,6 +1,6 @@
 // 発行前の請求（請求の詳細・発行・締めの取消のケースで使う）。
 import { prepareMemoryDatabase, type Adjustment, type Invoice, type InvoiceTax, type MemoryDatabase, type Refund, type Stored } from '@app/backend/testing'
-import { customers, preparePayment, prepareSales } from '../../test/billingFixture'
+import { customers, preparePayment, prepareSales } from '../../test/billingSeed'
 import type { InvoiceTarget } from './browseInvoice'
 
 /** 発行前の10月の請求。子会社の売上・入金・返金・振込手数料を載せている。 */

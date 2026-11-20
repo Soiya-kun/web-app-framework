@@ -4,7 +4,7 @@ import { describeScenario } from '@app/flow/vitest'
 import type { MemoryDatabase } from '@app/backend/testing'
 import { expect } from 'vitest'
 import { launchApp } from '../../test/launchApp'
-import { draftTarget, prepareDraftSeed } from './invoiceFixture'
+import { draftTarget, prepareDraftSeed } from './invoiceSeed'
 import { issueInvoice } from './issueInvoice'
 
 /** 4番まで振った年に、発行前の請求を発行する。 */

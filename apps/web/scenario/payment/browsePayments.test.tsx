@@ -2,7 +2,7 @@
 import { confirmScenario, operateScenario } from '@app/flow'
 import { describeScenario } from '@app/flow/vitest'
 import { prepareText } from '@app/vocabulary/text'
-import { customers, issuedOctoberInvoice, preparePayment } from '../../test/billingFixture'
+import { customers, issuedOctoberInvoice, preparePayment } from '../../test/billingSeed'
 import { launchApp } from '../../test/launchApp'
 import { browsePayments } from './browsePayments'
 

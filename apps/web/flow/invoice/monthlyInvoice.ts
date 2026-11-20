@@ -1,6 +1,6 @@
 import { defineFlow, elapse, nest, operate, outside } from '@app/flow'
 import type { MemoryDatabase } from '@app/backend/testing'
-import { customers } from '../../test/billingFixture'
+import { customers } from '../../test/billingSeed'
 import { browseInvoice } from '../../scenario/invoice/browseInvoice'
 import { cancelClosing } from '../../scenario/invoice/cancelClosing'
 import { closeInvoice } from '../../scenario/invoice/closeInvoice'
