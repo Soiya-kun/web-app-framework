@@ -1,7 +1,8 @@
 // 業務フロー・シナリオ・ケースを読む（apps/web/flow・apps/web/scenario）。書き方の規則に合わないところは problems に出す。
-import { findUnknownTokens, renderNounPhrase, startsWithVerb } from '@app/vocabulary'
+import { findUnknownTokens, startsWithVerb } from '@app/vocabulary'
 import ts from 'typescript'
-import { labelOf, messageText, readInputs, translateName, translateScreenBody, translateScreenCall, valueOf } from './screenText'
+import { prepareLanguage, type Language } from '../language'
+import { prepareScreenText, type ScreenText } from './screenText'
 import { collectCalls, lineOf, listExportedCalls, readProperty, readString, unwrap, type ParsedSource, type SourceReader } from './source'
 import type { CaseNode, FlowExtensionNode, FlowNode, FlowStepNode, ModelInput, ModelProblem } from './types'
 
@@ -65,7 +66,14 @@ function checkName(problems: ModelProblem[], place: { file: string; line: number
   }
 }
 
-function readScenarios(reader: SourceReader, problems: ModelProblem[]): ScenarioDraft[] {
+/** 手順の最初の文が、画面を開く操作（await screen.go(…)）か。 */
+function startsWithGo(body: ts.ConciseBody): boolean {
+  const [first] = ts.isBlock(body) ? body.statements : []
+  const expression = first !== undefined && ts.isExpressionStatement(first) ? unwrap(first.expression) : undefined
+  return expression !== undefined && ts.isCallExpression(expression) && ts.isPropertyAccessExpression(expression.expression) && expression.expression.name.text === 'go'
+}
+
+function readScenarios(screen: ScreenText, reader: SourceReader, problems: ModelProblem[]): ScenarioDraft[] {
   const files = reader.list(scenarioRoot, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
   return files.flatMap((file) => {
     const parsed = reader.read(file)
@@ -85,12 +93,12 @@ function readScenarios(reader: SourceReader, problems: ModelProblem[]): Scenario
       checkName(problems, place, 'actor', actor, null)
       const operate = functionBodyOf(readProperty(options, 'operate'))
       const confirm = functionBodyOf(readProperty(options, 'confirm'))
-      const operateSteps = operate === null ? { steps: [], flat: true } : translateScreenBody(operate.body)
-      const confirmSteps = confirm === null ? { steps: [], flat: true } : translateScreenBody(confirm.body)
+      const operateSteps = operate === null ? { steps: [], flat: true } : screen.translateScreenBody(operate.body)
+      const confirmSteps = confirm === null ? { steps: [], flat: true } : screen.translateScreenBody(confirm.body)
       if (!operateSteps.flat || !confirmSteps.flat) {
         problems.push({ ...place, rule: 'scenario-flat', message: `シナリオ「${name}」の operate・confirm は、画面の操作（await screen.…）を並べるだけにする` })
       }
-      if (operate !== null && !(operateSteps.steps[0] ?? '').endsWith('を開く')) {
+      if (operate !== null && !startsWithGo(operate.body)) {
         problems.push({ ...place, rule: 'scenario-start', message: `シナリオ「${name}」は、画面を開く（screen.go）ところから始める（1人が1回の操作で目的を果たす）` })
       }
       const extensionsNode = readProperty(options, 'extensions')
@@ -106,7 +114,7 @@ function readScenarios(reader: SourceReader, problems: ModelProblem[]): Scenario
                 {
                   name: property.name.text,
                   condition: readString(readProperty(property.initializer, 'condition')) ?? property.name.text,
-                  handling: handling === null ? null : translateScreenBody(handling.body).steps,
+                  handling: handling === null ? null : screen.translateScreenBody(handling.body).steps,
                 },
               ]
             })
@@ -115,7 +123,7 @@ function readScenarios(reader: SourceReader, problems: ModelProblem[]): Scenario
         {
           id: name,
           variable,
-          title: translateName(name),
+          title: screen.translateName(name),
           actor,
           pending: operate === null,
           operateBody: operate?.body ?? null,
@@ -131,7 +139,7 @@ function readScenarios(reader: SourceReader, problems: ModelProblem[]): Scenario
 }
 
 /** ケースの rows（each の値の表）。 */
-function readRows(node: ts.Expression | undefined): Record<string, string>[] {
+function readRows(screen: ScreenText, node: ts.Expression | undefined): Record<string, string>[] {
   const inner = node === undefined ? undefined : unwrap(node)
   if (inner === undefined || !ts.isArrayLiteralExpression(inner)) {
     return []
@@ -150,9 +158,9 @@ function readRows(node: ts.Expression | undefined): Record<string, string>[] {
           const literal = readString(value)
           // 列は見出しの日本語にする（messageKey は、文のキーでなく文そのものを出す）。
           if (property.name.text === 'messageKey' && literal !== undefined) {
-            return [[labelOf('message'), messageText(literal)]]
+            return [[screen.labelOf('message'), screen.messageText(literal)]]
           }
-          return [[labelOf(property.name.text), literal === '' ? '空' : (literal ?? value.getText())]]
+          return [[screen.labelOf(property.name.text), literal === '' ? screen.language.sentence.empty : (literal ?? value.getText())]]
         }),
       ),
     ]
@@ -173,7 +181,7 @@ function flattenObject(node: ts.Expression | undefined, constants: ReadonlyMap<s
 }
 
 /** ケースで変えた値（...spread で元にした値を除く）を「売上金額を「0」」の形にする。 */
-function describeChanges(node: ts.Expression | undefined, constants: ReadonlyMap<string, ts.Expression>): string[] {
+function describeChanges(screen: ScreenText, node: ts.Expression | undefined, constants: ReadonlyMap<string, ts.Expression>): string[] {
   const inner = node === undefined ? undefined : unwrap(node)
   const resolved = inner !== undefined && ts.isIdentifier(inner) ? constants.get(inner.text) : inner
   const object = resolved === undefined ? undefined : unwrap(resolved)
@@ -182,10 +190,10 @@ function describeChanges(node: ts.Expression | undefined, constants: ReadonlyMap
   }
   return object.properties.flatMap((property) => {
     if (ts.isPropertyAssignment(property) && ts.isIdentifier(property.name)) {
-      return [`${labelOf(property.name.text)}を${valueOf(property.initializer, constants)}`]
+      return [screen.language.sentence.change(screen.labelOf(property.name.text), screen.valueOf(property.initializer, constants))]
     }
     if (ts.isShorthandPropertyAssignment(property)) {
-      return [`${labelOf(property.name.text)}を〈${labelOf(property.name.text)}〉`]
+      return [screen.language.sentence.change(screen.labelOf(property.name.text), screen.language.sentence.slot(screen.labelOf(property.name.text)))]
     }
     return []
   })
@@ -193,6 +201,7 @@ function describeChanges(node: ts.Expression | undefined, constants: ReadonlyMap
 
 /** ケースの中身を日本語の手順にする。同じファイルの補助の関数は、引数を置き換えて中身を展開する。 */
 function translateCaseBody(
+  screen: ScreenText,
   body: ts.ConciseBody,
   helpers: ReadonlyMap<string, CaseHelper>,
   constants: ReadonlyMap<string, ts.Expression>,
@@ -226,33 +235,33 @@ function translateCaseBody(
             bound.set(parameter.name.text, argument)
           }
         })
-        return translateCaseBody(helper.body, helpers, bound, scenarioTitles, depth + 1)
+        return translateCaseBody(screen, helper.body, helpers, bound, scenarioTitles, depth + 1)
       }
       if (callee.text === 'launchApp') {
         const [seed] = expression.arguments
         const tables = [
           ...new Set(
             flattenObject(seed, constants).flatMap((property) =>
-              (ts.isPropertyAssignment(property) || ts.isShorthandPropertyAssignment(property)) && ts.isIdentifier(property.name) ? [labelOf(property.name.text)] : [],
+              (ts.isPropertyAssignment(property) || ts.isShorthandPropertyAssignment(property)) && ts.isIdentifier(property.name) ? [screen.labelOf(property.name.text)] : [],
             ),
           ),
         ]
-        return [tables.length === 0 ? '画面を開く' : `画面を開く（DB に${tables.join('・')}の行を入れておく）`]
+        return [screen.language.sentence.launch(tables)]
       }
       if (callee.text === 'operateScenario') {
         const [scenario, , input] = expression.arguments
         const title = scenario !== undefined && ts.isIdentifier(scenario) ? (scenarioTitles.get(scenario.text) ?? scenario.text) : ''
-        const changes = describeChanges(input, constants)
-        return [changes.length === 0 ? `${title}` : `${title}（${changes.join('、')}にして）`]
+        const changes = describeChanges(screen, input, constants)
+        return [screen.language.sentence.operateWith(title, changes)]
       }
       if (callee.text === 'confirmScenario') {
-        return ['成功の保証を確かめる']
+        return [screen.language.sentence.confirmGuarantee]
       }
       if (callee.text === 'confirmExtension') {
-        return ['拡張の扱いを確かめる']
+        return [screen.language.sentence.confirmExtension]
       }
     }
-    const screenStep = translateScreenCall(expression, constants)
+    const screenStep = screen.translateScreenCall(expression, constants)
     if (screenStep !== undefined) {
       return [screenStep]
     }
@@ -262,21 +271,21 @@ function translateCaseBody(
       const table = /database\.(\w+)/.exec(subject)?.[1]
       const isEmpty = /\.toEqual\(\[\]\)$/.test(expression.getText())
       if (table !== undefined) {
-        return [`DB の${labelOf(table)}${isEmpty ? 'が空である' : 'の行が期待どおりである'}ことを確かめる`]
+        return [screen.language.sentence.expectTable(screen.labelOf(table), isEmpty)]
       }
       const subjectCall = expectCall.arguments[0] === undefined ? undefined : unwrap(expectCall.arguments[0])
       if (subjectCall !== undefined && ts.isCallExpression(subjectCall) && ts.isIdentifier(subjectCall.expression) && startsWithVerb(subjectCall.expression.text)) {
         const [, ...rest] = subjectCall.expression.text.split(/(?=[A-Z])/)
         const noun = rest.join('')
-        return [`${renderNounPhrase(noun.charAt(0).toLowerCase() + noun.slice(1), 'ja')}が期待どおりであることを確かめる`]
+        return [screen.language.sentence.expectSubject(screen.language.noun(noun.charAt(0).toLowerCase() + noun.slice(1)))]
       }
-      return [`\`${subject}\` が期待どおりであることを確かめる`]
+      return [screen.language.sentence.expectSubject(`\`${subject}\``)]
     }
     return [`\`${statement.getText().replace(/\s+/g, ' ')}\``]
   })
 }
 
-function readCases(reader: SourceReader, scenarios: readonly ScenarioDraft[], problems: ModelProblem[]): Map<string, { testFile: string; cases: CaseNode[] }> {
+function readCases(screen: ScreenText, reader: SourceReader, scenarios: readonly ScenarioDraft[], problems: ModelProblem[]): Map<string, { testFile: string; cases: CaseNode[] }> {
   const result = new Map<string, { testFile: string; cases: CaseNode[] }>()
   const scenarioByPlace = new Map(scenarios.map((scenario) => [`${scenario.file}#${scenario.variable}`, scenario]))
   for (const file of reader.list(scenarioRoot, (path) => path.endsWith('.test.tsx') || path.endsWith('.test.ts'))) {
@@ -331,7 +340,7 @@ function readCases(reader: SourceReader, scenarios: readonly ScenarioDraft[], pr
           const isEach = method.endsWith('Each')
           const offset = kind === 'extend' ? 1 : 0
           const extension = kind === 'extend' ? (readString(args[0]) ?? null) : null
-          const rows = isEach ? readRows(args[offset]) : []
+          const rows = isEach ? readRows(screen, args[offset]) : []
           const title = readString(args[offset + (isEach ? 1 : 0)]) ?? ''
           const run = functionBodyOf(args[offset + (isEach ? 2 : 1)])
           cases.push({
@@ -340,7 +349,7 @@ function readCases(reader: SourceReader, scenarios: readonly ScenarioDraft[], pr
             title,
             pending: run === null,
             rows,
-            steps: run === null ? [] : translateCaseBody(run.body, helpers, constants, scenarioTitles),
+            steps: run === null ? [] : translateCaseBody(screen, run.body, helpers, constants, scenarioTitles),
             file,
             line: lineOf(parsed, caseCall),
           })
@@ -356,6 +365,7 @@ function readCases(reader: SourceReader, scenarios: readonly ScenarioDraft[], pr
 }
 
 function readFlowSteps(
+  screen: ScreenText,
   parsed: ParsedSource,
   elements: readonly ts.Expression[],
   prefix: string,
@@ -381,7 +391,7 @@ function readFlowSteps(
         return []
       }
       const resolved = ts.isIdentifier(inner) ? constants.get(inner.text) : inner
-      return resolved !== undefined && ts.isObjectLiteralExpression(unwrap(resolved)) ? readInputs(unwrap(resolved) as ts.ObjectLiteralExpression, constants) : []
+      return resolved !== undefined && ts.isObjectLiteralExpression(unwrap(resolved)) ? screen.readInputs(unwrap(resolved) as ts.ObjectLiteralExpression, constants) : []
     }
     const base = { number, actor: null, actorTitle: null, scenarioId: null, flowId: null, inputs: [], extensions: [], ...place }
     if (kind === 'operate') {
@@ -409,7 +419,7 @@ function readFlowSteps(
                   inputs: inputsOf(readProperty(property.initializer, 'input')),
                   then:
                     thenNode !== undefined && ts.isArrayLiteralExpression(thenNode)
-                      ? readFlowSteps(parsed, thenNode.elements, `${key}.`, constants, scenarios, flowNames, problems)
+                      ? readFlowSteps(screen, parsed, thenNode.elements, `${key}.`, constants, scenarios, flowNames, problems)
                       : [],
                   resume: resumeNode?.kind !== ts.SyntaxKind.FalseKeyword,
                 },
@@ -422,7 +432,7 @@ function readFlowSteps(
           kind: 'operate',
           title: scenario.title,
           actor: scenario.actor,
-          actorTitle: renderNounPhrase(scenario.actor, 'ja'),
+          actorTitle: screen.language.noun(scenario.actor),
           scenarioId: scenario.id,
           inputs: inputsOf(second),
           extensions,
@@ -434,7 +444,7 @@ function readFlowSteps(
       const name = readString(second) ?? ''
       checkName(problems, place, 'step-name', actor, null)
       checkName(problems, place, 'step-name', name, true)
-      return [{ ...base, kind, title: translateName(name), actor, actorTitle: renderNounPhrase(actor, 'ja') }]
+      return [{ ...base, kind, title: screen.translateName(name), actor, actorTitle: screen.language.noun(actor) }]
     }
     if (kind === 'elapse') {
       const time = readString(first) ?? ''
@@ -443,7 +453,7 @@ function readFlowSteps(
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         problems.push({ ...place, rule: 'elapse', message: `時の経過の日付「${date}」は YYYY-MM-DD にする` })
       }
-      return [{ ...base, kind, title: `${labelOf(time)}になる（${date}）` }]
+      return [{ ...base, kind, title: screen.language.sentence.elapse(screen.labelOf(time), date) }]
     }
     if (kind === 'nest') {
       const imported = first !== undefined && ts.isIdentifier(first) ? parsed.imports.get(first.text) : undefined
@@ -452,14 +462,14 @@ function readFlowSteps(
         problems.push({ ...place, rule: 'flow-step', message: 'nest には、apps/web/flow の defineFlow を渡す' })
         return []
       }
-      return [{ ...base, kind, title: renderNounPhrase(flowName, 'ja'), flowId: flowName }]
+      return [{ ...base, kind, title: screen.language.noun(flowName), flowId: flowName }]
     }
     problems.push({ ...place, rule: 'flow-step', message: `業務フローの段「${kind}」は operate・outside・occur・elapse・nest のどれかにする` })
     return []
   })
 }
 
-function readFlows(reader: SourceReader, scenarios: readonly ScenarioDraft[], problems: ModelProblem[]): FlowNode[] {
+function readFlows(screen: ScreenText, reader: SourceReader, scenarios: readonly ScenarioDraft[], problems: ModelProblem[]): FlowNode[] {
   const files = reader.list(flowRoot, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
   const definitions = files.flatMap((file) => listExportedCalls(reader.read(file), 'defineFlow').map((definition) => ({ ...definition, file })))
   const flowNames = new Map(definitions.map((definition) => [`${definition.file}#${definition.name}`, readString(definition.call.arguments[0]) ?? definition.name]))
@@ -490,13 +500,13 @@ function readFlows(reader: SourceReader, scenarios: readonly ScenarioDraft[], pr
     return [
       {
         id: name,
-        title: renderNounPhrase(name, 'ja'),
+        title: screen.language.noun(name),
         area,
-        areaTitle: area === '' ? '' : renderNounPhrase(area, 'ja'),
+        areaTitle: area === '' ? '' : screen.language.noun(area),
         precondition: precondition !== undefined && ts.isObjectLiteralExpression(precondition) ? (readString(readProperty(precondition, 'summary')) ?? null) : null,
         steps:
           stepsNode !== undefined && ts.isArrayLiteralExpression(stepsNode)
-            ? readFlowSteps(parsed, stepsNode.elements, '', constants, scenarioByPlace, flowNames, problems)
+            ? readFlowSteps(screen, parsed, stepsNode.elements, '', constants, scenarioByPlace, flowNames, problems)
             : [],
         parentIds: [] as string[],
         ...place,
@@ -524,11 +534,12 @@ function checkTestPlaces(reader: SourceReader, problems: ModelProblem[]): void {
   }
 }
 
-export function readFlowModel(reader: SourceReader): FlowModelDraft {
+export function readFlowModel(reader: SourceReader, language: Language = prepareLanguage('ja')): FlowModelDraft {
+  const screen = prepareScreenText(language)
   const problems: ModelProblem[] = []
-  const scenarios = readScenarios(reader, problems)
-  const cases = readCases(reader, scenarios, problems)
-  const flows = readFlows(reader, scenarios, problems)
+  const scenarios = readScenarios(screen, reader, problems)
+  const cases = readCases(screen, reader, scenarios, problems)
+  const flows = readFlows(screen, reader, scenarios, problems)
   checkTestPlaces(reader, problems)
   return { scenarios, cases, flows, problems }
 }

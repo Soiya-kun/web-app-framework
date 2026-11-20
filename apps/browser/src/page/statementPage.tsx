@@ -1,11 +1,12 @@
 import { getRouteApi } from '@tanstack/react-router'
 import { PageTitle, Section, SourcePlace, TextLink } from '../component/part'
 import { useModel } from '../model'
-import { text } from '../text'
+import { useText } from '../text'
 
 const statementRoute = getRouteApi('/statement/$statementId')
 
 export function StatementPage() {
+  const text = useText()
   const { statementId } = statementRoute.useParams()
   const { model, statements, tables } = useModel()
   const statement = statements.get(statementId)

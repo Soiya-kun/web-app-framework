@@ -1,7 +1,7 @@
 // ミニマップ。キャンバス全体の中で、フレームの位置と、いま見ている範囲を小さく出す。押した・ドラッグしたところへ視点を動かす。
 import type { PointerEvent } from 'react'
 import { useModel } from '../model'
-import { text } from '../text'
+import { useText } from '../text'
 import type { CanvasView } from './canvasStore'
 import { emptyFrame, useCanvasState } from './canvasStore'
 
@@ -26,6 +26,7 @@ export function CanvasMinimap({
   /** キャンバスの上の点を、画面の中央にする。 */
   readonly onPoint: (left: number, top: number) => void
 }) {
+  const text = useText()
   const { flows } = useModel()
   const frames = useCanvasState((state) => state.frames)
   const areas = [...frameAreas.entries()].map(([flowId, area]) => {

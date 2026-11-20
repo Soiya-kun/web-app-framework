@@ -1,5 +1,5 @@
 // バックエンドを読む。API の入口（Hono のルート）→ usecase（処理）→ domain の関数（規則）・repository の呼び出し → SQL → テーブル。
-import { renderNounPhrase, translateStep } from '@app/vocabulary'
+import { prepareLanguage, type Language } from '../language'
 import ts from 'typescript'
 import { translateSource, type StepTranslation } from '../translateSource'
 import { collectCalls, collectIdentifiers, isExported, lineOf, readString, type ParsedSource, type SourceReader } from './source'
@@ -123,12 +123,12 @@ function listExportedFunctions(parsed: ParsedSource): { readonly name: string; r
   })
 }
 
-function readRules(reader: SourceReader): RuleNode[] {
+function readRules(language: Language, reader: SourceReader): RuleNode[] {
   return reader
     .list(`${backendRoot}/domain`, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
     .flatMap((file) => {
       const parsed = reader.read(file)
-      return translateSource(parsed.source.getFullText(), file).map((translation) => ({
+      return translateSource(parsed.source.getFullText(), file, language).map((translation) => ({
         id: `${file}#${translation.name}`,
         name: translation.name,
         title: translation.title,
@@ -187,13 +187,13 @@ function readRepositoryStatements(reader: SourceReader, statementNames: Readonly
   return result
 }
 
-function readWorks(reader: SourceReader, rules: readonly RuleNode[], repositoryStatements: ReadonlyMap<string, string[]>, endpoints: readonly EndpointNode[]): WorkNode[] {
+function readWorks(language: Language, reader: SourceReader, rules: readonly RuleNode[], repositoryStatements: ReadonlyMap<string, string[]>, endpoints: readonly EndpointNode[]): WorkNode[] {
   const ruleIds = new Map(rules.map((rule) => [`${rule.file}#${rule.name}`, rule.id]))
   return reader
     .list(`${backendRoot}/usecase`, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts') && !file.includes('_mock'))
     .flatMap((file) => {
       const parsed = reader.read(file)
-      const translations = new Map(translateSource(parsed.source.getFullText(), file).map((translation) => [translation.name, translation]))
+      const translations = new Map(translateSource(parsed.source.getFullText(), file, language).map((translation) => [translation.name, translation]))
       return listExportedFunctions(parsed).flatMap(({ name, body }) => {
         const translation = translations.get(name)
         if (translation === undefined) {
@@ -218,7 +218,7 @@ function readWorks(reader: SourceReader, rules: readonly RuleNode[], repositoryS
             return []
           }
           const method = callee.name.text
-          return [{ repository, method, title: translateStep(method, repository) ?? method, statementIds: repositoryStatements.get(`${repository}.${method}`) ?? [] }]
+          return [{ repository, method, title: language.step(method, repository) ?? method, statementIds: repositoryStatements.get(`${repository}.${method}`) ?? [] }]
         })
         return [
           {
@@ -269,7 +269,7 @@ function readStatements(reader: SourceReader): { statements: StatementNode[]; na
   return { statements, names }
 }
 
-function readTables(reader: SourceReader, statements: readonly StatementNode[]): TableNode[] {
+function readTables(language: Language, reader: SourceReader, statements: readonly StatementNode[]): TableNode[] {
   const tables: TableNode[] = []
   for (const file of reader.list('packages/backend/database/migration', (path) => path.endsWith('.sql'))) {
     const lines = reader.text(file).split('\n')
@@ -291,7 +291,7 @@ function readTables(reader: SourceReader, statements: readonly StatementNode[]):
         const finished: { id: string; line: number; note: string; columns: ColumnNode[] } = current
         tables.push({
           id: finished.id,
-          title: renderNounPhrase(toCamel(finished.id), 'ja'),
+          title: language.noun(toCamel(finished.id)),
           note: finished.note,
           columns: finished.columns,
           statementIds: statements.filter((statement) => statement.tableIds.includes(finished.id)).map((statement) => statement.id),
@@ -305,7 +305,7 @@ function readTables(reader: SourceReader, statements: readonly StatementNode[]):
       if (current !== null && column?.[1] !== undefined && !['primary', 'unique', 'check', 'constraint', 'foreign'].includes(column[1])) {
         ;(current as { columns: ColumnNode[] }).columns.push({
           name: column[1],
-          title: renderNounPhrase(toCamel(column[1]), 'ja'),
+          title: language.noun(toCamel(column[1])),
           type: column[2] ?? '',
           note: column[3] ?? '',
         })
@@ -318,15 +318,15 @@ function readTables(reader: SourceReader, statements: readonly StatementNode[]):
   return tables
 }
 
-export function readBackendModel(reader: SourceReader): BackendModel {
+export function readBackendModel(reader: SourceReader, language: Language = prepareLanguage('ja')): BackendModel {
   if (!reader.exists(`${backendRoot}/handler/app.ts`)) {
     return { endpoints: [], works: [], rules: [], statements: [], tables: [] }
   }
   const endpoints = readEndpoints(reader)
-  const rules = readRules(reader)
+  const rules = readRules(language, reader)
   const { statements, names } = readStatements(reader)
   const repositoryStatements = readRepositoryStatements(reader, names)
-  const works = readWorks(reader, rules, repositoryStatements, endpoints)
-  const tables = readTables(reader, statements)
+  const works = readWorks(language, reader, rules, repositoryStatements, endpoints)
+  const tables = readTables(language, reader, statements)
   return { endpoints, works, rules, statements, tables }
 }

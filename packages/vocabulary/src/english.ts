@@ -54,6 +54,12 @@ export function renderEnglishAction(verb: Concept): string {
   return capitalize(verb.en.base)
 }
 
+/** 関数名の見出し（命令形の Title Case。registerPayment → "Register Payment"）。 */
+export function renderEnglishTitle(phrase: VerbPhrase): string {
+  const object = renderEnglishLabel(phrase.object)
+  return object === '' ? capitalize(phrase.verb.en.base) : `${capitalize(phrase.verb.en.base)} ${object}`
+}
+
 /** 処理の手順（命令形。createSales → "Create sales"）。 */
 export function renderEnglishStep(phrase: VerbPhrase): string {
   const object = renderEnglishPhraseInSentence(phrase.object)

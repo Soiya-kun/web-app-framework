@@ -127,10 +127,10 @@ web-app-framework/
 | `pnpm database:down` | テスト用の PostgreSQL を止める |
 | `pnpm vocabulary:generate` | 単語帳（YAML）を変えたあとに、辞書と画面の文言ファイル（`locale/ja.json`・`en.json`）を作り直す |
 | `pnpm vocabulary:find <日本語>` | 日本語の用語から英語の名前を引く |
-| `pnpm translate` | 処理の日本語訳を作り直す |
+| `pnpm translate` | 処理の訳（日本語・英語）を作り直す |
 | `pnpm sql:ledger` | SQL の台帳を作り直す（DB の名前の単語帳の検査も行う） |
 | `pnpm flow:check` | 業務フローの書き方の規則を確かめる（`pnpm check` に含まれる） |
-| `pnpm model` | コードのブラウザのモデル（`apps/browser/generated/model.json`）を作る |
+| `pnpm model` | コードのブラウザのモデル（日本語と英語。`apps/browser/generated/model.ja.json`・`model.en.json`）を作る |
 | `pnpm dev:browser` | コードのブラウザを開く（ソースを保存するたびにモデルを作り直す） |
 | `pnpm dev:api` / `pnpm dev:web` | 手元で API サーバー（`DATABASE_URL` が要る）と画面を動かす。画面の `/api` は API サーバーへ中継する |
 | `pnpm --filter @app/infra synth` | AWS の CloudFormation のテンプレートを作る（`-c stage=dev` などで環境を選ぶ） |
@@ -409,8 +409,9 @@ flowchart LR
 
 サンプルの業務は、売上の登録・請求の締めと発行・入金の記録と仮受の特定で区切った（返金・調整の登録・顧客・残高の画面は作らない）。次は土台の側を詰める。
 
-1. ブラウザの英語の表示。
-2. 配備の自動化（GitHub Actions から CDK とマイグレーション）。CI は `.github/workflows/check.yml` で、main への push と Pull Request ごとに `pnpm check`・DB の契約テスト・実ブラウザの E2E を流す。
-3. 認証（Cognito のユーザープールと、API での ID トークンの検証）。
-4. 請求書の PDF の出力と、自社の情報（名前・登録番号など）の設定。
-5. 単語帳をファイル名・API のパスにも当てる。翻訳ツールで英語の訳も作る。
+1. 配備の自動化（GitHub Actions から CDK とマイグレーション）。CI は `.github/workflows/check.yml` で、main への push と Pull Request ごとに `pnpm check`・DB の契約テスト・実ブラウザの E2E を流す。
+2. 認証（Cognito のユーザープールと、API での ID トークンの検証）。
+3. 請求書の PDF の出力と、自社の情報（名前・登録番号など）の設定。
+4. 単語帳をファイル名・API のパスにも当てる。
+
+コードのブラウザと処理の訳は、日本語と英語の両方で出す（ブラウザの上で切り替える）。

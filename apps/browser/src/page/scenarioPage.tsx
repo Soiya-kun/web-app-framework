@@ -2,17 +2,15 @@ import type { CaseNode } from '@app/translator/model-types'
 import { getRouteApi } from '@tanstack/react-router'
 import { Badge, Cell, HeaderCell, PageTitle, Section, SourcePlace, StepList, Table, TextLink } from '../component/part'
 import { useModel } from '../model'
-import { text } from '../text'
+import { readCaseKindLabels } from '../component/kindLabel'
+import { useText, useLabelFormat } from '../text'
 
 const scenarioRoute = getRouteApi('/scenario/$scenarioId')
 
-const caseKindLabel: Readonly<Record<CaseNode['kind'], string>> = {
-  main: text.label('primarySuccessScenario'),
-  vary: text.label('variation'),
-  extend: text.label('extension'),
-}
-
 function CaseItem({ caseNode, condition }: { readonly caseNode: CaseNode; readonly condition: string | undefined }) {
+  const text = useText()
+  const labelFormat = useLabelFormat()
+  const caseKindLabel = readCaseKindLabels(text)
   const columns = [...new Set(caseNode.rows.flatMap((row) => Object.keys(row)))]
   return (
     <li className="flex flex-col gap-2 rounded-control border border-line p-3">
@@ -45,7 +43,7 @@ function CaseItem({ caseNode, condition }: { readonly caseNode: CaseNode; readon
       {caseNode.steps.length === 0 ? null : (
         <details className="text-sm">
           <summary className="cursor-pointer text-muted">{text.label('step')}</summary>
-          <StepList label={`${caseNode.title}の${text.label('step')}`} steps={caseNode.steps} />
+          <StepList label={labelFormat.joinItem(caseNode.title, text.label('step'))} steps={caseNode.steps} />
         </details>
       )}
       <SourcePlace file={caseNode.file} line={caseNode.line} />
@@ -54,6 +52,8 @@ function CaseItem({ caseNode, condition }: { readonly caseNode: CaseNode; readon
 }
 
 export function ScenarioPage() {
+  const text = useText()
+  const labelFormat = useLabelFormat()
   const { scenarioId } = scenarioRoute.useParams()
   const { scenarios, flows, pages, endpoints, works } = useModel()
   const scenario = scenarios.get(scenarioId)
@@ -67,7 +67,7 @@ export function ScenarioPage() {
 
   return (
     <>
-      <PageTitle level={`${text.label('userGoal')}（${text.label('scenario')}）`}>{scenario.title}</PageTitle>
+      <PageTitle level={labelFormat.joinNote(text.label('userGoal'), text.label('scenario'))}>{scenario.title}</PageTitle>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <Badge>
           {text.label('actor')}: {scenario.actorTitle}
@@ -81,8 +81,8 @@ export function ScenarioPage() {
             <li key={`${use.flowId}-${use.number}`}>
               <TextLink to="/flow/$flowId" params={{ flowId: use.flowId }}>
                 {flows.get(use.flowId)?.title ?? use.flowId}
-              </TextLink>{' '}
-              の {use.number}
+              </TextLink>
+              {labelFormat.formatStepNumber(use.number)}
             </li>
           ))}
         </ul>
@@ -116,14 +116,14 @@ export function ScenarioPage() {
                   </Cell>
                   <Cell>{extension.handling === null ? '—' : extension.handling.join(' ')}</Cell>
                   <Cell>{extension.caseCount}</Cell>
-                  <Cell>{extension.flowPaths.join('・') || '—'}</Cell>
+                  <Cell>{labelFormat.joinList(extension.flowPaths) || '—'}</Cell>
                 </tr>
               ))}
             </tbody>
           </Table>
         </Section>
       )}
-      <Section title={`${text.label('case')}（${scenario.cases.length}）`}>
+      <Section title={labelFormat.joinNote(text.label('case'), String(scenario.cases.length))}>
         <ul className="flex flex-col gap-2">
           {scenario.cases.map((caseNode) => (
             <CaseItem

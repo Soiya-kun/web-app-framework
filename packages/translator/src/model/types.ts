@@ -165,6 +165,8 @@ export type ModelProgress = {
 }
 
 export type Model = {
+  /** 見出し・手順の言語。 */
+  readonly locale: 'ja' | 'en'
   readonly flows: readonly FlowNode[]
   readonly scenarios: readonly ScenarioNode[]
   readonly pages: readonly PageNode[]

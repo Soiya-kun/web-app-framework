@@ -2,7 +2,7 @@ import type { StepTranslationNode } from '@app/translator/model-types'
 import { getRouteApi } from '@tanstack/react-router'
 import { Badge, PageTitle, Section, SourcePlace, TextLink } from '../component/part'
 import { useModel } from '../model'
-import { text } from '../text'
+import { useText, useLabelFormat } from '../text'
 
 const workRoute = getRouteApi('/work/$workId')
 
@@ -21,6 +21,8 @@ export function StepTree({ label, steps }: { readonly label: string; readonly st
 }
 
 export function WorkPage() {
+  const text = useText()
+  const labelFormat = useLabelFormat()
   const { workId } = workRoute.useParams()
   const { model, works, rules } = useModel()
   const work = works.get(workId)
@@ -31,11 +33,11 @@ export function WorkPage() {
 
   return (
     <>
-      <PageTitle level={`${text.label('subfunction')}（${text.label('work')}）`}>{work.title}</PageTitle>
+      <PageTitle level={labelFormat.joinNote(text.label('subfunction'), text.label('work'))}>{work.title}</PageTitle>
       <p className="font-mono text-xs">{work.id}</p>
       <SourcePlace file={work.file} line={work.line} />
       <Section title={text.label('step')}>
-        <StepTree label={`${work.title}の${text.label('step')}`} steps={work.steps} />
+        <StepTree label={labelFormat.joinItem(work.title, text.label('step'))} steps={work.steps} />
       </Section>
       <Section title={text.label('rule')}>
         <ul className="flex flex-col gap-2 text-sm">

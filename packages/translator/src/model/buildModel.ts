@@ -1,15 +1,16 @@
 // ソースを静的解析して、コードのブラウザのモデルを作る。業務フローから SQL・テーブルまでをつなぎ、書き方の規則を検査する。
-import { conceptList, renderNounPhrase } from '@app/vocabulary'
+import { conceptList, renderNounPhrase, type Locale } from '@app/vocabulary'
 import ts from 'typescript'
 import { readBackendModel } from './backendModel'
 import { readFlowModel, type ScenarioDraft } from './flowModel'
-import { buttonTextOf } from './screenText'
+import { prepareLanguage } from '../language'
+import { prepareScreenText } from './screenText'
 import { prepareSourceReader, readString, unwrap } from './source'
 import type { FlowStepNode, GlossaryEntry, Model, PageNode, ScenarioNode, ScenarioUse } from './types'
 import { readWebModel, type WebModel } from './webModel'
 
 /** シナリオの手順から、開く画面・押すボタンをたどる。 */
-function traceScenario(scenario: ScenarioDraft, web: WebModel): { pageIds: string[]; actionEndpointIds: string[]; queryEndpointIds: string[] } {
+function traceScenario(scenario: ScenarioDraft, web: WebModel, buttonTextOf: (key: string) => string): { pageIds: string[]; actionEndpointIds: string[]; queryEndpointIds: string[] } {
   const pages = new Map<string, PageNode>(web.pages.map((page) => [page.id, page]))
   const pageIds: string[] = []
   const actionEndpointIds: string[] = []
@@ -62,11 +63,14 @@ function readGlossary(): GlossaryEntry[] {
     .sort((left, right) => left.id.localeCompare(right.id))
 }
 
-export function buildModel(root: string): Model {
+/** モデルを作る。見出し・手順は locale の言語にする（書き方の規則の問題は日本語のまま）。 */
+export function buildModel(root: string, locale: Locale = 'ja'): Model {
+  const language = prepareLanguage(locale)
   const reader = prepareSourceReader(root)
-  const backend = readBackendModel(reader)
-  const web = readWebModel(reader)
-  const draft = readFlowModel(reader)
+  const backend = readBackendModel(reader, language)
+  const web = readWebModel(reader, language)
+  const draft = readFlowModel(reader, language)
+  const { buttonTextOf } = prepareScreenText(language)
   const problems = [...draft.problems]
 
   // シナリオを使う段と、拡張を流す経路。
@@ -90,7 +94,7 @@ export function buildModel(root: string): Model {
 
   const endpointWorks = new Map(backend.endpoints.map((endpoint) => [endpoint.id, endpoint.workIds]))
   const scenarios: ScenarioNode[] = draft.scenarios.map((scenario) => {
-    const trace = traceScenario(scenario, web)
+    const trace = traceScenario(scenario, web, buttonTextOf)
     const testing = draft.cases.get(scenario.id)
     const cases = testing?.cases ?? []
     const uses = usedIn.get(scenario.id) ?? []
@@ -107,7 +111,7 @@ export function buildModel(root: string): Model {
       id: scenario.id,
       title: scenario.title,
       actor: scenario.actor,
-      actorTitle: renderNounPhrase(scenario.actor, 'ja'),
+      actorTitle: language.noun(scenario.actor),
       pending: scenario.pending,
       steps: scenario.steps,
       guarantee: scenario.guarantee,
@@ -132,6 +136,7 @@ export function buildModel(root: string): Model {
   const allExtensions = scenarios.flatMap((scenario) => scenario.extensions)
   const allCases = scenarios.flatMap((scenario) => scenario.cases)
   return {
+    locale,
     flows: draft.flows,
     scenarios,
     pages: web.pages,

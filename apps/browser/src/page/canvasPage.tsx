@@ -17,10 +17,11 @@ import {
 } from '../canvas/canvasStore'
 import { FlowFrame } from '../canvas/flowFrame'
 import { arrangeFlowAreas, sumPendingSteps } from '../component/flowArea'
+import { LocaleToggle } from '../component/part'
 import { FitIcon, MinusIcon, PlusIcon } from '../canvas/icon'
 import { CanvasMinimap, type FrameArea } from '../canvas/minimap'
 import { useModel } from '../model'
-import { text } from '../text'
+import { useText, useLabelFormat } from '../text'
 
 const minimumScale = 0.1
 const maximumScale = 2.5
@@ -101,6 +102,8 @@ export function CanvasPage() {
 }
 
 function CanvasScreen({ store }: { readonly store: CanvasStore }) {
+  const text = useText()
+  const labelFormat = useLabelFormat()
   const { model, scenarios } = useModel()
   const view = useCanvasState((state) => state.view) ?? initialView
   const [animated, setAnimated] = useState(false)
@@ -425,6 +428,7 @@ function CanvasScreen({ store }: { readonly store: CanvasStore }) {
               <Link to="/glossary" className="rounded-lg px-2.5 py-1 text-muted hover:bg-canvas hover:text-ink">
                 {text.label('glossary')}
               </Link>
+              <LocaleToggle />
             </nav>
             <CanvasSearch attachInput={searchInput} onSelect={openTarget} />
           </div>
@@ -521,9 +525,7 @@ function CanvasScreen({ store }: { readonly store: CanvasStore }) {
                     {pending === 0 ? (
                       ''
                     ) : (
-                      <span className="text-pending-line">
-                        （{text.label('pending')} {pending}）
-                      </span>
+                      <span className="text-pending-line">{labelFormat.formatNote(`${text.label('pending')} ${pending}`)}</span>
                     )}
                   </dd>
                 </div>

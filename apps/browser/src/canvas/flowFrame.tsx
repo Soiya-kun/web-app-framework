@@ -2,9 +2,10 @@
 // 開いたカードは、右の段のものほど上に並べる。こうすると、下のカードへの線（レール）が上のカードと重ならない。
 import type { FlowNode, FlowStepNode } from '@app/translator/model-types'
 import { useRef, type PointerEvent, type Ref } from 'react'
-import { arrangeLanes, kindLabel, laneSize } from '../component/laneLayout'
+import { readStepKindLabels } from '../component/kindLabel'
+import { arrangeLanes, laneSize } from '../component/laneLayout'
 import { useModel } from '../model'
-import { text } from '../text'
+import { useText, useLabelFormat } from '../text'
 import { useCanvasAction } from './canvasAction'
 import { emptyFrame, toggleItem, updateFrame, useCanvasState, useCanvasStore, type FrameState } from './canvasStore'
 import { ChevronIcon, FitIcon } from './icon'
@@ -35,6 +36,9 @@ export function FlowFrame({
   readonly initialFolded: boolean
   readonly attachFrame: Ref<HTMLDivElement>
 }) {
+  const text = useText()
+  const labelFormat = useLabelFormat()
+  const kindLabel = readStepKindLabels(text)
   const table = useModel()
   const store = useCanvasStore()
   const action = useCanvasAction()
@@ -96,7 +100,7 @@ export function FlowFrame({
     }
     changeFolded((current) => !current)
   }
-  const layout = arrangeLanes(table, flow, (number) => openedNests.includes(number))
+  const layout = arrangeLanes(text, table, flow, (number) => openedNests.includes(number))
   const stepIndex = new Map(layout.steps.map((laneStep, index) => [laneStep.number, index]))
   const measureRailLeft = (index: number) => laneSize.label + layout.measureBoxLeft(index) + laneSize.boxWidth / 2
   // 開いた段を、右（番号の大きい列）から順に並べる。閉じた子フローの中の段は出さない。
@@ -135,9 +139,12 @@ export function FlowFrame({
           <ChevronIcon opened={!folded} />
           <span className="font-bold text-ink">{flow.title}</span>
           <span className="text-xs">
-            {flow.parentIds.length === 0 ? text.label('summary') : text.label('childFlow')}・{text.label('step')} {flow.steps.length}・
+            {flow.parentIds.length === 0 ? text.label('summary') : text.label('childFlow')}
+            {labelFormat.mark}
+            {text.label('step')} {flow.steps.length}
+            {labelFormat.mark}
             {text.label('scenario')} {scenarioCount}
-            {pendingCount === 0 ? '' : `・${text.label('pending')} ${pendingCount}`}
+            {pendingCount === 0 ? '' : `${labelFormat.mark}${text.label('pending')} ${pendingCount}`}
           </span>
         </button>
         <button
@@ -164,7 +171,7 @@ export function FlowFrame({
           </p>
         )}
         {folded ? null : (
-          <figure aria-label={`${flow.title}の${text.label('laneDiagram')}`} className="relative flex" style={{ height: layout.height }}>
+          <figure aria-label={labelFormat.joinItem(flow.title, text.label('laneDiagram'))} className="relative flex" style={{ height: layout.height }}>
             <div className="relative shrink-0 border-r border-line/60" style={{ width: laneSize.label }}>
               {layout.lanes.map(([laneKey, laneTitle], index) => (
                 <div
@@ -262,9 +269,11 @@ export function FlowFrame({
                     }}
                   >
                     <span className="text-[10px] text-muted">
-                      {laneStep.number}・{kindLabel[step.kind]}
-                      {laneStep.pending ? `・${text.label('pending')}` : ''}
-                      {step.extensions.length > 0 ? `・${text.label('extension')}` : ''}
+                      {laneStep.number}
+                      {labelFormat.mark}
+                      {kindLabel[step.kind]}
+                      {laneStep.pending ? `${labelFormat.mark}${text.label('pending')}` : ''}
+                      {step.extensions.length > 0 ? `${labelFormat.mark}${text.label('extension')}` : ''}
                     </span>
                     <span className="flex items-center gap-1 text-xs font-medium leading-snug">
                       {laneStep.folded ? <ChevronIcon opened={false} /> : null}
