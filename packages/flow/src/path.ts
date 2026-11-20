@@ -86,11 +86,11 @@ export function listFlowPaths(flow: Flow<unknown>): FlowPath[] {
 export async function runFlowPath(
   path: FlowPath,
   screen: Parameters<ScenarioStep<unknown>>[0],
-  setToday: (date: string) => void,
+  setToday: (date: string) => Promise<void>,
 ): Promise<{ readonly pendingAt: string | undefined }> {
   for (const action of path.actions) {
     if (action.kind === 'elapse') {
-      setToday(action.date)
+      await setToday(action.date)
     }
     if (action.kind === 'operate') {
       if (action.scenario.operate === undefined) {

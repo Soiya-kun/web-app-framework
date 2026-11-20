@@ -91,6 +91,7 @@ web-app-framework/
 │  ├─ src/                    # 画面（sales・invoice・payment）と、API クライアント・ルーター・文言・画面の土台（shared）
 │  ├─ scenario/               # シナリオ（*.ts）と、そのケース＝画面の結合テスト（*.test.tsx）
 │  ├─ flow/                   # 業務フローと、その E2E（flow.test.tsx）
+│  ├─ e2e/                    # 業務フローを実ブラウザ・API サーバー・PostgreSQL で流す E2E（pnpm test:e2e）
 │  └─ test/launchApp.tsx      # 画面をインプロセスで開く道具
 ├─ apps/browser/              # コードのブラウザ（モデルを読む静的な画面）
 ├─ apps/server/               # 本番の API サーバー（Node で Hono を常駐）とマイグレーションの実行。Dockerfile
@@ -122,6 +123,7 @@ web-app-framework/
 | `pnpm check` | 単語帳の生成物・lint・型・テスト・翻訳と SQL の台帳の生成物・業務フローの書き方をまとめて確かめる（Docker は要らない） |
 | `pnpm test` | テストだけ（Docker は要らない） |
 | `pnpm test:database` | Docker の PostgreSQL を起動し、repository のテストを流す |
+| `pnpm test:e2e` | Docker の PostgreSQL を起動し、業務フローを実ブラウザ（Chromium）・API サーバーで流す |
 | `pnpm database:down` | テスト用の PostgreSQL を止める |
 | `pnpm vocabulary:generate` | 単語帳（YAML）を変えたあとに、辞書と画面の文言ファイル（`locale/ja.json`・`en.json`）を作り直す |
 | `pnpm vocabulary:find <日本語>` | 日本語の用語から英語の名前を引く |
@@ -407,8 +409,8 @@ flowchart LR
 
 サンプルの業務は、売上の登録・請求の締めと発行・入金の記録と仮受の特定で区切った（返金・調整の登録・顧客・残高の画面は作らない）。次は土台の側を詰める。
 
-1. 最上位の業務フローを、実ブラウザ（Playwright）と実 DB でも流す。ブラウザの英語の表示。
-2. CI（GitHub Actions で `pnpm check` と `pnpm test:database`）と、配備の自動化（GitHub Actions から CDK とマイグレーション）。
+1. ブラウザの英語の表示。
+2. CI（GitHub Actions で `pnpm check`・`pnpm test:database`・`pnpm test:e2e`）と、配備の自動化（GitHub Actions から CDK とマイグレーション）。
 3. 認証（Cognito のユーザープールと、API での ID トークンの検証）。
 4. 請求書の PDF の出力と、自社の情報（名前・登録番号など）の設定。
 5. 単語帳をファイル名・API のパスにも当てる。翻訳ツールで英語の訳も作る。

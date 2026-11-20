@@ -12,6 +12,7 @@ import {
 } from '../../src/repository/postgres/postgresDatabase'
 import type { Executor } from '../../src/repository/postgres/statement'
 import { closeInvoice } from '../../src/usecase/invoice/closeInvoice'
+import { resetTables, seedTables } from '../../database/seedDatabase'
 import { testDatabaseUrl } from '../testDatabase'
 import {
   childCustomer,
@@ -47,74 +48,6 @@ async function selectRows<Row>(text: string, values: readonly unknown[] = []): P
   return result.rows as Row[]
 }
 
-async function seedTables(seed: Partial<MemoryDatabase>): Promise<void> {
-  for (const row of seed.customer ?? []) {
-    await selectRows(
-      'INSERT INTO customer (customer_id, customer_name, billing_customer_id, closing_day, collection_month_offset, collection_day) VALUES ($1, $2, $3, $4, $5, $6)',
-      [row.customerId, row.customerName, row.billingCustomerId, row.closingDay, row.collectionMonthOffset, row.collectionDay],
-    )
-  }
-  for (const row of seed.payerName ?? []) {
-    await selectRows('INSERT INTO payer_name (payer_name, customer_id) VALUES ($1, $2)', [row.payerName, row.customerId])
-  }
-  for (const row of seed.invoice ?? []) {
-    await selectRows(
-      'INSERT INTO invoice (invoice_id, billing_customer_id, previous_invoice_id, closing_date, due_date, previous_amount, payment_amount, adjustment_amount, carried_amount, sales_amount, tax_amount, invoice_amount, invoice_number, issue_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
-      [
-        row.invoiceId,
-        row.billingCustomerId,
-        row.previousInvoiceId,
-        row.closingDate,
-        row.dueDate,
-        row.previousAmount,
-        row.paymentAmount,
-        row.adjustmentAmount,
-        row.carriedAmount,
-        row.salesAmount,
-        row.taxAmount,
-        row.invoiceAmount,
-        row.invoiceNumber,
-        row.issueDate,
-      ],
-    )
-  }
-  for (const row of seed.invoiceTax ?? []) {
-    await selectRows('INSERT INTO invoice_tax (invoice_id, tax_rate, taxable_amount, tax_amount) VALUES ($1, $2, $3, $4)', [
-      row.invoiceId,
-      row.taxRate,
-      row.taxableAmount,
-      row.taxAmount,
-    ])
-  }
-  for (const row of seed.invoiceCounter ?? []) {
-    await selectRows('INSERT INTO invoice_counter (issue_year, last_number) VALUES ($1, $2)', [row.issueYear, row.lastNumber])
-  }
-  for (const row of seed.sales ?? []) {
-    await selectRows(
-      'INSERT INTO sales (sales_id, customer_id, sales_date, sales_kind, item_name, sales_amount, tax_rate, invoice_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
-      [row.salesId, row.customerId, row.salesDate, row.salesKind, row.itemName, row.salesAmount, row.taxRate, row.invoiceId],
-    )
-  }
-  for (const row of seed.payment ?? []) {
-    await selectRows(
-      'INSERT INTO payment (payment_id, payment_date, payment_method, payment_amount, payer_name, customer_id, invoice_id) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [row.paymentId, row.paymentDate, row.paymentMethod, row.paymentAmount, row.payerName, row.customerId, row.invoiceId],
-    )
-  }
-  for (const row of seed.refund ?? []) {
-    await selectRows(
-      'INSERT INTO refund (refund_id, payment_id, refund_date, refund_amount, invoice_id) VALUES ($1, $2, $3, $4, $5)',
-      [row.refundId, row.paymentId, row.refundDate, row.refundAmount, row.invoiceId],
-    )
-  }
-  for (const row of seed.adjustment ?? []) {
-    await selectRows(
-      'INSERT INTO adjustment (adjustment_id, billing_customer_id, adjustment_date, adjustment_kind, adjustment_amount, payment_id, invoice_id) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [row.adjustmentId, row.billingCustomerId, row.adjustmentDate, row.adjustmentKind, row.adjustmentAmount, row.paymentId, row.invoiceId],
-    )
-  }
-}
-
 async function readTables(): Promise<MemoryDatabase> {
   return {
     customer: await selectRows(
@@ -144,11 +77,11 @@ async function readTables(): Promise<MemoryDatabase> {
 }
 
 async function preparePostgresTarget(statementNames: string[] = []): Promise<RepositoryTarget> {
-  await pool.query('TRUNCATE customer, payer_name, invoice, invoice_tax, invoice_counter, sales, payment, refund, adjustment CASCADE')
+  await resetTables(pool)
   return {
     repositories: preparePostgresRepositories(prepareTracingExecutor(prepareClientExecutor(pool), statementNames)),
     runTransaction: preparePostgresTransaction(pool),
-    seedTables,
+    seedTables: (seed) => seedTables(pool, seed),
     readTables,
   }
 }

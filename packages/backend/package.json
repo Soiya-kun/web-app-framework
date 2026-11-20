@@ -6,7 +6,8 @@
     ".": "./src/index.ts",
     "./testing": "./src/testing.ts",
     "./production": "./src/production.ts",
-    "./migration": "./database/applyMigrations.ts"
+    "./migration": "./database/applyMigrations.ts",
+    "./seed": "./database/seedDatabase.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

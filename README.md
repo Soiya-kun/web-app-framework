@@ -23,6 +23,7 @@ Node.js（`.node-version`）と pnpm（`package.json` の `packageManager`）を
 | `pnpm check` | 単語帳の生成物・lint・型・テスト・翻訳と SQL の台帳の生成物・業務フローの書き方をまとめて確かめる |
 | `pnpm test` | テストだけ（Docker は要らない） |
 | `pnpm test:database` | Docker の PostgreSQL を起動し、repository のテストを流す |
+| `pnpm test:e2e` | Docker の PostgreSQL を起動し、業務フローを実ブラウザ（Chromium）・API サーバーで流す |
 | `pnpm vocabulary:generate` | 単語帳（`packages/vocabulary/words` など）を変えたあとに、辞書と画面の文言ファイルを作り直す |
 | `pnpm vocabulary:find <日本語>` | 日本語の用語から英語の名前を引く（`振込依頼人の顧客` → `payerCustomer`） |
 | `pnpm translate` | 処理の日本語訳を作り直す |

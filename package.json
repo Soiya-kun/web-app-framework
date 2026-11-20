@@ -18,6 +18,7 @@
     "database:up": "docker compose up -d --wait test-database",
     "database:down": "docker compose down",
     "test:database": "pnpm database:up && pnpm --filter @app/backend test:database",
+    "test:e2e": "pnpm database:up && pnpm --filter @app/web test:e2e",
     "sql:ledger": "pnpm --filter @app/translator sql:ledger",
     "sql:ledger:check": "pnpm --filter @app/translator sql:ledger --check",
     "dev:api": "pnpm --filter @app/server dev",

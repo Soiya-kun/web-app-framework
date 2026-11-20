@@ -505,11 +505,11 @@ function readFlows(reader: SourceReader, scenarios: readonly ScenarioDraft[], pr
   return flows.map((flow) => ({ ...flow, parentIds: flows.filter((parent) => children.get(parent.id)?.includes(flow.id) === true).map((parent) => parent.id) }))
 }
 
-/** apps/web の画面のテストは、scenario（シナリオのケース）と flow（業務フローの E2E）にだけ置く。 */
+/** apps/web の画面のテストは、scenario（シナリオのケース）と flow（業務フローの E2E）、e2e（同じ業務フローを実ブラウザで流す）にだけ置く。 */
 function checkTestPlaces(reader: SourceReader, problems: ModelProblem[]): void {
   for (const file of reader.list('apps/web', (path) => /\.test\.tsx?$/.test(path))) {
-    if (!file.startsWith(`${scenarioRoot}/`) && !file.startsWith(`${flowRoot}/`)) {
-      problems.push({ file, line: 1, rule: 'test-place', message: '画面のテストは apps/web/scenario のシナリオのケースか、apps/web/flow の業務フローに書く' })
+    if (!file.startsWith(`${scenarioRoot}/`) && !file.startsWith(`${flowRoot}/`) && !file.startsWith('apps/web/e2e/')) {
+      problems.push({ file, line: 1, rule: 'test-place', message: '画面のテストは apps/web/scenario のシナリオのケースか、apps/web/flow の業務フローに書く（apps/web/e2e は同じ業務フローを実ブラウザで流すだけ）' })
     }
   }
 }
