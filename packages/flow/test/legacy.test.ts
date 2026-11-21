@@ -33,6 +33,31 @@ describe('現行の業務フロー', () => {
     expect(nest(legacyMonthlyInvoice)).toEqual({ kind: 'nest', flow: legacyMonthlyInvoice })
   })
 
+  test('旧システムの操作には、動かさない画面の手順を残せる（書かなくてもよい）', async () => {
+    const recorded: string[] = []
+    const printInvoice = operateLegacy(accountant, 'printInvoice', {
+      operate: async (screen) => {
+        await screen.go('請求書発行')
+        await screen.press('印刷(F10)')
+      },
+    })
+    const screen = {
+      go: async (menu: string) => void recorded.push(`go:${menu}`),
+      follow: async (link: string) => void recorded.push(`follow:${link}`),
+      fill: async (field: string, value: string) => void recorded.push(`fill:${field}:${value}`),
+      choose: async (field: string, choice: string) => void recorded.push(`choose:${field}:${choice}`),
+      press: async (button: string) => void recorded.push(`press:${button}`),
+      expectText: async (text: string) => void recorded.push(`expectText:${text}`),
+    }
+
+    expect(printInvoice).toMatchObject({ kind: 'legacy', confirm: undefined })
+    if (printInvoice.kind === 'legacy' && printInvoice.operate !== undefined) {
+      await printInvoice.operate(screen)
+    }
+    expect(recorded).toEqual(['go:請求書発行', 'press:印刷(F10)'])
+    expect(operateLegacy(accountant, 'enterSales')).toMatchObject({ operate: undefined, confirm: undefined })
+  })
+
   test('新しい業務フローには、現行の段（旧システムの操作・置き換え先・日付のない時の経過・画面の操作）を書けない', () => {
     // @ts-expect-error 旧システムの操作は、新しい業務フローの段にならない
     defineFlow('wrongFlow', { steps: [operateLegacy(accountant, 'printInvoice')] })

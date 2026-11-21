@@ -481,7 +481,7 @@ function readFlowSteps(context: StepContext, parsed: ParsedSource, elements: rea
     const call = unwrap(element)
     const number = `${prefix}${index + 1}`
     const place = { file: parsed.file, line: lineOf(parsed, element) }
-    const base = { number, actor: null, actorTitle: null, scenarioId: null, flowId: null, inputs: [], extensions: [], stepKey: null, replacements: [], tableIds: [], change: null, ...place }
+    const base = { number, actor: null, actorTitle: null, scenarioId: null, flowId: null, inputs: [], extensions: [], stepKey: null, replacements: [], tableIds: [], change: null, screenSteps: [], guarantee: [], ...place }
     // apps/web/step の値（システムの外の業務・外のイベント）。
     if (ts.isIdentifier(call)) {
       const step = context.steps.get(importKeyOf(parsed, call) ?? '')
@@ -585,7 +585,31 @@ function readFlowSteps(context: StepContext, parsed: ParsedSource, elements: rea
               return table === undefined ? [] : [table]
             })
           : []
-      return [{ ...base, kind: stepKind, title: screen.translateName(name), actor, actorTitle: screen.language.noun(actor), replacements, tableIds }]
+      // 旧システムの画面の手順（書いたときだけ）。画面の操作を並べるだけにする。
+      const procedureOf = (option: string): string[] => {
+        const body = kind === 'operateLegacy' ? functionBodyOf(optionOf(third, option)) : null
+        if (body === null) {
+          return []
+        }
+        const translated = screen.translateScreenBody(body.body, constants, true)
+        if (!translated.flat) {
+          problems.push({ ...place, rule: 'legacy-step', message: `旧システムの画面の手順（${option}）は、画面の操作（await screen.…）を並べるだけにする` })
+        }
+        return translated.steps
+      }
+      return [
+        {
+          ...base,
+          kind: stepKind,
+          title: screen.translateName(name),
+          actor,
+          actorTitle: screen.language.noun(actor),
+          replacements,
+          tableIds,
+          screenSteps: procedureOf('operate'),
+          guarantee: procedureOf('confirm'),
+        },
+      ]
     }
     if (kind === 'elapse') {
       const time = readString(first) ?? ''

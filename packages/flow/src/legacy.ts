@@ -31,6 +31,23 @@ export type LegacyTable = {
   readonly columns: readonly LegacyColumn[]
 }
 
+/**
+ * 旧システムの画面の操作。記録するだけで動かさない（スタブの E2E のように、手順の形で残す）。
+ * 画面・項目・ボタンの名前は、旧システムの画面の文言をそのまま書く。
+ */
+export type LegacyScreen = {
+  /** メニューから画面を開く。 */
+  go(menu: string): Promise<void>
+  follow(link: string): Promise<void>
+  fill(field: string, value: string): Promise<void>
+  choose(field: string, choice: string): Promise<void>
+  press(button: string): Promise<void>
+  expectText(text: string): Promise<void>
+}
+
+/** 旧システムの画面の手順。画面の操作（await screen.…）を並べるだけにする。 */
+export type LegacyScreenStep = (screen: LegacyScreen) => Promise<void>
+
 /** 現行の業務フローの段。 */
 export type LegacyStep =
   | OutsideStep
@@ -39,7 +56,16 @@ export type LegacyStep =
   | { readonly kind: 'outside' | 'occur'; readonly actor: Role; readonly name: string; readonly replacement: readonly Replacement[] }
   | { readonly kind: 'elapse'; readonly time: string; readonly date: undefined }
   /** 旧システムの操作。 */
-  | { readonly kind: 'legacy'; readonly actor: Role; readonly name: string; readonly tables: readonly LegacyTable[]; readonly replacement: readonly Replacement[] }
+  | {
+      readonly kind: 'legacy'
+      readonly actor: Role
+      readonly name: string
+      readonly tables: readonly LegacyTable[]
+      readonly replacement: readonly Replacement[]
+      /** 旧システムの画面の手順と、そのあと画面で確かめること（書かなくてもよい）。 */
+      readonly operate: LegacyScreenStep | undefined
+      readonly confirm: LegacyScreenStep | undefined
+    }
   | { readonly kind: 'nest'; readonly flow: LegacyFlow }
 
 export type LegacyFlow = {
@@ -60,13 +86,26 @@ export function defineLegacyFlow(
   return { kind: 'legacyFlow', name, replacement, steps: definition.steps }
 }
 
-/** 段: 旧システムの操作。使うテーブルと、新しい業務フローの置き換え先を書く。 */
+/** 段: 旧システムの操作。使うテーブル・新しい業務フローの置き換え先と、残したければ旧システムの画面の手順を書く。 */
 export function operateLegacy(
   actor: Role,
   name: string,
-  option: { readonly tables?: readonly LegacyTable[]; readonly replacement?: Replacement | readonly Replacement[] } = {},
+  option: {
+    readonly tables?: readonly LegacyTable[]
+    readonly replacement?: Replacement | readonly Replacement[]
+    readonly operate?: LegacyScreenStep
+    readonly confirm?: LegacyScreenStep
+  } = {},
 ): LegacyStep {
-  return { kind: 'legacy', actor, name, tables: option.tables ?? [], replacement: listReplacements(option.replacement) }
+  return {
+    kind: 'legacy',
+    actor,
+    name,
+    tables: option.tables ?? [],
+    replacement: listReplacements(option.replacement),
+    operate: option.operate,
+    confirm: option.confirm,
+  }
 }
 
 /** 旧システムのテーブルを書く。 */

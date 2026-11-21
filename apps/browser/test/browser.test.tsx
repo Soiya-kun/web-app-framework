@@ -158,6 +158,10 @@ describe('キャンバス', () => {
     expect(within(comparison).getByRole('row', { name: /請求をコピーする/ })).toHaveTextContent('廃止')
     expect(within(comparison).getByRole('row', { name: /請求を支払う/ })).toHaveTextContent('同じ')
     expect(screen.getByRole('region', { name: '新しい段（2）' })).toHaveTextContent('8.3入金を閲覧する')
+    // 旧システムの画面の手順と、置き換え先のシナリオの手順を並べる。
+    const screenComparison = screen.getByRole('region', { name: '画面の比較' })
+    expect(within(screenComparison).getByRole('list', { name: '売上を記入するの手順' })).toHaveTextContent('「売上伝票入力」を開く')
+    expect(within(screenComparison).getByRole('list', { name: '売上を登録するの手順' })).toHaveTextContent('「売上登録」を開く')
 
     await user.click(within(within(comparison).getByRole('row', { name: /売上を記入する/ })).getByRole('link', { name: '売上伝票' }))
     expect(screen.getByRole('heading', { name: '売上伝票' })).toBeVisible()
