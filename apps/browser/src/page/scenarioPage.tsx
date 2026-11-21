@@ -4,7 +4,7 @@ import { Badge, Cell, HeaderCell, PageTitle, Section, SourcePlace, StepList, Tab
 import { useModel } from '../model'
 import { readCaseKindLabels } from '../component/kindLabel'
 import { useText, useLabelFormat } from '../text'
-import { PlaceMinutes } from '../component/meetingPart'
+import { PlaceMinutes, prepareScenarioMatch } from '../component/meetingPart'
 
 const scenarioRoute = getRouteApi('/scenario/$scenarioId')
 
@@ -167,7 +167,7 @@ export function ScenarioPage() {
           </ul>
         </Section>
       </div>
-      <PlaceMinutes scenarioId={scenario.id} />
+      <PlaceMinutes matchPlace={prepareScenarioMatch(scenario)} />
     </>
   )
 }

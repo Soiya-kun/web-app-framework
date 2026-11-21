@@ -1,14 +1,14 @@
 import type { RoleNode } from '@app/translator/model-types'
 import { getRouteApi } from '@tanstack/react-router'
-import { PlaceLink, QuestionItem } from '../component/meetingPart'
-import { Badge, PageTitle, Section, SourcePlace } from '../component/part'
+import { DecisionItem, PlaceLink, QuestionItem } from '../component/meetingPart'
+import { PageTitle, Section, SourcePlace } from '../component/part'
 import { useModel } from '../model'
 import { useLabelFormat, useText } from '../text'
 
 const meetingRoute = getRouteApi('/meeting/$meetingId')
 const sides: readonly RoleNode['side'][] = ['vendor', 'business', 'external']
 
-/** 1回の打合せの議事録。業務部門がレビューし、承認する。 */
+/** 1回の打合せの議事録（出席者・議題・決めたこと・課題）。開発チームと業務部門がレビューする。 */
 export function MeetingPage() {
   const text = useText()
   const labelFormat = useLabelFormat()
@@ -26,19 +26,6 @@ export function MeetingPage() {
   return (
     <>
       <PageTitle level={labelFormat.joinNote(text.label('minutes'), meeting.date)}>{meeting.title}</PageTitle>
-      <p className="text-sm">
-        {meeting.approval === null ? (
-          <Badge tone="pending">{text.label('unapproved')}</Badge>
-        ) : (
-          <Badge tone="primary">
-            {text.label('approved')}
-            {labelFormat.mark}
-            {meeting.approval.on}
-            {labelFormat.mark}
-            {roles.get(meeting.approval.byId)?.title ?? meeting.approval.byId}
-          </Badge>
-        )}
-      </p>
       <SourcePlace file={meeting.file} line={meeting.line} />
       <Section title={text.label('attendee')}>
         <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
@@ -55,41 +42,17 @@ export function MeetingPage() {
       <Section title={text.label('agenda')}>
         <ul className="flex flex-col gap-1 text-sm">
           {meeting.agenda.map((place) => (
-            <li key={`${place.kind}-${place.flowId ?? ''}-${place.scenarioId ?? ''}-${place.extension ?? ''}`}>
+            <li key={`${place.kind}-${place.id}-${place.extension ?? ''}`}>
               <PlaceLink place={place} />
             </li>
           ))}
         </ul>
       </Section>
-      <Section title={labelFormat.joinNote(text.label('answer'), String(meeting.answers.length))}>
-        <ul className="flex flex-col gap-3 text-sm">
-          {meeting.answers.map((answer) => {
-            const question = questions.get(answer.questionId)
-            return (
-              <li key={answer.questionId} className="flex flex-col gap-0.5">
-                <p className="text-muted">
-                  {question === undefined ? answer.questionId : question.text}
-                  {question === undefined ? null : (
-                    <>
-                      {labelFormat.mark}
-                      <PlaceLink place={question.place} />
-                    </>
-                  )}
-                </p>
-                <p>{answer.text}</p>
-              </li>
-            )
-          })}
-        </ul>
-      </Section>
       <Section title={labelFormat.joinNote(text.label('decision'), String(meeting.decisions.length))}>
-        <ul className="flex flex-col gap-3 text-sm">
+        <ul className="flex flex-col gap-3">
           {meeting.decisions.map((decision) => (
-            <li key={decision.text} className="flex flex-col gap-0.5">
-              <p className="text-xs text-muted">
-                <PlaceLink place={decision.place} />
-              </p>
-              <p>{decision.text}</p>
+            <li key={decision.text}>
+              <DecisionItem decision={decision} />
             </li>
           ))}
         </ul>

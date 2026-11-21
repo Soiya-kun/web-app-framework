@@ -1,10 +1,10 @@
-// 議事録（apps/web/meeting の defineMeeting）を読む。決めたこと・課題・回答・承認を、業務フロー・シナリオ・拡張と役割につなぐ。
-// 課題が解決したかどうかは議事録に書かない。後の打合せの回答（answer）をたどって求める。
+// 議事録（apps/web/meeting の defineMeeting）を読む。決めたこと・課題を、指している業務フロー・シナリオ・拡張・画面・処理と役割につなぐ。
+// 課題が解決したかどうかは議事録に書かない。後の打合せで、その課題を指して決めたこと（decide の question）をたどって求める。
 import { findUnknownTokens } from '@app/vocabulary'
 import ts from 'typescript'
 import type { ScenarioDraft } from './flowModel'
 import { lineOf, listExportedCalls, readProperty, readString, unwrap, type ParsedSource, type SourceReader } from './source'
-import type { FlowNode, MeetingNode, MeetingPlaceNode, ModelProblem, QuestionNode, RoleNode } from './types'
+import type { DecisionNode, FlowNode, MeetingNode, MeetingPlaceNode, ModelProblem, PageNode, QuestionNode, RoleNode, RuleNode, WorkNode } from './types'
 
 export const meetingRoot = 'apps/web/meeting'
 
@@ -13,10 +13,14 @@ export type MeetingModel = {
   readonly questions: QuestionNode[]
 }
 
+/** 議事録から指せるもの。キーは「定義したファイル#名前」。 */
 type Tables = {
   readonly roles: ReadonlyMap<string, RoleNode>
   readonly flows: ReadonlyMap<string, FlowNode>
   readonly scenarios: ReadonlyMap<string, ScenarioDraft>
+  readonly pages: ReadonlyMap<string, PageNode>
+  readonly works: ReadonlyMap<string, WorkNode>
+  readonly rules: ReadonlyMap<string, RuleNode>
 }
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/
@@ -28,27 +32,50 @@ function placeKeyOf(parsed: ParsedSource, node: ts.Expression | undefined): stri
     return undefined
   }
   const imported = parsed.imports.get(inner.text)
-  return imported === undefined ? `${parsed.file}#${inner.text}` : `${imported.file}#${imported.name}`
+  if (imported === undefined) {
+    return `${parsed.file}#${inner.text}`
+  }
+  // パッケージの名前で import したもの（@app/flow など）は、どのファイルの定義か分からない。
+  return imported.file === null ? undefined : `${imported.file}#${imported.name}`
 }
 
-/** 議事録の項目が話している場所（業務フロー・シナリオ・拡張）。 */
-function readPlace(parsed: ParsedSource, node: ts.Expression | undefined, tables: Tables): MeetingPlaceNode | undefined {
-  const inner = node === undefined ? undefined : unwrap(node)
-  if (inner !== undefined && ts.isCallExpression(inner) && ts.isIdentifier(inner.expression) && inner.expression.text === 'extensionOf') {
+/** 議事録の項目が話している場所（業務フロー・シナリオ・拡張・画面・処理・規則・そのほかの関数）。 */
+function readPlace(parsed: ParsedSource, node: ts.Expression, tables: Tables): MeetingPlaceNode | undefined {
+  const inner = unwrap(node)
+  if (ts.isCallExpression(inner) && ts.isIdentifier(inner.expression) && inner.expression.text === 'extensionOf') {
     const scenario = tables.scenarios.get(placeKeyOf(parsed, inner.arguments[0]) ?? '')
     const extension = readString(inner.arguments[1])
     const condition = scenario?.extensions.find((candidate) => candidate.name === extension)?.condition
     return scenario === undefined || extension === undefined || condition === undefined
       ? undefined
-      : { kind: 'extension', flowId: null, scenarioId: scenario.id, extension, title: `${scenario.title} › ${condition}` }
+      : { kind: 'extension', id: scenario.id, extension, title: `${scenario.title} › ${condition}` }
   }
   const key = placeKeyOf(parsed, inner)
-  const flow = tables.flows.get(key ?? '')
-  if (flow !== undefined) {
-    return { kind: 'flow', flowId: flow.id, scenarioId: null, extension: null, title: flow.title }
+  if (key === undefined || !ts.isIdentifier(inner) || !parsed.imports.has(inner.text)) {
+    return undefined
   }
-  const scenario = tables.scenarios.get(key ?? '')
-  return scenario === undefined ? undefined : { kind: 'scenario', flowId: null, scenarioId: scenario.id, extension: null, title: scenario.title }
+  const flow = tables.flows.get(key)
+  if (flow !== undefined) {
+    return { kind: 'flow', id: flow.id, extension: null, title: flow.title }
+  }
+  const scenario = tables.scenarios.get(key)
+  if (scenario !== undefined) {
+    return { kind: 'scenario', id: scenario.id, extension: null, title: scenario.title }
+  }
+  const page = tables.pages.get(key)
+  if (page !== undefined) {
+    return { kind: 'page', id: page.id, extension: null, title: page.title }
+  }
+  const work = tables.works.get(key)
+  if (work !== undefined) {
+    return { kind: 'work', id: work.id, extension: null, title: work.title }
+  }
+  const rule = tables.rules.get(key)
+  if (rule !== undefined) {
+    return { kind: 'rule', id: rule.id, extension: null, title: rule.title }
+  }
+  // そのほかの関数（画面の部品など）は、名前とファイルで出す。
+  return { kind: 'source', id: key, extension: null, title: inner.text }
 }
 
 function readArray(node: ts.Expression | undefined): readonly ts.Expression[] {
@@ -64,7 +91,7 @@ function callOf(node: ts.Expression, calleeName: string): ts.CallExpression | un
 export function readMeetingModel(reader: SourceReader, tables: Tables, problems: ModelProblem[]): MeetingModel {
   const meetings: MeetingNode[] = []
   const questions: QuestionNode[] = []
-  const pendingAnswers: { readonly questionKey: string; readonly meetingId: string; readonly date: string; readonly text: string; readonly file: string; readonly line: number }[] = []
+  const pendingDecisions: { readonly questionKey: string; readonly meetingId: string; readonly date: string; readonly text: string; readonly file: string; readonly line: number }[] = []
   const questionByKey = new Map<string, QuestionNode>()
 
   for (const file of reader.list(meetingRoot, (path) => path.endsWith('.ts') && !path.endsWith('.test.ts'))) {
@@ -77,20 +104,31 @@ export function readMeetingModel(reader: SourceReader, tables: Tables, problems:
       }
       const options = call.arguments[1]
       if (options === undefined || !ts.isObjectLiteralExpression(options)) {
-        problems.push({ ...place, rule: 'meeting', message: '議事録の2つめの引数は { title, attendees, agenda, decisions, questions, answers, approval } にする' })
+        problems.push({ ...place, rule: 'meeting', message: '議事録の2つめの引数は { title, attendees, agenda, decisions, questions } にする' })
         continue
       }
-      const placeOf = (node: ts.Expression | undefined, at: ts.Node): MeetingPlaceNode | undefined => {
-        const resolved = readPlace(parsed, node, tables)
-        if (resolved === undefined) {
-          problems.push({ file, line: lineOf(parsed, at), rule: 'meeting-place', message: '議事録の項目は、業務フロー・シナリオ・extensionOf(シナリオ, 拡張) を import して指す' })
+      /** 場所を1つ、または配列で書いたものを読む。 */
+      const placesOf = (node: ts.Expression | undefined, at: ts.Node): MeetingPlaceNode[] => {
+        const inner = node === undefined ? undefined : unwrap(node)
+        const nodes = inner !== undefined && ts.isArrayLiteralExpression(inner) ? inner.elements : inner === undefined ? [] : [inner]
+        const resolved = nodes.flatMap((element) => {
+          const target = readPlace(parsed, element, tables)
+          return target === undefined ? [] : [target]
+        })
+        if (nodes.length === 0 || resolved.length !== nodes.length) {
+          problems.push({
+            file,
+            line: lineOf(parsed, at),
+            rule: 'meeting-place',
+            message: '議事録の項目は、業務フロー・シナリオ・extensionOf(シナリオ, 拡張)・画面の部品・処理などを、ファイルから import して指す',
+          })
         }
         return resolved
       }
       const roleOf = (node: ts.Expression | undefined, at: ts.Node): RoleNode | undefined => {
         const role = tables.roles.get(placeKeyOf(parsed, node) ?? '')
         if (role === undefined) {
-          problems.push({ file, line: lineOf(parsed, at), rule: 'meeting-role', message: '出席者・担当者・承認者は、apps/web/role の defineRole の役割を import して渡す' })
+          problems.push({ file, line: lineOf(parsed, at), rule: 'meeting-role', message: '出席者・課題の担当者は、apps/web/role の defineRole の役割を import して渡す' })
         }
         return role
       }
@@ -99,16 +137,34 @@ export function readMeetingModel(reader: SourceReader, tables: Tables, problems:
         const role = roleOf(node, node)
         return role === undefined ? [] : [role.id]
       })
-      const agenda = readArray(readProperty(options, 'agenda')).flatMap((node) => {
-        const resolved = placeOf(node, node)
-        return resolved === undefined ? [] : [resolved]
-      })
-      const decisions = readArray(readProperty(options, 'decisions')).flatMap((node) => {
+      const agenda = readArray(readProperty(options, 'agenda')).flatMap((node) => placesOf(node, node))
+
+      const decisions: DecisionNode[] = []
+      for (const node of readArray(readProperty(options, 'decisions'))) {
         const decision = callOf(node, 'decide')
-        const resolved = decision === undefined ? undefined : placeOf(decision.arguments[0], node)
         const text = decision === undefined ? undefined : readString(decision.arguments[1])
-        return resolved === undefined || text === undefined ? [] : [{ place: resolved, text }]
-      })
+        if (decision === undefined || text === undefined) {
+          problems.push({ file, line: lineOf(parsed, node), rule: 'meeting-place', message: '決めたことは decide(場所, 決めたこと, { question }) の形で書く' })
+          continue
+        }
+        const places = placesOf(decision.arguments[0], node)
+        const option = decision.arguments[2] === undefined ? undefined : unwrap(decision.arguments[2])
+        const questionNode = option !== undefined && ts.isObjectLiteralExpression(option) ? readProperty(option, 'question') : undefined
+        let questionId: string | null = null
+        if (questionNode !== undefined) {
+          // meeting20261003.questions.overpaymentHandling の形だけを読む。
+          const target = unwrap(questionNode)
+          const meetingNode = ts.isPropertyAccessExpression(target) && ts.isPropertyAccessExpression(target.expression) ? target.expression.expression : undefined
+          const meetingKey = placeKeyOf(parsed, meetingNode)
+          if (meetingKey === undefined || !ts.isPropertyAccessExpression(target)) {
+            problems.push({ file, line: lineOf(parsed, node), rule: 'decision-question', message: '解決する課題は { question: meeting20261003.questions.課題の名前 } の形で書く' })
+          } else {
+            pendingDecisions.push({ questionKey: `${meetingKey}.${target.name.text}`, meetingId: variable, date, text, file, line: lineOf(parsed, node) })
+            questionId = `${meetingKey.split('#')[1] ?? ''}.${target.name.text}`
+          }
+        }
+        decisions.push({ places, text, questionId })
+      }
 
       const questionIds: string[] = []
       const questionsNode = readProperty(options, 'questions')
@@ -125,14 +181,14 @@ export function readMeetingModel(reader: SourceReader, tables: Tables, problems:
           }
           const raised = callOf(property.initializer, 'raise')
           const option = raised?.arguments[2] === undefined ? undefined : unwrap(raised.arguments[2])
-          const resolved = raised === undefined ? undefined : placeOf(raised.arguments[0], property)
+          const places = raised === undefined ? [] : placesOf(raised.arguments[0], property)
           const assignee = option !== undefined && ts.isObjectLiteralExpression(option) ? roleOf(readProperty(option, 'assignee'), property) : undefined
           const deadline = option !== undefined && ts.isObjectLiteralExpression(option) ? (readString(readProperty(option, 'deadline')) ?? '') : ''
           if (!datePattern.test(deadline) || deadline < date) {
             problems.push({ ...questionPlace, rule: 'question-deadline', message: `課題「${key}」の期限「${deadline}」は YYYY-MM-DD にし、打合せの日以後にする` })
           }
           const text = raised === undefined ? undefined : readString(raised.arguments[1])
-          if (resolved === undefined || assignee === undefined || text === undefined) {
+          if (places.length === 0 || assignee === undefined || text === undefined) {
             continue
           }
           const question: QuestionNode = {
@@ -140,11 +196,11 @@ export function readMeetingModel(reader: SourceReader, tables: Tables, problems:
             key,
             meetingId: variable,
             date,
-            place: resolved,
+            places,
             text,
             assigneeId: assignee.id,
             deadline,
-            answer: null,
+            decision: null,
             ...questionPlace,
           }
           questions.push(question)
@@ -152,38 +208,6 @@ export function readMeetingModel(reader: SourceReader, tables: Tables, problems:
           questionByKey.set(`${file}#${variable}.${key}`, question)
         }
       }
-
-      const answers: { questionId: string; text: string }[] = []
-      for (const node of readArray(readProperty(options, 'answers'))) {
-        const answered = callOf(node, 'answer')
-        const target = answered?.arguments[0] === undefined ? undefined : unwrap(answered.arguments[0])
-        // meeting20261003.questions.overpaymentHandling の形だけを読む。
-        const meetingNode = target !== undefined && ts.isPropertyAccessExpression(target) && ts.isPropertyAccessExpression(target.expression) ? target.expression.expression : undefined
-        const meetingKey = placeKeyOf(parsed, meetingNode)
-        const text = answered === undefined ? undefined : readString(answered.arguments[1])
-        if (meetingKey === undefined || target === undefined || !ts.isPropertyAccessExpression(target) || text === undefined) {
-          problems.push({ file, line: lineOf(parsed, node), rule: 'answer', message: '回答は answer(meeting20261003.questions.課題の名前, 回答) の形で書く' })
-          continue
-        }
-        pendingAnswers.push({ questionKey: `${meetingKey}.${target.name.text}`, meetingId: variable, date, text, file, line: lineOf(parsed, node) })
-        answers.push({ questionId: `${meetingKey.split('#')[1] ?? ''}.${target.name.text}`, text })
-      }
-
-      const approvalNode = readProperty(options, 'approval')
-      const approval =
-        approvalNode !== undefined && ts.isObjectLiteralExpression(approvalNode)
-          ? (() => {
-              const on = readString(readProperty(approvalNode, 'on')) ?? ''
-              const by = roleOf(readProperty(approvalNode, 'by'), approvalNode)
-              if (!datePattern.test(on) || on < date) {
-                problems.push({ file, line: lineOf(parsed, approvalNode), rule: 'approval', message: `承認の日「${on}」は YYYY-MM-DD にし、打合せの日以後にする` })
-              }
-              if (by !== undefined && by.side !== 'business') {
-                problems.push({ file, line: lineOf(parsed, approvalNode), rule: 'approval', message: '議事録を承認するのは、業務部門の役割にする' })
-              }
-              return by === undefined ? null : { on, byId: by.id }
-            })()
-          : null
 
       meetings.push({
         id: variable,
@@ -193,33 +217,31 @@ export function readMeetingModel(reader: SourceReader, tables: Tables, problems:
         agenda,
         decisions,
         questionIds,
-        answers,
-        approval,
         ...place,
       })
     }
   }
 
-  // 回答を課題につなぐ。回答は、課題を挙げた打合せより後の打合せで、1回だけ。
-  const answeredQuestions = new Map<string, QuestionNode>()
-  for (const pending of pendingAnswers.sort((left, right) => left.date.localeCompare(right.date))) {
+  // 決めたことを、解決する課題につなぐ。課題を挙げた打合せより後の打合せで、1回だけ。
+  const resolvedQuestions = new Map<string, QuestionNode>()
+  for (const pending of pendingDecisions.sort((left, right) => left.date.localeCompare(right.date))) {
     const question = questionByKey.get(pending.questionKey)
     if (question === undefined) {
-      problems.push({ file: pending.file, line: pending.line, rule: 'answer', message: `回答する課題「${pending.questionKey.split('#')[1] ?? ''}」がない` })
+      problems.push({ file: pending.file, line: pending.line, rule: 'decision-question', message: `解決する課題「${pending.questionKey.split('#')[1] ?? ''}」がない` })
       continue
     }
     if (pending.date <= question.date) {
-      problems.push({ file: pending.file, line: pending.line, rule: 'answer', message: `課題「${question.id}」には、挙げた打合せより後の打合せで回答する` })
+      problems.push({ file: pending.file, line: pending.line, rule: 'decision-question', message: `課題「${question.id}」は、挙げた打合せより後の打合せで決めて解決する` })
       continue
     }
-    if (answeredQuestions.has(question.id)) {
-      problems.push({ file: pending.file, line: pending.line, rule: 'answer', message: `課題「${question.id}」には、もう回答している` })
+    if (resolvedQuestions.has(question.id)) {
+      problems.push({ file: pending.file, line: pending.line, rule: 'decision-question', message: `課題「${question.id}」は、もう解決している` })
       continue
     }
-    answeredQuestions.set(question.id, { ...question, answer: { meetingId: pending.meetingId, date: pending.date, text: pending.text } })
+    resolvedQuestions.set(question.id, { ...question, decision: { meetingId: pending.meetingId, date: pending.date, text: pending.text } })
   }
   return {
     meetings: meetings.sort((left, right) => left.date.localeCompare(right.date)),
-    questions: questions.map((question) => answeredQuestions.get(question.id) ?? question).sort((left, right) => left.date.localeCompare(right.date) || left.id.localeCompare(right.id)),
+    questions: questions.map((question) => resolvedQuestions.get(question.id) ?? question).sort((left, right) => left.date.localeCompare(right.date) || left.id.localeCompare(right.id)),
   }
 }

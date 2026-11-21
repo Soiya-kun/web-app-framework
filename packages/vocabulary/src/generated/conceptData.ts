@@ -20604,7 +20604,7 @@ export const conceptList: readonly Concept[] = [
     },
     "role": false,
     "avoid": [],
-    "description": "業務部門で、議事録や決めたことを承認する人。"
+    "description": "業務部門で、返金などの業務を承認する人。"
   },
   {
     "id": "meeting",
@@ -20696,7 +20696,7 @@ export const conceptList: readonly Concept[] = [
     },
     "role": false,
     "avoid": [],
-    "description": "打合せで決めたこと・挙がった課題・課題への回答の記録。業務部門がレビューし、承認する。"
+    "description": "打合せで決めたことと挙がった課題の記録。文字起こしやメモから作り、開発チームと業務部門がレビューする。"
   },
   {
     "id": "agenda",
@@ -20834,7 +20834,7 @@ export const conceptList: readonly Concept[] = [
     },
     "role": false,
     "avoid": [],
-    "description": "打合せで挙がった、決めなければならないこと。関係する業務フロー・シナリオ・拡張に付け、担当の役割と期限を持つ。後の打合せで回答すると解決する。"
+    "description": "打合せで挙がった、決めなければならないこと。関係する業務フロー・シナリオ・拡張などに付け、担当の役割と期限を持つ。後の打合せで決めると解決する。"
   },
   {
     "id": "deadline",
@@ -20880,7 +20880,7 @@ export const conceptList: readonly Concept[] = [
     },
     "role": false,
     "avoid": [],
-    "description": "課題に答える期限。"
+    "description": "課題を解決する期限。"
   },
   {
     "id": "assignee",
@@ -20926,7 +20926,7 @@ export const conceptList: readonly Concept[] = [
     },
     "role": false,
     "avoid": [],
-    "description": "課題に答える役割。"
+    "description": "課題を解決する役割。"
   },
   {
     "id": "raise",
@@ -20975,40 +20975,40 @@ export const conceptList: readonly Concept[] = [
     "description": "打合せで課題を挙げること。"
   },
   {
-    "id": "answer",
+    "id": "resolve",
     "kind": "domain",
     "category": "verb",
     "tokens": [
-      "answer"
+      "resolve"
     ],
     "en": {
-      "base": "answer",
-      "label": "Answer",
+      "base": "resolve",
+      "label": "Resolve",
       "plural": null,
-      "third": "answers",
-      "past": "answered",
-      "participle": "answered",
-      "gerund": "answering",
-      "able": "answerable",
-      "unPast": "unanswered",
-      "noun": "answer"
+      "third": "resolves",
+      "past": "resolved",
+      "participle": "resolved",
+      "gerund": "resolving",
+      "able": "resolvable",
+      "unPast": "unresolved",
+      "noun": "resolving"
     },
     "ja": {
       "form": null,
       "attach": "direct",
       "verbClass": "suru",
-      "noun": "回答",
-      "label": "回答",
-      "dictionary": "回答する",
-      "te": "回答して",
-      "past": "回答した",
-      "potential": "回答できる",
-      "politePast": "回答しました",
-      "negative": "回答しない",
-      "perfective": "回答済みの",
-      "perfectiveLabel": "回答済み",
-      "negativePerfective": "未回答の",
-      "negativePerfectiveLabel": "未回答",
+      "noun": "解決",
+      "label": "解決",
+      "dictionary": "解決する",
+      "te": "解決して",
+      "past": "解決した",
+      "potential": "解決できる",
+      "politePast": "解決しました",
+      "negative": "解決しない",
+      "perfective": "解決済みの",
+      "perfectiveLabel": "解決済み",
+      "negativePerfective": "未解決の",
+      "negativePerfectiveLabel": "未解決",
       "adjectiveClass": null,
       "attributive": null,
       "predicative": null,
@@ -21018,53 +21018,7 @@ export const conceptList: readonly Concept[] = [
     },
     "role": false,
     "avoid": [],
-    "description": "前の打合せで挙がった課題に答えること。"
-  },
-  {
-    "id": "approve",
-    "kind": "domain",
-    "category": "verb",
-    "tokens": [
-      "approve"
-    ],
-    "en": {
-      "base": "approve",
-      "label": "Approve",
-      "plural": null,
-      "third": "approves",
-      "past": "approved",
-      "participle": "approved",
-      "gerund": "approving",
-      "able": "approvable",
-      "unPast": "unapproved",
-      "noun": "approval"
-    },
-    "ja": {
-      "form": null,
-      "attach": "direct",
-      "verbClass": "suru",
-      "noun": "承認",
-      "label": "承認",
-      "dictionary": "承認する",
-      "te": "承認して",
-      "past": "承認した",
-      "potential": "承認できる",
-      "politePast": "承認しました",
-      "negative": "承認しない",
-      "perfective": "承認済みの",
-      "perfectiveLabel": "承認済み",
-      "negativePerfective": "未承認の",
-      "negativePerfectiveLabel": "未承認",
-      "adjectiveClass": null,
-      "attributive": null,
-      "predicative": null,
-      "nounPattern": null,
-      "stepPattern": null,
-      "titlePattern": null
-    },
-    "role": false,
-    "avoid": [],
-    "description": "業務部門が議事録を確かめ、認めること。"
+    "description": "前の打合せで挙がった課題を、後の打合せで決めて片付けること。"
   },
   {
     "id": "sales",

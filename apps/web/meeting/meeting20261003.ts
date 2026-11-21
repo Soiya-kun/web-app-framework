@@ -28,5 +28,4 @@ export const meeting20261003 = defineMeeting('2026-10-03', {
       deadline: '2026-10-17',
     }),
   },
-  approval: { on: '2026-10-06', by: approver },
 })

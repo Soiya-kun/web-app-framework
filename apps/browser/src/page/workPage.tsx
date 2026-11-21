@@ -1,5 +1,6 @@
 import type { StepTranslationNode } from '@app/translator/model-types'
 import { getRouteApi } from '@tanstack/react-router'
+import { PlaceMinutes, prepareWorkMatch } from '../component/meetingPart'
 import { Badge, PageTitle, Section, SourcePlace, TextLink } from '../component/part'
 import { useModel } from '../model'
 import { useText, useLabelFormat } from '../text'
@@ -97,6 +98,7 @@ export function WorkPage() {
           </ul>
         </Section>
       </div>
+      <PlaceMinutes matchPlace={prepareWorkMatch(work)} />
     </>
   )
 }

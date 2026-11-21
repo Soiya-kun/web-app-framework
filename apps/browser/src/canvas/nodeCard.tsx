@@ -3,7 +3,7 @@
 import type { CaseNode, FlowStepNode, StepTranslationNode } from '@app/translator/model-types'
 import { Link } from '@tanstack/react-router'
 import { readCaseKindLabels, readStepKindLabels } from '../component/kindLabel'
-import { QuestionItem, selectScenarioQuestions } from '../component/meetingPart'
+import { prepareScenarioMatch, QuestionItem, selectQuestions } from '../component/meetingPart'
 import { useModel } from '../model'
 import { useText, useLabelFormat } from '../text'
 import { Branch, type BranchChild } from './branch'
@@ -221,7 +221,7 @@ export function ScenarioCard({ path, step }: { readonly path: string; readonly s
   if (scenario === undefined) {
     return null
   }
-  const scenarioQuestions = selectScenarioQuestions(table, scenario.id).sort((left, right) => Number(left.answer !== null) - Number(right.answer !== null))
+  const scenarioQuestions = selectQuestions(table, prepareScenarioMatch(scenario))
   const listWorks = (endpointIds: readonly string[]) => [
     ...new Set(endpointIds.flatMap((endpointId) => endpoints.get(endpointId)?.workIds ?? [])),
   ]
@@ -279,11 +279,11 @@ export function ScenarioCard({ path, step }: { readonly path: string; readonly s
         </div>
       </Fold>
       {scenarioQuestions.length === 0 ? null : (
-        <Fold path={`${path}#question`} title={text.label('question')} count={scenarioQuestions.length} initialOpened={scenarioQuestions.some((question) => question.answer === null)}>
+        <Fold path={`${path}#question`} title={text.label('question')} count={scenarioQuestions.length} initialOpened={scenarioQuestions.some((question) => question.decision === null)}>
           <ul className="flex flex-col gap-2">
             {scenarioQuestions.map((question) => (
               <li key={question.id}>
-                <QuestionItem question={question} displayPlace={question.place.kind === 'extension'} />
+                <QuestionItem question={question} displayPlace={question.places.some((place) => place.kind !== 'scenario')} />
               </li>
             ))}
           </ul>

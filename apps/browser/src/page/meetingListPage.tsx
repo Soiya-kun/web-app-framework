@@ -1,22 +1,22 @@
 import type { RoleNode } from '@app/translator/model-types'
 import { QuestionItem } from '../component/meetingPart'
-import { Badge, Cell, HeaderCell, PageTitle, Section, Table, TextLink } from '../component/part'
+import { Cell, HeaderCell, PageTitle, Section, Table, TextLink } from '../component/part'
 import { useModel } from '../model'
 import { useLabelFormat, useText } from '../text'
 
 const sides: readonly RoleNode['side'][] = ['vendor', 'business', 'external']
 
-/** 議事録の一覧・まだ回答のない課題（宿題）・役割。業務部門にもそのまま見せる。 */
+/** 議事録の一覧・まだ解決していない課題・役割。業務部門にもそのまま見せる。課題がなくなれば、要件定義で決めることは残っていない。 */
 export function MeetingListPage() {
   const text = useText()
   const labelFormat = useLabelFormat()
   const { model } = useModel()
-  const openQuestions = model.questions.filter((question) => question.answer === null).sort((left, right) => left.deadline.localeCompare(right.deadline))
+  const openQuestions = model.questions.filter((question) => question.decision === null).sort((left, right) => left.deadline.localeCompare(right.deadline))
 
   return (
     <>
       <PageTitle>{text.label('minutes')}</PageTitle>
-      <Section title={labelFormat.joinNote(text.label('unanswered'), String(openQuestions.length))}>
+      <Section title={labelFormat.joinNote(text.label('unresolvedQuestion'), String(openQuestions.length))}>
         <ul className="flex flex-col gap-3">
           {openQuestions.map((question) => (
             <li key={question.id}>
@@ -31,10 +31,9 @@ export function MeetingListPage() {
             <tr>
               <HeaderCell>{text.label('date')}</HeaderCell>
               <HeaderCell>{text.label('title')}</HeaderCell>
-              <HeaderCell>{text.label('approval')}</HeaderCell>
               <HeaderCell>{text.label('decision')}</HeaderCell>
               <HeaderCell>{text.label('question')}</HeaderCell>
-              <HeaderCell>{text.label('answer')}</HeaderCell>
+              <HeaderCell>{text.label('resolvedQuestion')}</HeaderCell>
             </tr>
           </thead>
           <tbody>
@@ -46,10 +45,9 @@ export function MeetingListPage() {
                     {meeting.title}
                   </TextLink>
                 </Cell>
-                <Cell>{meeting.approval === null ? <Badge tone="pending">{text.label('unapproved')}</Badge> : meeting.approval.on}</Cell>
                 <Cell>{meeting.decisions.length}</Cell>
                 <Cell>{meeting.questionIds.length}</Cell>
-                <Cell>{meeting.answers.length}</Cell>
+                <Cell>{meeting.decisions.filter((decision) => decision.questionId !== null).length}</Cell>
               </tr>
             ))}
           </tbody>
