@@ -1,0 +1,19 @@
+# 受託開発の進め方の言葉（役割・打合せ・議事録・課題）。description は用語集に出す。
+- { id: role, category: noun, ja: { form: 役割 }, description: 業務や打合せでの人の役目。議事録や業務フローには、人の名前でなく役割を書く。 }
+- { id: side, category: noun, ja: { form: 立場 }, description: 役割がどちら側か。開発チーム・業務部門・外のどれか。 }
+- { id: vendor, category: noun, ja: { form: 開発チーム }, description: システムを作る側（受託した側）。PM・エンジニアなど。 }
+- { id: business, category: noun, ja: { form: 業務部門 }, description: システムを使う側（発注した会社で業務をする人）。経理担当・営業担当・承認者など。 }
+- { id: project, category: noun, ja: { form: プロジェクト }, description: 受託したシステムの開発。 }
+- { id: manager, category: noun, ja: { form: マネージャー, attach: direct }, description: 進め方と合意をまとめる人（PM）。 }
+- { id: engineer, category: noun, ja: { form: エンジニア }, description: 業務フロー・シナリオ・処理を書く開発チームの人。 }
+- { id: approver, category: noun, ja: { form: 承認者 }, description: 業務部門で、議事録や決めたことを承認する人。 }
+- { id: meeting, category: noun, ja: { form: 打合せ }, description: 業務部門と開発チームで要件を話し、決める場。1回ごとに議事録を残す。 }
+- { id: minutes, category: noun, en: { plural: minutes }, ja: { form: 議事録 }, description: 打合せで決めたこと・挙がった課題・課題への回答の記録。業務部門がレビューし、承認する。 }
+- { id: agenda, category: noun, ja: { form: 議題 }, description: 打合せで話す業務フロー・シナリオ。 }
+- { id: attendee, category: noun, ja: { form: 出席者 }, description: 打合せに出た役割。 }
+- { id: question, category: noun, ja: { form: 課題 }, description: 打合せで挙がった、決めなければならないこと。関係する業務フロー・シナリオ・拡張に付け、担当の役割と期限を持つ。後の打合せで回答すると解決する。 }
+- { id: deadline, category: noun, ja: { form: 期限 }, description: 課題に答える期限。 }
+- { id: assignee, category: noun, ja: { form: 担当者 }, description: 課題に答える役割。 }
+- { id: raise, category: verb, ja: { dictionary: 挙げる, class: ichidan }, description: 打合せで課題を挙げること。 }
+- { id: answer, category: verb, en: { past: answered, noun: answer }, ja: { stem: 回答, class: suru }, description: 前の打合せで挙がった課題に答えること。 }
+- { id: approve, category: verb, en: { noun: approval }, ja: { stem: 承認, class: suru }, description: 業務部門が議事録を確かめ、認めること。 }

@@ -1,4 +1,5 @@
 import { defineScenario, type CellExpectation } from '@app/flow'
+import { accountant } from '../../role/role'
 
 /** 請求の締めの画面に入れる値と、締めたあとの請求の内訳で確かめる金額。 */
 export type ClosingInput = {
@@ -8,7 +9,7 @@ export type ClosingInput = {
 }
 
 export const closeInvoice = defineScenario('closeInvoice', {
-  actor: 'accountant',
+  actor: accountant,
   operate: async (screen, closing: ClosingInput) => {
     await screen.go('invoiceClosing')
     await screen.choose('billingCustomer', closing.billingCustomer)

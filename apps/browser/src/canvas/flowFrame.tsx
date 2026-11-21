@@ -4,6 +4,7 @@ import type { FlowNode, FlowStepNode } from '@app/translator/model-types'
 import { useRef, type PointerEvent, type Ref } from 'react'
 import { readStepKindLabels } from '../component/kindLabel'
 import { arrangeLanes, laneSize } from '../component/laneLayout'
+import { selectFlowQuestions } from '../component/meetingPart'
 import { useModel } from '../model'
 import { useText, useLabelFormat } from '../text'
 import { useCanvasAction } from './canvasAction'
@@ -114,6 +115,7 @@ export function FlowFrame({
   const scenarioCount = new Set(layout.steps.flatMap((laneStep) => (laneStep.step.scenarioId === null ? [] : [laneStep.step.scenarioId])))
     .size
   const pendingCount = layout.steps.filter((laneStep) => laneStep.pending).length
+  const openQuestionCount = selectFlowQuestions(table, flow).filter((question) => question.answer === null).length
 
   return (
     <div
@@ -145,6 +147,7 @@ export function FlowFrame({
             {labelFormat.mark}
             {text.label('scenario')} {scenarioCount}
             {pendingCount === 0 ? '' : `${labelFormat.mark}${text.label('pending')} ${pendingCount}`}
+            {openQuestionCount === 0 ? '' : `${labelFormat.mark}${text.label('unansweredQuestion')} ${openQuestionCount}`}
           </span>
         </button>
         <button

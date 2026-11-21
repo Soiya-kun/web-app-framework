@@ -145,7 +145,7 @@ pnpm vocabulary:find 請求に載せていない入金   # → unbilledPayment
 export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoice', {
   precondition: { summary: '親会社（末締め翌月末払い）と、請求先を親会社にした子会社が、顧客として登録されている', seed: { customer: customers } },
   steps: [
-    outside('salesperson', 'deliverProduct'),
+    outside(salesperson, 'deliverProduct'),
     operate(createSales, { customer: '株式会社子', salesDate: '2026-10-15', salesKind: '通常', itemName: '運賃', salesAmount: '100000', taxRate: '10%' }),
     elapse('closingDate', '2026-10-31'),
     operate(closeInvoice, { ...october, breakdown: { currentSalesAmount: 100_000, taxAmount: 10_000, currentInvoiceAmount: 110_000 } }),
@@ -157,7 +157,7 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
       },
     }),
     operate(issueInvoice, { ...october, issueDate: '2026-11-02' }),
-    outside('accountant', 'sendInvoice'),
+    outside(accountant, 'sendInvoice'),
     nest(paymentManagement),
     elapse('closingDate', '2026-11-30'),
     operate(closeInvoice, { /* … */ breakdown: { previousInvoiceAmount: 110_000, currentPaymentAmount: 110_000, carriedAmount: 0, currentInvoiceAmount: 0 } }),
@@ -185,7 +185,7 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
 
 ```ts
 export const registerPayment = defineScenario('registerPayment', {
-  actor: 'accountant',
+  actor: accountant,
   operate: async (screen, payment: PaymentInput) => {
     await screen.go('paymentCreate')
     await screen.fill('paymentDate', payment.paymentDate)
@@ -321,7 +321,7 @@ export function operate<Input, ExtensionName extends string>(
 ): FlowStep
 ```
 
-- **決まっていないシナリオは、名前と担当だけで置ける。** `defineScenario('createSales', { actor: 'salesperson' })` と書き、業務フローには `operate(createSales)` と値なしで並べます。型エラーにもテストの失敗にもならず、「未着手」として数えられ、業務フローの E2E はその段の手前まで流れて skip になります。
+- **決まっていないシナリオは、名前と担当だけで置ける。** `defineScenario('createSales', { actor: salesperson })` と書き、業務フローには `operate(createSales)` と値なしで並べます。型エラーにもテストの失敗にもならず、「未着手」として数えられ、業務フローの E2E はその段の手前まで流れて skip になります。
 - **決めたら、食い違いだけが止まる。** シナリオの手順を決めると入力の型が決まり、業務フローの側でその値を決めていなければ型エラーになります。拡張も同じで、シナリオにない拡張を指したときだけ型エラーになります。
 - **条件だけの拡張や、中身のないケースも置ける。** これらも止めずに「未着手」として数えます。
 
@@ -511,11 +511,11 @@ Figma のキャンバスみたいな画面に業務フローが並んでいて�
 **段階1: 担当と目的を並べる。** 業務フローの段を並べ、シナリオは名前と担当だけにします。
 
 ```ts
-export const createSales = defineScenario('createSales', { actor: 'salesperson' })     // 未着手
-export const closeInvoice = defineScenario('closeInvoice', { actor: 'accountant' })    // 未着手
+export const createSales = defineScenario('createSales', { actor: salesperson })     // 未着手
+export const closeInvoice = defineScenario('closeInvoice', { actor: accountant })    // 未着手
 
 export const monthlyInvoice = defineFlow('monthlyInvoice', {
-  steps: [outside('salesperson', 'deliverProduct'), operate(createSales), elapse('closingDate', '2026-10-31'), operate(closeInvoice)],
+  steps: [outside(salesperson, 'deliverProduct'), operate(createSales), elapse('closingDate', '2026-10-31'), operate(closeInvoice)],
 })
 ```
 

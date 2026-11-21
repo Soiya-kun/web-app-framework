@@ -13,7 +13,7 @@ const started = performance.now()
 const model = buildModel(repositoryRoot, 'ja')
 const elapsed = Math.round(performance.now() - started)
 const { progress } = model
-const summary = `業務フロー ${progress.flows}（段 ${progress.flowSteps}）・シナリオ ${progress.scenarios}（未着手 ${progress.pendingScenarios}）・拡張 ${progress.extensions}（未着手 ${progress.pendingExtensions}）・ケース ${progress.cases}（未着手 ${progress.pendingCases}）・処理 ${model.works.length}・SQL ${model.statements.length}`
+const summary = `業務フロー ${progress.flows}（段 ${progress.flowSteps}）・シナリオ ${progress.scenarios}（未着手 ${progress.pendingScenarios}）・拡張 ${progress.extensions}（未着手 ${progress.pendingExtensions}）・ケース ${progress.cases}（未着手 ${progress.pendingCases}）・処理 ${model.works.length}・SQL ${model.statements.length}・議事録 ${progress.meetings}（未承認 ${progress.unapprovedMeetings}）・課題 ${progress.questions}（未回答 ${progress.openQuestions}）`
 
 if (model.problems.length > 0) {
   console.error(`業務フローの書き方の規則に ${model.problems.length} 件の問題があります。`)

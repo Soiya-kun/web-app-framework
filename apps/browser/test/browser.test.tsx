@@ -103,6 +103,45 @@ describe('キャンバス', () => {
     expect(screen.getByRole('region', { name: '月次の請求' })).toBeInTheDocument()
   })
 
+  test('議事録の一覧に、まだ回答のない課題（担当者・期限）と、回ごとの承認の状態を出す', async () => {
+    await launchBrowser('/meetings')
+
+    const openSection = screen.getByRole('region', { name: '未回答（2）' })
+    expect(openSection).toHaveTextContent('返金を登録する画面で、振込先の口座まで入れるか')
+    expect(openSection).toHaveTextContent('担当者: 経理担当')
+    expect(openSection).toHaveTextContent('期限: 2026-11-14')
+    const minutes = screen.getByRole('table', { name: '議事録' })
+    expect(within(minutes).getByRole('row', { name: /第3回/ })).toHaveTextContent('未承認')
+    expect(within(minutes).getByRole('row', { name: /キックオフ/ })).toHaveTextContent('2026-10-06')
+    expect(screen.getByRole('region', { name: '役割' })).toHaveTextContent('PM')
+  })
+
+  test('回ごとの議事録に、出席者・議題・回答・決めたこと・課題を、業務フローとシナリオへのリンク付きで出す', async () => {
+    const { user } = await launchBrowser('/meeting/meeting20261017')
+
+    expect(screen.getByRole('heading', { name: '第2回（入金の業務）' })).toBeVisible()
+    expect(screen.getByText('承認済み・2026-10-20・承認者')).toBeVisible()
+    expect(screen.getByRole('region', { name: '出席者' })).toHaveTextContent('開発チーム')
+    expect(screen.getByRole('region', { name: '回答（2）' })).toHaveTextContent('振込手数料は当社の負担とし')
+    const questions = screen.getByRole('region', { name: '課題（2）' })
+    expect(questions).toHaveTextContent('回答済み')
+    await user.click(within(questions).getAllByRole('link', { name: '返金を登録する' })[0]!)
+    expect(screen.getByRole('heading', { name: '返金を登録する' })).toBeVisible()
+    expect(screen.getByRole('region', { name: '課題（1）' })).toHaveTextContent('振込先の口座')
+  })
+
+  test('キャンバスのシナリオのカードに、そのシナリオと拡張に付いた課題を出す', async () => {
+    const { user } = await launchBrowser('/')
+    const frame = screen.getByRole('region', { name: '月次の請求' })
+
+    await user.click(within(frame).getByRole('button', { name: '8 入金管理' }))
+    await user.click(within(frame).getByRole('button', { name: '8.2 入金を記録する' }))
+    const scenarioCard = within(frame).getByRole('article', { name: '入金を記録する' })
+    await user.click(within(scenarioCard).getByRole('button', { name: /^課題/ }))
+    expect(scenarioCard).toHaveTextContent('他社宛の誤入金を返金するとき、誰の承認が要るか')
+    expect(scenarioCard).toHaveTextContent('他社宛の誤入金の返金は、承認者の承認を要する')
+  })
+
   test('子フローを開き、段 → シナリオ → 処理 → SQL → テーブルとカードを開いていける', async () => {
     const { user } = await launchBrowser('/')
     const frame = screen.getByRole('region', { name: '月次の請求' })

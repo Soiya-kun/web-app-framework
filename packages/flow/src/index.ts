@@ -23,3 +23,7 @@ export type {
 export { listFlowPaths, numberSteps, runFlowPath } from './path'
 export type { FlowPath, PathAction } from './path'
 export type { CellExpectation, CellValue, Screen } from './screen'
+export { answer, decide, defineMeeting, extensionOf, raise } from './meeting'
+export type { Answer, Approval, Decision, ExtensionPlace, Meeting, MeetingPlace, Question } from './meeting'
+export { defineRole } from './role'
+export type { Role, RoleSide } from './role'

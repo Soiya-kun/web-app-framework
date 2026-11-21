@@ -3,6 +3,7 @@
 import type { CaseNode, FlowStepNode, StepTranslationNode } from '@app/translator/model-types'
 import { Link } from '@tanstack/react-router'
 import { readCaseKindLabels, readStepKindLabels } from '../component/kindLabel'
+import { QuestionItem, selectScenarioQuestions } from '../component/meetingPart'
 import { useModel } from '../model'
 import { useText, useLabelFormat } from '../text'
 import { Branch, type BranchChild } from './branch'
@@ -213,12 +214,14 @@ function listExtensionSteps(step: FlowStepNode): ReadonlyMap<string, FlowStepNod
 export function ScenarioCard({ path, step }: { readonly path: string; readonly step: FlowStepNode }) {
   const text = useText()
   const labelFormat = useLabelFormat()
-  const { scenarios, endpoints, works } = useModel()
+  const table = useModel()
+  const { scenarios, endpoints, works } = table
   const { opened, toggle } = useBranches(path)
   const scenario = step.scenarioId === null ? undefined : scenarios.get(step.scenarioId)
   if (scenario === undefined) {
     return null
   }
+  const scenarioQuestions = selectScenarioQuestions(table, scenario.id).sort((left, right) => Number(left.answer !== null) - Number(right.answer !== null))
   const listWorks = (endpointIds: readonly string[]) => [
     ...new Set(endpointIds.flatMap((endpointId) => endpoints.get(endpointId)?.workIds ?? [])),
   ]
@@ -275,6 +278,17 @@ export function ScenarioCard({ path, step }: { readonly path: string; readonly s
           ))}
         </div>
       </Fold>
+      {scenarioQuestions.length === 0 ? null : (
+        <Fold path={`${path}#question`} title={text.label('question')} count={scenarioQuestions.length} initialOpened={scenarioQuestions.some((question) => question.answer === null)}>
+          <ul className="flex flex-col gap-2">
+            {scenarioQuestions.map((question) => (
+              <li key={question.id}>
+                <QuestionItem question={question} displayPlace={question.place.kind === 'extension'} />
+              </li>
+            ))}
+          </ul>
+        </Fold>
+      )}
       {step.extensions.length === 0 ? null : (
         <div className="flex flex-col gap-1.5">
           <p className="text-xs font-bold text-muted">{text.label('flowExtension')}</p>

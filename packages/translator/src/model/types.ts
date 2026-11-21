@@ -29,6 +29,58 @@ export type FlowExtensionNode = {
   readonly resume: boolean
 }
 
+/** 役割（業務フローの担当・議事録の出席者・課題の担当）。 */
+export type RoleNode = SourcePlace & {
+  readonly id: string
+  /** 定義した変数の名前（id と同じ）。 */
+  readonly variable: string
+  readonly title: string
+  readonly side: 'vendor' | 'business' | 'external'
+  readonly sideTitle: string
+}
+
+/** 議事録の項目が話している場所。業務フロー（大きい粒度）・シナリオ・拡張（細かい粒度）。 */
+export type MeetingPlaceNode = {
+  readonly kind: 'flow' | 'scenario' | 'extension'
+  readonly flowId: string | null
+  readonly scenarioId: string | null
+  /** 拡張の名前（extension のとき）。 */
+  readonly extension: string | null
+  readonly title: string
+}
+
+/** 打合せの議事録。 */
+export type MeetingNode = SourcePlace & {
+  /** 変数の名前（meeting20261003）。 */
+  readonly id: string
+  readonly date: string
+  readonly title: string
+  readonly attendeeIds: readonly string[]
+  readonly agenda: readonly MeetingPlaceNode[]
+  readonly decisions: readonly { readonly place: MeetingPlaceNode; readonly text: string }[]
+  /** この回で挙がった課題。 */
+  readonly questionIds: readonly string[]
+  /** 前の回までの課題への回答。 */
+  readonly answers: readonly { readonly questionId: string; readonly text: string }[]
+  /** 業務部門の承認。null なら未承認。 */
+  readonly approval: { readonly on: string; readonly byId: string } | null
+}
+
+/** 課題。答えたかどうかは、後の回の回答から求める。 */
+export type QuestionNode = SourcePlace & {
+  /** 挙げた議事録と課題の名前（meeting20261003.overpaymentHandling）。 */
+  readonly id: string
+  readonly key: string
+  readonly meetingId: string
+  /** 挙げた打合せの日。 */
+  readonly date: string
+  readonly place: MeetingPlaceNode
+  readonly text: string
+  readonly assigneeId: string
+  readonly deadline: string
+  readonly answer: { readonly meetingId: string; readonly date: string; readonly text: string } | null
+}
+
 export type FlowNode = SourcePlace & {
   readonly id: string
   readonly title: string
@@ -162,11 +214,20 @@ export type ModelProgress = {
   readonly pendingExtensions: number
   readonly cases: number
   readonly pendingCases: number
+  /** 議事録の数と、そのうち業務部門の承認がないもの。 */
+  readonly meetings: number
+  readonly unapprovedMeetings: number
+  /** 課題の数と、そのうちまだ回答がないもの。 */
+  readonly questions: number
+  readonly openQuestions: number
 }
 
 export type Model = {
   /** 見出し・手順の言語。 */
   readonly locale: 'ja' | 'en'
+  readonly roles: readonly RoleNode[]
+  readonly meetings: readonly MeetingNode[]
+  readonly questions: readonly QuestionNode[]
   readonly flows: readonly FlowNode[]
   readonly scenarios: readonly ScenarioNode[]
   readonly pages: readonly PageNode[]

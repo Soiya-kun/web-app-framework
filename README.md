@@ -6,10 +6,11 @@ TypeScript（React + Hono）で業務 Web アプリを作るための土台（�
 - 識別子の英単語を単語帳で絞り、処理を日本語に機械翻訳して読めるようにする。
 - 単語帳から画面の文言ファイル（日本語・英語）を生成し、画面・コード・設計の言葉をそろえる。
 - 業務フローを TypeScript で書き、そのまま E2E として流す。コードのブラウザで、業務フローからシナリオ・処理・SQL までたどって読む。
+- 受託開発の要件定義のために、役割と議事録も TypeScript で書く。課題は担当の役割と期限を持ち、話した業務フロー・シナリオ・拡張の場所に残る。先方はブラウザで業務フローと議事録を確かめる。
 
 まず読むもの: [このリポジトリの考え方](docs/concept.md)（業務フローからコードまでを一続きに読む、という全体の話）。
 
-業務フロー・シナリオ・ケースの書き方は [docs/flow-rules.md](docs/flow-rules.md)。
+業務フロー・シナリオ・ケース・役割・議事録の書き方は [docs/flow-rules.md](docs/flow-rules.md)。
 
 要求と方針は [docs/requirements.md](docs/requirements.md)、業務の作りは [docs/domain-model.md](docs/domain-model.md)、単語帳の設計は [docs/vocabulary-design.md](docs/vocabulary-design.md)、処理の訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)（英語は [backend-process.en.md](docs/generated/backend-process.en.md)）、SQL の台帳は [docs/generated/sql-ledger.md](docs/generated/sql-ledger.md)。
 
@@ -39,12 +40,12 @@ CI（`.github/workflows/check.yml`）は、main への push と Pull Request ご
 
 | 場所 | 内容 |
 | --- | --- |
-| `apps/web` | React の画面。`scenario` にシナリオとケース（画面の結合テスト）、`flow` に業務フロー（E2E） |
-| `apps/browser` | コードのブラウザ（業務フロー・シナリオ・処理・SQL を読む） |
+| `apps/web` | React の画面。`scenario` にシナリオとケース（画面の結合テスト）、`flow` に業務フロー（E2E）、`role` に役割、`meeting` に議事録 |
+| `apps/browser` | コードのブラウザ（業務フロー・シナリオ・処理・SQL・議事録を読む） |
 | `apps/server` | 本番の API サーバーとマイグレーションの実行（Dockerfile） |
 | `packages/backend` | Hono の API（domain・usecase・repository・handler） |
 | `packages/vocabulary` | 単語帳と、そこから作る辞書・文法・画面の文言ファイル |
 | `packages/eslint-plugin` | 単語帳・関数名の文法・usecase の書き方の lint |
-| `packages/flow` | 業務フロー・シナリオ・ケースの書き方と、画面の操作の部品 |
+| `packages/flow` | 業務フロー・シナリオ・ケース・役割・議事録の書き方と、画面の操作の部品 |
 | `packages/translator` | 日本語翻訳ツール・SQL の台帳の生成・コードのブラウザのモデル（静的解析） |
 | `infra` | AWS の CDK |

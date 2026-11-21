@@ -1,4 +1,5 @@
 import { defineScenario } from '@app/flow'
+import { accountant } from '../../role/role'
 
 /** 請求一覧から開く請求（請求先と請求締め日で選ぶ）。 */
 export type InvoiceTarget = {
@@ -7,7 +8,7 @@ export type InvoiceTarget = {
 }
 
 export const browseInvoice = defineScenario('browseInvoice', {
-  actor: 'accountant',
+  actor: accountant,
   operate: async (screen, invoice: InvoiceTarget) => {
     await screen.go('invoiceList')
     await screen.rowOf('invoiceList', { closingDate: invoice.closingDate, billingCustomer: invoice.billingCustomer }).follow(invoice.closingDate)
