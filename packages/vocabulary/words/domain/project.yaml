@@ -20,3 +20,4 @@
 - { id: replacement, category: noun, ja: { form: 置き換え }, description: 現行の業務・段が変わる先の、新しい業務フロー・シナリオ・段。 }
 - { id: discontinue, category: verb, en: { noun: discontinuation }, ja: { stem: 廃止, class: suru }, description: 現行の業務・段が、新しい業務フローではなくなること。 }
 - { id: same, category: adjective, ja: { stem: 同じ, class: no }, description: 現行と新しい業務フローで、同じ値の段（変わらない業務）。 }
+- { id: estimate, category: verb, en: { noun: estimate }, ja: { stem: 見積, class: suru }, description: 受託開発の見積。項目の名前と金額が最小の単位で、対象（業務フロー・シナリオ・画面・処理・現行の業務フロー）を値で指せる。 }

@@ -104,6 +104,23 @@ export type QuestionNode = SourcePlace & {
   readonly decision: { readonly meetingId: string; readonly date: string; readonly text: string } | null
 }
 
+/** 見積の項目（名前と金額。対象は書かなくてもよい）。 */
+export type EstimateItemNode = {
+  readonly title: string
+  readonly amount: number
+  readonly targets: readonly MeetingPlaceNode[]
+}
+
+/** 見積（版ごとに1つ）。 */
+export type EstimateNode = SourcePlace & {
+  /** 変数の名前（estimate20261031）。 */
+  readonly id: string
+  readonly date: string
+  readonly title: string
+  readonly items: readonly EstimateItemNode[]
+  readonly totalAmount: number
+}
+
 export type FlowNode = SourcePlace & {
   readonly id: string
   readonly title: string
@@ -277,6 +294,10 @@ export type ModelProgress = {
   /** 現行の業務フローと旧システムのテーブルの数。 */
   readonly legacyFlows: number
   readonly legacyTables: number
+  /** 見積の版の数・いちばん新しい見積の合計・その見積のどの項目からも指されていないシナリオの数。 */
+  readonly estimates: number
+  readonly estimateAmount: number
+  readonly unestimatedScenarios: number
 }
 
 export type Model = {
@@ -285,6 +306,9 @@ export type Model = {
   readonly roles: readonly RoleNode[]
   readonly meetings: readonly MeetingNode[]
   readonly questions: readonly QuestionNode[]
+  /** 見積（日付の順）と、いちばん新しい見積のどの項目からも指されていないシナリオ。 */
+  readonly estimates: readonly EstimateNode[]
+  readonly unestimatedScenarioIds: readonly string[]
   readonly flows: readonly FlowNode[]
   readonly legacyFlows: readonly LegacyFlowNode[]
   readonly legacyTables: readonly LegacyTableNode[]

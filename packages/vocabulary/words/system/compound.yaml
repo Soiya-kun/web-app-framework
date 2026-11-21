@@ -31,3 +31,4 @@
 - { id: stepChange, en: { tokens: step change, label: Change }, ja: { form: 変わり方 } }
 - { id: legacyOperation, en: { tokens: legacy operation, label: Legacy System Operation }, ja: { form: 旧システムの操作 } }
 - { id: legacyTable, en: { tokens: legacy table, label: Legacy System Table }, ja: { form: 旧システムのテーブル } }
+- { id: estimateItem, en: { tokens: estimate item, label: Estimate Item }, ja: { form: 見積項目 } }

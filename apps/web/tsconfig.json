@@ -21,6 +21,7 @@
     "meeting",
     "step",
     "legacy",
+    "estimate",
     "vite.config.ts"
   ]
 }

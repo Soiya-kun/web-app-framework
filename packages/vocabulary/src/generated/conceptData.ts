@@ -3761,6 +3761,53 @@ export const conceptList: readonly Concept[] = [
     "description": ""
   },
   {
+    "id": "estimateItem",
+    "kind": "system",
+    "category": "noun",
+    "tokens": [
+      "estimate",
+      "item"
+    ],
+    "en": {
+      "base": "estimate item",
+      "label": "Estimate Item",
+      "plural": "estimate items",
+      "third": null,
+      "past": null,
+      "participle": null,
+      "gerund": null,
+      "able": null,
+      "unPast": null,
+      "noun": null
+    },
+    "ja": {
+      "form": "見積項目",
+      "attach": "no",
+      "verbClass": null,
+      "noun": null,
+      "label": "見積項目",
+      "dictionary": null,
+      "te": null,
+      "past": null,
+      "potential": null,
+      "politePast": null,
+      "negative": null,
+      "perfective": null,
+      "perfectiveLabel": null,
+      "negativePerfective": null,
+      "negativePerfectiveLabel": null,
+      "adjectiveClass": null,
+      "attributive": null,
+      "predicative": null,
+      "nounPattern": null,
+      "stepPattern": null,
+      "titlePattern": null
+    },
+    "role": false,
+    "avoid": [],
+    "description": ""
+  },
+  {
     "id": "amount",
     "kind": "system",
     "category": "noun",
@@ -16393,7 +16440,7 @@ export const conceptList: readonly Concept[] = [
       "gerund": "summing",
       "able": "sumable",
       "unPast": "unsummed",
-      "noun": "summing"
+      "noun": "sum"
     },
     "ja": {
       "form": null,
@@ -21483,6 +21530,52 @@ export const conceptList: readonly Concept[] = [
     "role": false,
     "avoid": [],
     "description": "現行と新しい業務フローで、同じ値の段（変わらない業務）。"
+  },
+  {
+    "id": "estimate",
+    "kind": "domain",
+    "category": "verb",
+    "tokens": [
+      "estimate"
+    ],
+    "en": {
+      "base": "estimate",
+      "label": "Estimate",
+      "plural": null,
+      "third": "estimates",
+      "past": "estimated",
+      "participle": "estimated",
+      "gerund": "estimating",
+      "able": "estimatable",
+      "unPast": "unestimated",
+      "noun": "estimate"
+    },
+    "ja": {
+      "form": null,
+      "attach": "direct",
+      "verbClass": "suru",
+      "noun": "見積",
+      "label": "見積",
+      "dictionary": "見積する",
+      "te": "見積して",
+      "past": "見積した",
+      "potential": "見積できる",
+      "politePast": "見積しました",
+      "negative": "見積しない",
+      "perfective": "見積済みの",
+      "perfectiveLabel": "見積済み",
+      "negativePerfective": "未見積の",
+      "negativePerfectiveLabel": "未見積",
+      "adjectiveClass": null,
+      "attributive": null,
+      "predicative": null,
+      "nounPattern": null,
+      "stepPattern": null,
+      "titlePattern": null
+    },
+    "role": false,
+    "avoid": [],
+    "description": "受託開発の見積。項目の名前と金額が最小の単位で、対象（業務フロー・シナリオ・画面・処理・現行の業務フロー）を値で指せる。"
   },
   {
     "id": "sales",

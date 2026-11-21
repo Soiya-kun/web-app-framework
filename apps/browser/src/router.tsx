@@ -10,6 +10,8 @@ import {
 } from '@tanstack/react-router'
 import { CanvasPage } from './page/canvasPage'
 import { FlowPage } from './page/flowPage'
+import { EstimateListPage } from './page/estimateListPage'
+import { EstimatePage } from './page/estimatePage'
 import { GlossaryPage } from './page/glossaryPage'
 import { HomePage } from './page/homePage'
 import { LegacyListPage } from './page/legacyListPage'
@@ -50,6 +52,9 @@ function RootLayout() {
           <Link to="/legacy" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
             {text.label('legacy')}
           </Link>
+          <Link to="/estimates" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
+            {text.label('estimate')}
+          </Link>
           <Link to="/glossary" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
             {text.label('glossary')}
           </Link>
@@ -76,6 +81,8 @@ const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: '/meetings', component: MeetingListPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/meeting/$meetingId', component: MeetingPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/legacy', component: LegacyListPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/estimates', component: EstimateListPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/estimate/$estimateId', component: EstimatePage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/legacy/$legacyId', component: LegacyPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/legacy/table/$tableId', component: LegacyTablePage }),
 ])

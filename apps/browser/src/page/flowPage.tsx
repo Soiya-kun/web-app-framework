@@ -7,6 +7,7 @@ import { readStepKindLabels } from '../component/kindLabel'
 import { useText, useLabelFormat } from '../text'
 import { useChangeSummary } from '../component/legacyPart'
 import { PlaceMinutes, prepareFlowMatch } from '../component/meetingPart'
+import { PlaceEstimate } from '../component/estimatePart'
 
 const flowRoute = getRouteApi('/flow/$flowId')
 
@@ -148,6 +149,7 @@ export function FlowPage() {
         </ul>
       </Section>
       <LegacySection flow={flow} />
+      <PlaceEstimate matchPlace={prepareFlowMatch(flow)} />
       <PlaceMinutes matchPlace={prepareFlowMatch(flow)} />
     </>
   )
