@@ -19,6 +19,8 @@
     "flow",
     "role",
     "meeting",
+    "step",
+    "legacy",
     "vite.config.ts"
   ]
 }

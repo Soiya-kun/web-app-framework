@@ -1,6 +1,6 @@
 # 業務フローの書き方の規則
 
-業務フロー・シナリオ・ケース・役割・議事録の書き方と、その検査の規則をまとめる。なぜこの形にしたかは [このリポジトリの考え方](concept.md) の6章にある。
+業務フロー・シナリオ・ケース・役割・議事録・現行の業務フローの書き方と、その検査の規則をまとめる。なぜこの形にしたかは [このリポジトリの考え方](concept.md) の6章にある。
 
 書いた時点: 2026-11-21。規則は `pnpm flow:check`（`pnpm check` に含まれる）が検査する。
 
@@ -24,7 +24,7 @@
 export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoice', {
   precondition: { summary: '親会社と、請求先を親会社にした子会社が、顧客として登録されている', seed: { customer: customers } },
   steps: [
-    outside(salesperson, 'deliverProduct'),
+    deliverProduct,                                              // システムの外の業務（apps/web/step の値）
     operate(createSales, { customer: '株式会社子', salesDate: '2026-10-15', salesKind: '通常', itemName: '運賃', salesAmount: '100000', taxRate: '10%' }),
     elapse('closingDate', '2026-10-31'),
     operate(closeInvoice, { ...october, breakdown: { currentSalesAmount: 100_000, taxAmount: 10_000, currentInvoiceAmount: 110_000 } }),
@@ -32,7 +32,7 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
       mistakenInvoice: { input: october, then: [operate(cancelClosing, october), …], resume: false },
     }),
     operate(issueInvoice, { ...october, issueDate: '2026-11-02' }),
-    outside(accountant, 'sendInvoice'),
+    sendInvoice,
     nest(paymentManagement),
     elapse('closingDate', '2026-11-30'),
     operate(closeInvoice, { … }),
@@ -49,12 +49,13 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
 | 段 | 書き方 | 意味 | テストで流すとき |
 | --- | --- | --- | --- |
 | 画面の操作 | `operate(シナリオ, 値, 拡張)` | 1人が画面で目的を果たす | シナリオの手順と成功の保証を流す |
-| システムの外の業務 | `outside(担当, 動詞で始まる名前)` | 商品を納品する・請求書を送るなど | 何もしない（流れ図に出す） |
-| 外のイベント | `occur(担当, 動詞で始まる名前)` | 顧客が請求を支払うなど | 何もしない（必要ならデータを作る段にする） |
+| システムの外の業務 | `apps/web/step` に `outside(担当, 動詞で始まる名前)` で書いた値 | 商品を納品する・請求書を送るなど | 何もしない（流れ図に出す） |
+| 外のイベント | `apps/web/step` に `occur(担当, 動詞で始まる名前)` で書いた値 | 顧客が請求を支払うなど | 何もしない（必要ならデータを作る段にする） |
 | 時の経過 | `elapse(名詞, 'YYYY-MM-DD')` | 締め日になるなど | テストの今日の日付をその日にする |
 | 子フロー | `nest(業務フロー)` | 別の業務フローをひとまとまりで入れる | 子フローの段を、その場で流す |
 
-- 担当は、`apps/web/role` に書いた役割の値で渡す（`salesperson` 営業担当・`accountant` 経理担当・`customer` 顧客。[7章](#7-役割と議事録)）。シナリオの担当はシナリオの側に書く。
+- 担当は、`apps/web/role` に書いた役割の値で渡す（`salesperson` 営業担当・`accountant` 経理担当・`customer` 顧客。[7章](#7-受託開発の要件定義)）。シナリオの担当はシナリオの側に書く。
+- システムの外の業務と外のイベントは、`apps/web/step/step.ts` に1つずつ値として書き（`export const deliverProduct = outside(salesperson, 'deliverProduct')`、変数の名前は段の名前と同じ）、業務フローではその値を段にする。同じ業務は、どの業務フローでも（現行の業務フローでも）同じ値になる。
 - 段の番号は、上から 1, 2, … と振る。子フローの中は「親の番号.子の番号」（8.2）。
 
 ### 2.2 拡張（うまくいかない流れ）
@@ -196,7 +197,8 @@ describeScenario(registerPayment, (cases) => {
 | `flow-step` | 段は `operate`・`outside`・`occur`・`elapse`・`nest` の呼び出しで、シナリオ・業務フローを import で渡す |
 | `flow-cycle` | 子フローをたどって、自分を含まない |
 | `flow-place` | 業務フローは `apps/web/flow/<領域>/` に置く。領域（`invoice`・`payment` など）は単語帳の名詞で、ブラウザのまとまりになる |
-| `step-name` | システムの外の業務・外のイベントの名前は動詞で始め、担当は役割の値 |
+| `step-name` | システムの外の業務・外のイベントの名前は動詞で始め、担当は役割の値。`apps/web/step` の値の変数の名前は、段の名前と同じ |
+| `step-place` | 業務フローのシステムの外の業務・外のイベントは、`apps/web/step` に書いた値を使う。`apps/web/step` の値に置き換え先は書かない |
 | `elapse` | 時の経過は単語帳の名詞と、YYYY-MM-DD の日付 |
 | `scenario-form`・`scenario-name`・`actor` | シナリオは `defineScenario(名前, { actor, … })`。名前は変数と同じ・単語帳の言葉・動詞で始める。担当は役割の値 |
 | `scenario-start` | 手順は画面を開く（`screen.go`）ところから始める |
@@ -213,13 +215,16 @@ describeScenario(registerPayment, (cases) => {
 | `meeting-role` | 出席者・課題の担当は、役割の値を import して渡す |
 | `question-name`・`question-deadline` | 課題の名前は単語帳の言葉。期限は YYYY-MM-DD で、打合せの日以後 |
 | `decision-question` | 課題を解決する決定は `{ question: 議事録.questions.課題の名前 }` の形で、課題を挙げた打合せより後の打合せで1回だけ |
+| `legacy-name`・`legacy-place` | 現行の業務フローは `apps/web/legacy/<領域>/` に `defineLegacyFlow(名前, { replacement, steps })` で書く。名前は変数と同じ・単語帳の言葉・名詞句で、`legacy` で始める |
+| `legacy-step` | 現行の業務フローに画面の操作（`operate`）は書かない。変わらない業務は `apps/web/step` の値を使う。置き換え先・旧システムのテーブルは値を import して指す |
+| `legacy-table` | 旧システムのテーブルは列の名前と意味を書く。列の移す先（`テーブル.列`）は、新しいテーブル（マイグレーション）にあるものにする |
 | `skill` | Skill は `.claude/skills/minutes`（文字起こしから議事録を作る）の1つだけで、先頭に `name: minutes` と `description` を書く。ほかの Skill・AI に向けた指示のファイル（`CLAUDE.md`・`AGENTS.md`・`.cursorrules` など）・置き場所（`.claude/commands`・`.agents` など）は置かない |
 
 ほかに、型（未着手のシナリオに値を渡さない、拡張のキー、画面にない文言のキー）と lint（単語帳・動詞で始まる関数名）でも止まる。
 
-## 7. 役割と議事録
+## 7. 受託開発の要件定義
 
-受託開発で、要件定義を先方との会話で進めるための書き方である。GitHub でコードを書くのは開発チームだけで、先方はブラウザ（8章）で業務フローと議事録を読む。
+受託開発で、要件定義を先方との会話で進めるための書き方である（役割・議事録・現行の業務フロー）。GitHub でコードを書くのは開発チームだけで、先方はブラウザ（8章）で業務フローと議事録を読む。
 
 ### 7.1 役割
 
@@ -294,6 +299,51 @@ export const meeting20261017 = defineMeeting('2026-10-17', {
 
 **AI に向けた指示は、この Skill の1つだけにする。** ほかの書き方の決まりは、型・lint・`pnpm check`（CI と同じ）が止める。AI は止まったところを直せばよいので、決まりを AI 向けの文書に書き写さない。ほかの Skill や、AI に向けた指示のファイル（`CLAUDE.md`・`AGENTS.md` など）を置くと、規則 `skill`（6章）で止まる。
 
+### 7.5 現行の業務フロー（AsIs）
+
+ヒアリングでは、いまの業務（AsIs）も聞く。現行の業務フローも型で書き、新しい業務フロー（ToBe）と比べられるようにする。現行の業務は実装しないので、画面の操作の手順・処理・ケースは書かない。
+
+```ts
+// apps/web/legacy/invoice/legacyMonthlyInvoice.ts
+export const legacyMonthlyInvoice = defineLegacyFlow('legacyMonthlyInvoice', {
+  replacement: monthlyInvoice,                                            // 置き換え先の新しい業務フロー
+  steps: [
+    deliverProduct,                                                       // 変わらない業務は、apps/web/step の同じ値
+    operateLegacy(accountant, 'enterSales', { tables: [legacySales], replacement: createSales }),
+    elapse('closingDate'),                                                // 現行の業務フローには日付を書かない
+    operateLegacy(accountant, 'printInvoice', { tables: [legacySales, legacyInvoice], replacement: [closeInvoice, issueInvoice] }),
+    outside(accountant, 'copyInvoice'),                                   // 置き換え先がなければ廃止
+    outside(accountant, 'mailInvoice', { replacement: sendInvoice }),     // 変わる業務は、置き換え先を書く
+    payInvoice,
+    operateLegacy(accountant, 'enterPayment', { tables: [legacyPayment], replacement: registerPayment }),
+  ],
+})
+```
+
+- 現行の業務フローは `apps/web/legacy/<領域>/` に、`defineLegacyFlow` で書く。名前は `legacy` で始める（`legacyMonthlyInvoice` →「現行の月次の請求」）。
+- `replacement` に、置き換え先の新しい業務フローを値で書く（いくつでもよい）。書かなければ、その業務はなくなる。
+- 段は次の5種類にする。
+
+| 段 | 書き方 |
+| --- | --- |
+| 変わらない業務・イベント | `apps/web/step` の値（新しい業務フローと同じ値） |
+| 変わる業務・イベント | `outside(担当, 名前, { replacement })`・`occur(担当, 名前, { replacement })` |
+| 旧システムの操作 | `operateLegacy(担当, 名前, { tables, replacement })` |
+| 時の経過 | `elapse(名詞)`（日付は書かない） |
+| 子フロー | `nest(現行の業務フロー)` |
+
+- 置き換え先（`replacement`）は、新しい業務フローのシナリオ・`apps/web/step` の値・業務フローを値で指す。いくつでもよい。新しい業務フローやシナリオの名前を変えたり消したりすると、型のエラーになる。
+- 旧システムのテーブルは `defineLegacyTable(物理名, { title, note, columns })` で書く。列には物理名・意味・型・備考と、移す先の新しいテーブルの列（`replacement: 'sales.sales_date'`）を書く。移す先は検査でマイグレーションと照らし合わせる。
+
+静的解析は、現行の業務フローの段を、置き換え先の新しい業務フロー（子フローの中まで）と比べる。
+
+- **同じ**: 新しい業務フローにも同じ値の段がある（時の経過は名詞が同じ）。
+- **置き換え**: 置き換え先を書いた段。
+- **廃止**: どちらでもない段。
+- **新しい段**: 新しい業務フローにあって、現行のどの段からも指されていない段。
+
+議事録の決めたこと・課題からも、現行の業務フローと旧システムのテーブルを指せる。
+
 ## 8. コードのブラウザ
 
 `pnpm dev:browser` で開く。静的解析で作ったモデル（`apps/browser/generated/model.ja.json`・`model.en.json`。リポジトリには入れない）を読む。画面の上の「English／日本語」で言語を切り替える（ブラウザに覚える）。画面の文言・業務フローとシナリオの見出しと手順・処理の手順・テーブルの列は、同じ単語帳から両方の言語で作る。人が日本語で書いたもの（事前条件・拡張の条件・ケースの見出し・入力の値）は、書いたまま出す。
@@ -318,9 +368,12 @@ export const meeting20261017 = defineMeeting('2026-10-17', {
 ### 8.2 一覧と詳細のページ
 
 - 一覧: 進み具合（議事録の数、課題と未解決の数を含む）・規則の問題・業務フロー（領域ごと。未着手の数付き）・シナリオ・処理・テーブルの一覧と、名前の検索。
+- 現行（上のナビゲーションの「現行」）: 現行の業務フロー（領域ごと。置き換え先と、同じ・置き換え・廃止・新しい段の数）と、旧システムのテーブルの一覧。
+- 現行の業務フロー: レーン図（旧システムの操作と、段ごとの変わり方）、新しい業務フローとの比べ（段・変わり方・置き換え先・旧システムのテーブル）、新しい段、指している課題と決めたこと。
+- 旧システムのテーブル: 列（意味・物理名・型・備考・移す先の新しいテーブルの列）と、使っている現行の業務フローの段。
 - 議事録（上のナビゲーションの「議事録」）: 未解決の課題（期限の順。担当の役割・期限・期日超過）、議事録の一覧（日付・決めたこと・課題・解決した課題の数）、役割の一覧（立場ごと）。
 - 1回の議事録: 出席者（立場ごと）、議題、決めたこと（指している場所と、解決した課題）、課題（場所・担当・期限・状態）。場所を押すと、その業務フロー・シナリオ・処理のページへ移る。
-- 業務フロー: 担当ごとのレーン図（子フローは中を開く）、段の表、拡張、テストの経路、その業務フローの課題と決めたこと（議事録へのリンク付き）。
+- 業務フロー: 担当ごとのレーン図（子フローは中を開く）、段の表、拡張、テストの経路、置き換わる現行の業務フロー、その業務フローの課題と決めたこと（議事録へのリンク付き）。
 - シナリオ: 主アクター・使う業務フロー・主な成功シナリオ・成功の保証・拡張の表・ケース（行の表と、中身の日本語の手順）・開く画面・通る処理（押すボタンから呼ぶものと、画面を開いて読むもの）、そのシナリオ・拡張・開く画面・通る処理を指す課題と決めたこと。
 - 処理: usecase の手順、通る規則（domain の関数の訳）、リポジトリの呼び出しと SQL、API の入口、使うシナリオ、その処理・規則を指す課題と決めたこと。
 - SQL・テーブル: SQL の全文と、使うテーブル・処理。テーブルの列の日本語。
@@ -328,4 +381,4 @@ export const meeting20261017 = defineMeeting('2026-10-17', {
 
 キャンバスのカードの「詳細ページ」から、それぞれのページへ移れる。
 
-開いている間は、業務フロー・シナリオ・役割・議事録・画面・バックエンド・単語帳のソースを保存するたびに、後ろでモデルを作り直す（全体の解析は約 0.2 秒）。作り直すと、開いている画面が新しいモデルを表示する。`pnpm --filter @app/browser build` で静的なファイルにでき、S3 などに置ける。
+開いている間は、業務フロー・シナリオ・段の値・役割・議事録・現行の業務フロー・画面・バックエンド・単語帳のソースを保存するたびに、後ろでモデルを作り直す（全体の解析は約 0.2 秒）。作り直すと、開いている画面が新しいモデルを表示する。`pnpm --filter @app/browser build` で静的なファイルにでき、S3 などに置ける。

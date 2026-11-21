@@ -59,7 +59,7 @@ export function selectFlowQuestions(table: ModelTable, flow: FlowNode): Question
   return selectQuestions(table, prepareFlowMatch(flow))
 }
 
-/** 指している場所へのリンク（業務フロー・シナリオ・拡張・処理はその画面。画面・規則などは名前だけ）。 */
+/** 指している場所へのリンク（業務フロー・シナリオ・拡張・処理・現行の業務フロー・旧システムのテーブルはその画面。画面・規則などは名前だけ）。 */
 export function PlaceLink({ place }: { readonly place: MeetingPlaceNode }) {
   switch (place.kind) {
     case 'flow':
@@ -78,6 +78,18 @@ export function PlaceLink({ place }: { readonly place: MeetingPlaceNode }) {
     case 'work':
       return (
         <TextLink to="/work/$workId" params={{ workId: place.id }}>
+          {place.title}
+        </TextLink>
+      )
+    case 'legacy':
+      return (
+        <TextLink to="/legacy/$legacyId" params={{ legacyId: place.id }}>
+          {place.title}
+        </TextLink>
+      )
+    case 'legacyTable':
+      return (
+        <TextLink to="/legacy/table/$tableId" params={{ tableId: place.id }}>
           {place.title}
         </TextLink>
       )

@@ -5,6 +5,7 @@ import { Badge, Cell, HeaderCell, PageTitle, Section, SourcePlace, Table, TextLi
 import { useModel, type ModelTable } from '../model'
 import { readStepKindLabels } from '../component/kindLabel'
 import { useText, useLabelFormat } from '../text'
+import { useChangeSummary } from '../component/legacyPart'
 import { PlaceMinutes, prepareFlowMatch } from '../component/meetingPart'
 
 const flowRoute = getRouteApi('/flow/$flowId')
@@ -146,7 +147,37 @@ export function FlowPage() {
           ))}
         </ul>
       </Section>
+      <LegacySection flow={flow} />
       <PlaceMinutes matchPlace={prepareFlowMatch(flow)} />
     </>
+  )
+}
+
+/** この業務フローに置き換わる現行の業務フロー（比べたページへのリンクと、変わり方の数）。 */
+function LegacySection({ flow }: { readonly flow: FlowNode }) {
+  const text = useText()
+  const formatChangeSummary = useChangeSummary()
+  const { legacyFlows } = useModel()
+  if (flow.legacyIds.length === 0) {
+    return null
+  }
+  return (
+    <Section title={text.label('legacyFlow')}>
+      <ul className="flex flex-col gap-1 text-sm">
+        {flow.legacyIds.flatMap((legacyId) => {
+          const legacy = legacyFlows.get(legacyId)
+          return legacy === undefined
+            ? []
+            : [
+                <li key={legacyId} className="flex flex-col gap-0.5">
+                  <TextLink to="/legacy/$legacyId" params={{ legacyId }}>
+                    {legacy.title}
+                  </TextLink>
+                  <span className="text-xs text-muted">{formatChangeSummary(legacy)}</span>
+                </li>,
+              ]
+        })}
+      </ul>
+    </Section>
   )
 }

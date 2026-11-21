@@ -1,10 +1,11 @@
-// 業務フロー・シナリオ・ケースを読む（apps/web/flow・apps/web/scenario）。書き方の規則に合わないところは problems に出す。
+// 業務フロー・シナリオ・ケース・段の値・現行の業務フローと旧システムのテーブルを読む（apps/web/flow・scenario・step・legacy）。
+// 書き方の規則に合わないところは problems に出す。
 import { findUnknownTokens, startsWithVerb } from '@app/vocabulary'
 import ts from 'typescript'
 import { prepareLanguage, type Language } from '../language'
 import { prepareScreenText, type ScreenText } from './screenText'
 import { collectCalls, lineOf, listExportedCalls, readProperty, readString, unwrap, type ParsedSource, type SourceReader } from './source'
-import type { CaseNode, FlowExtensionNode, FlowNode, FlowStepNode, ModelInput, ModelProblem, RoleNode } from './types'
+import type { CaseNode, FlowExtensionNode, FlowNode, FlowStepNode, LegacyColumnNode, LegacyTableNode, ModelInput, ModelProblem, ReplacementNode, RoleNode } from './types'
 
 export const scenarioRoot = 'apps/web/scenario'
 export const flowRoot = 'apps/web/flow'
@@ -25,12 +26,44 @@ export type ScenarioDraft = {
 }
 
 export const roleRoot = 'apps/web/role'
+export const stepRoot = 'apps/web/step'
+export const legacyRoot = 'apps/web/legacy'
+
+/** apps/web/step に書いた、システムの外の業務・外のイベントの値。 */
+export type StepDraft = {
+  /** 「ファイル#変数の名前」。 */
+  readonly key: string
+  readonly kind: 'outside' | 'occur'
+  readonly name: string
+  readonly actor: string
+  readonly file: string
+  readonly line: number
+}
 
 export type FlowModelDraft = {
   readonly roles: RoleNode[]
   readonly scenarios: ScenarioDraft[]
   readonly cases: Map<string, { testFile: string; cases: CaseNode[] }>
   readonly flows: FlowNode[]
+  readonly steps: StepDraft[]
+  /** 現行の業務フロー（置き換え先の新しい業務フローの id 付き）と、旧システムのテーブル。 */
+  readonly legacyFlows: (FlowNode & { readonly replacementIds: string[] })[]
+  readonly legacyTables: LegacyTableNode[]
+  readonly problems: ModelProblem[]
+}
+
+/** 業務フローの段を読むときに使う表。mode が legacy なら、現行の業務フローの段として読む。 */
+type StepContext = {
+  readonly screen: ScreenText
+  readonly mode: 'flow' | 'legacy'
+  readonly scenarios: ReadonlyMap<string, ScenarioDraft>
+  /** 新しい業務フロー・現行の業務フローの「ファイル#変数の名前」→ 名前。 */
+  readonly flowNames: ReadonlyMap<string, string>
+  readonly legacyFlowNames: ReadonlyMap<string, string>
+  readonly steps: ReadonlyMap<string, StepDraft>
+  /** 旧システムのテーブルの「ファイル#変数の名前」→ id。 */
+  readonly tables: ReadonlyMap<string, string>
+  readonly roles: RoleTable
   readonly problems: ModelProblem[]
 }
 
@@ -406,24 +439,60 @@ function readCases(screen: ScreenText, reader: SourceReader, scenarios: readonly
   return result
 }
 
-function readFlowSteps(
-  screen: ScreenText,
-  parsed: ParsedSource,
-  elements: readonly ts.Expression[],
-  prefix: string,
-  constants: ReadonlyMap<string, ts.Expression>,
-  scenarios: ReadonlyMap<string, ScenarioDraft>,
-  flowNames: ReadonlyMap<string, string>,
-  roles: RoleTable,
-  problems: ModelProblem[],
-): FlowStepNode[] {
+/** 名前（識別子）が指す、import した定義の「ファイル#名前」。 */
+function importKeyOf(parsed: ParsedSource, node: ts.Expression | undefined): string | undefined {
+  const inner = node === undefined ? undefined : unwrap(node)
+  const imported = inner !== undefined && ts.isIdentifier(inner) ? parsed.imports.get(inner.text) : undefined
+  return imported === undefined || imported.file === null ? undefined : `${imported.file}#${imported.name}`
+}
+
+/** 1つか配列で書いた値の並び。 */
+function listElements(node: ts.Expression | undefined): readonly ts.Expression[] {
+  const inner = node === undefined ? undefined : unwrap(node)
+  return inner === undefined ? [] : ts.isArrayLiteralExpression(inner) ? inner.elements : [inner]
+}
+
+/** 置き換え先（新しい業務フローのシナリオ・apps/web/step の値・業務フロー）を読む。 */
+function readReplacements(context: StepContext, parsed: ParsedSource, node: ts.Expression | undefined, place: { file: string; line: number }): ReplacementNode[] {
+  return listElements(node).flatMap((element): ReplacementNode[] => {
+    const key = importKeyOf(parsed, element) ?? ''
+    const scenario = context.scenarios.get(key)
+    if (scenario !== undefined) {
+      return [{ kind: 'scenario', id: scenario.id, title: scenario.title }]
+    }
+    const step = context.steps.get(key)
+    if (step !== undefined) {
+      return [{ kind: 'step', id: step.key, title: context.screen.translateName(step.name) }]
+    }
+    const flowName = context.flowNames.get(key)
+    if (flowName !== undefined) {
+      return [{ kind: 'flow', id: flowName, title: context.screen.language.noun(flowName) }]
+    }
+    context.problems.push({ ...place, rule: 'legacy-step', message: '置き換え先は、新しい業務フローのシナリオ・apps/web/step の値・業務フローを import して指す' })
+    return []
+  })
+}
+
+function readFlowSteps(context: StepContext, parsed: ParsedSource, elements: readonly ts.Expression[], prefix: string, constants: ReadonlyMap<string, ts.Expression>): FlowStepNode[] {
+  const { screen, problems, mode } = context
   const extensionLetters = 'abcdefghijklmnopqrstuvwxyz'
+  const stepCalls = mode === 'flow' ? 'operate・outside・occur・elapse・nest' : 'operateLegacy・outside・occur・elapse・nest'
   return elements.flatMap((element, index): FlowStepNode[] => {
     const call = unwrap(element)
     const number = `${prefix}${index + 1}`
     const place = { file: parsed.file, line: lineOf(parsed, element) }
+    const base = { number, actor: null, actorTitle: null, scenarioId: null, flowId: null, inputs: [], extensions: [], stepKey: null, replacements: [], tableIds: [], change: null, ...place }
+    // apps/web/step の値（システムの外の業務・外のイベント）。
+    if (ts.isIdentifier(call)) {
+      const step = context.steps.get(importKeyOf(parsed, call) ?? '')
+      if (step === undefined) {
+        problems.push({ ...place, rule: 'flow-step', message: `業務フローの段は ${stepCalls} の呼び出しか、${stepRoot} の値にする` })
+        return []
+      }
+      return [{ ...base, kind: step.kind, title: screen.translateName(step.name), actor: step.actor, actorTitle: screen.language.noun(step.actor), stepKey: step.key }]
+    }
     if (!ts.isCallExpression(call) || !ts.isIdentifier(call.expression)) {
-      problems.push({ ...place, rule: 'flow-step', message: '業務フローの段は operate・outside・occur・elapse・nest の呼び出しにする' })
+      problems.push({ ...place, rule: 'flow-step', message: `業務フローの段は ${stepCalls} の呼び出しか、${stepRoot} の値にする` })
       return []
     }
     const kind = call.expression.text
@@ -436,10 +505,16 @@ function readFlowSteps(
       const resolved = ts.isIdentifier(inner) ? constants.get(inner.text) : inner
       return resolved !== undefined && ts.isObjectLiteralExpression(unwrap(resolved)) ? screen.readInputs(unwrap(resolved) as ts.ObjectLiteralExpression, constants) : []
     }
-    const base = { number, actor: null, actorTitle: null, scenarioId: null, flowId: null, inputs: [], extensions: [], ...place }
+    const optionOf = (node: ts.Expression | undefined, name: string): ts.Expression | undefined => {
+      const inner = node === undefined ? undefined : unwrap(node)
+      return inner !== undefined && ts.isObjectLiteralExpression(inner) ? readProperty(inner, name) : undefined
+    }
     if (kind === 'operate') {
-      const imported = first !== undefined && ts.isIdentifier(first) ? parsed.imports.get(first.text) : undefined
-      const scenario = imported === undefined ? undefined : scenarios.get(`${imported.file}#${imported.name}`)
+      if (mode === 'legacy') {
+        problems.push({ ...place, rule: 'legacy-step', message: '現行の業務フローに画面の操作（operate）は書かない。旧システムの操作は operateLegacy で書く' })
+        return []
+      }
+      const scenario = context.scenarios.get(importKeyOf(parsed, first) ?? '')
       if (scenario === undefined) {
         problems.push({ ...place, rule: 'flow-step', message: 'operate には、apps/web/scenario の defineScenario を渡す' })
         return []
@@ -460,10 +535,7 @@ function readFlowSteps(
                   name: property.name.text,
                   condition: scenario.extensions.find((extension) => extension.name === property.name.getText())?.condition ?? property.name.text,
                   inputs: inputsOf(readProperty(property.initializer, 'input')),
-                  then:
-                    thenNode !== undefined && ts.isArrayLiteralExpression(thenNode)
-                      ? readFlowSteps(screen, parsed, thenNode.elements, `${key}.`, constants, scenarios, flowNames, roles, problems)
-                      : [],
+                  then: thenNode !== undefined && ts.isArrayLiteralExpression(thenNode) ? readFlowSteps(context, parsed, thenNode.elements, `${key}.`, constants) : [],
                   resume: resumeNode?.kind !== ts.SyntaxKind.FalseKeyword,
                 },
               ]
@@ -482,52 +554,154 @@ function readFlowSteps(
         },
       ]
     }
-    if (kind === 'outside' || kind === 'occur') {
-      const actorRole = resolveRole(parsed, first, roles)
+    if (kind === 'outside' || kind === 'occur' || kind === 'operateLegacy') {
+      const actorRole = resolveRole(parsed, first, context.roles)
       if (actorRole === undefined) {
         problems.push({ ...place, rule: 'step-name', message: `段「${kind}」の担当は、${roleRoot} の defineRole の役割を import して渡す` })
       }
       const actor = actorRole?.id ?? ''
       const name = readString(second) ?? ''
       checkName(problems, place, 'step-name', name, true)
-      return [{ ...base, kind, title: screen.translateName(name), actor, actorTitle: screen.language.noun(actor) }]
+      const stepKind = kind === 'operateLegacy' ? 'legacy' : kind
+      if (mode === 'flow') {
+        problems.push(
+          kind === 'operateLegacy'
+            ? { ...place, rule: 'flow-step', message: '旧システムの操作（operateLegacy）は、現行の業務フロー（apps/web/legacy）にだけ書く' }
+            : { ...place, rule: 'step-place', message: `システムの外の業務・外のイベントは、${stepRoot} に書いた値を使う（現行の業務フローと同じ段か分かるように）` },
+        )
+      }
+      const shared = [...context.steps.values()].find((step) => step.kind === stepKind && step.name === name && step.actor === actor)
+      if (mode === 'legacy' && shared !== undefined) {
+        problems.push({ ...place, rule: 'legacy-step', message: `変わらない業務なら、${stepRoot} の値（${name}）を使う` })
+      }
+      const replacements = mode === 'legacy' ? readReplacements(context, parsed, optionOf(third, 'replacement'), place) : []
+      const tableIds =
+        kind === 'operateLegacy'
+          ? listElements(optionOf(third, 'tables')).flatMap((node) => {
+              const table = context.tables.get(importKeyOf(parsed, node) ?? '')
+              if (table === undefined) {
+                problems.push({ ...place, rule: 'legacy-step', message: '旧システムの操作のテーブルは、defineLegacyTable の値を import して渡す' })
+              }
+              return table === undefined ? [] : [table]
+            })
+          : []
+      return [{ ...base, kind: stepKind, title: screen.translateName(name), actor, actorTitle: screen.language.noun(actor), replacements, tableIds }]
     }
     if (kind === 'elapse') {
       const time = readString(first) ?? ''
       const date = readString(second) ?? ''
       checkName(problems, place, 'elapse', time, false)
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      if (mode === 'flow' && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         problems.push({ ...place, rule: 'elapse', message: `時の経過の日付「${date}」は YYYY-MM-DD にする` })
       }
-      return [{ ...base, kind, title: screen.language.sentence.elapse(screen.labelOf(time), date) }]
+      return [{ ...base, kind, title: screen.language.sentence.elapse(screen.labelOf(time), mode === 'flow' ? date : ''), stepKey: `elapse:${time}` }]
     }
     if (kind === 'nest') {
-      const imported = first !== undefined && ts.isIdentifier(first) ? parsed.imports.get(first.text) : undefined
-      const flowName = imported === undefined ? undefined : flowNames.get(`${imported.file}#${imported.name}`)
+      const flowName = (mode === 'flow' ? context.flowNames : context.legacyFlowNames).get(importKeyOf(parsed, first) ?? '')
       if (flowName === undefined) {
-        problems.push({ ...place, rule: 'flow-step', message: 'nest には、apps/web/flow の defineFlow を渡す' })
+        problems.push({ ...place, rule: 'flow-step', message: mode === 'flow' ? 'nest には、apps/web/flow の defineFlow を渡す' : 'nest には、apps/web/legacy の defineLegacyFlow を渡す' })
         return []
       }
       return [{ ...base, kind, title: screen.language.noun(flowName), flowId: flowName }]
     }
-    problems.push({ ...place, rule: 'flow-step', message: `業務フローの段「${kind}」は operate・outside・occur・elapse・nest のどれかにする` })
+    problems.push({ ...place, rule: 'flow-step', message: `業務フローの段「${kind}」は ${stepCalls} のどれかにする` })
     return []
   })
 }
 
-function readFlows(screen: ScreenText, reader: SourceReader, scenarios: readonly ScenarioDraft[], roles: RoleTable, problems: ModelProblem[]): FlowNode[] {
-  const files = reader.list(flowRoot, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
-  const definitions = files.flatMap((file) => listExportedCalls(reader.read(file), 'defineFlow').map((definition) => ({ ...definition, file })))
-  const flowNames = new Map(definitions.map((definition) => [`${definition.file}#${definition.name}`, readString(definition.call.arguments[0]) ?? definition.name]))
-  const scenarioByPlace = new Map(scenarios.map((scenario) => [`${scenario.file}#${scenario.variable}`, scenario]))
+/** apps/web/step の値（outside・occur）を読む。変数の名前は段の名前と同じにする。 */
+function readSteps(screen: ScreenText, reader: SourceReader, roles: RoleTable, problems: ModelProblem[]): StepDraft[] {
+  return reader
+    .list(stepRoot, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
+    .flatMap((file) => {
+      const parsed = reader.read(file)
+      return (['outside', 'occur'] as const).flatMap((kind) =>
+        listExportedCalls(parsed, kind).map(({ name: variable, call }) => {
+          const place = { file, line: lineOf(parsed, call) }
+          const name = readString(call.arguments[1]) ?? variable
+          if (name !== variable) {
+            problems.push({ ...place, rule: 'step-name', message: `段の名前「${name}」を変数の名前「${variable}」と同じにする` })
+          }
+          checkName(problems, place, 'step-name', name, true)
+          if (call.arguments[2] !== undefined) {
+            problems.push({ ...place, rule: 'step-place', message: `${stepRoot} の値に置き換え先は書かない（現行の業務フローの段にだけ書く）` })
+          }
+          const role = resolveRole(parsed, call.arguments[0], roles)
+          if (role === undefined) {
+            problems.push({ ...place, rule: 'step-name', message: `段「${name}」の担当は、${roleRoot} の defineRole の役割を import して渡す` })
+          }
+          return { key: `${file}#${variable}`, kind, name, actor: role?.id ?? '', ...place }
+        }),
+      )
+    })
+}
+
+/** 旧システムのテーブル（apps/web/legacy の defineLegacyTable）を読む。 */
+function readLegacyTables(reader: SourceReader, problems: ModelProblem[]): LegacyTableNode[] {
+  return reader
+    .list(legacyRoot, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
+    .flatMap((file) => {
+      const parsed = reader.read(file)
+      return listExportedCalls(parsed, 'defineLegacyTable').map(({ name: variable, call }) => {
+        const place = { file, line: lineOf(parsed, call) }
+        checkName(problems, place, 'legacy-table', variable, false)
+        const options = call.arguments[1]
+        const option = (name: string) => (options !== undefined && ts.isObjectLiteralExpression(options) ? readProperty(options, name) : undefined)
+        const columns = listElements(option('columns')).flatMap((node): LegacyColumnNode[] => {
+          const column = unwrap(node)
+          if (!ts.isObjectLiteralExpression(column)) {
+            return []
+          }
+          const text = (name: string) => readString(readProperty(column, name)) ?? ''
+          const [tableId, columnName] = text('replacement').split('.')
+          return [
+            {
+              name: text('name'),
+              title: text('title'),
+              type: text('type'),
+              note: text('note'),
+              replacement: tableId === undefined || tableId === '' || columnName === undefined ? null : { tableId, column: columnName },
+            },
+          ]
+        })
+        return {
+          id: variable,
+          name: readString(call.arguments[0]) ?? variable,
+          title: readString(option('title')) ?? variable,
+          note: readString(option('note')) ?? '',
+          columns,
+          ...place,
+        }
+      })
+    })
+}
+
+type FlowDefinition = { readonly name: string; readonly call: ts.CallExpression; readonly file: string }
+
+function listFlowDefinitions(reader: SourceReader, root: string, calleeName: string): FlowDefinition[] {
+  return reader
+    .list(root, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
+    .flatMap((file) => listExportedCalls(reader.read(file), calleeName).map((definition) => ({ ...definition, file })))
+}
+
+/** 業務フロー（mode が legacy なら現行の業務フロー）を読む。置き場所は <root>/<領域>/<名前>.ts。 */
+function readFlowNodes(context: StepContext, reader: SourceReader, definitions: readonly FlowDefinition[]): (FlowNode & { readonly replacementIds: string[] })[] {
+  const { screen, problems, mode } = context
+  const root = mode === 'flow' ? flowRoot : legacyRoot
+  const nameRule = mode === 'flow' ? 'flow-name' : 'legacy-name'
+  const placeRule = mode === 'flow' ? 'flow-place' : 'legacy-place'
+  const subject = mode === 'flow' ? '業務フロー' : '現行の業務フロー'
   const flows = definitions.flatMap(({ name: variable, call, file }) => {
     const parsed = reader.read(file)
     const place = { file, line: lineOf(parsed, call) }
     const name = readString(call.arguments[0]) ?? variable
     if (name !== variable) {
-      problems.push({ ...place, rule: 'flow-name', message: `業務フローの名前「${name}」を変数の名前「${variable}」と同じにする` })
+      problems.push({ ...place, rule: nameRule, message: `${subject}の名前「${name}」を変数の名前「${variable}」と同じにする` })
     }
-    checkName(problems, place, 'flow-name', name, false)
+    checkName(problems, place, nameRule, name, false)
+    if (mode === 'legacy' && !/^legacy[A-Z]/.test(name)) {
+      problems.push({ ...place, rule: nameRule, message: `現行の業務フローの名前「${name}」は legacy で始める（新しい業務フローと名前を分ける）` })
+    }
     const options = call.arguments[1]
     if (options === undefined || !ts.isObjectLiteralExpression(options)) {
       return []
@@ -535,14 +709,24 @@ function readFlows(screen: ScreenText, reader: SourceReader, scenarios: readonly
     const precondition = readProperty(options, 'precondition')
     const stepsNode = readProperty(options, 'steps')
     const constants = topLevelConstants(parsed)
-    // 業務フローは apps/web/flow/<領域>/ に置く。領域はフォルダの名前（単語帳の名詞）。
-    const folders = file.slice(flowRoot.length + 1).split('/')
+    // <root>/<領域>/ に置く。領域はフォルダの名前（単語帳の名詞）。
+    const folders = file.slice(root.length + 1).split('/')
     const area = folders.length === 2 ? (folders[0] ?? '') : ''
     if (area === '') {
-      problems.push({ ...place, rule: 'flow-place', message: `業務フロー「${name}」を、${flowRoot}/<領域>/ のフォルダに置く` })
+      problems.push({ ...place, rule: placeRule, message: `${subject}「${name}」を、${root}/<領域>/ のフォルダに置く` })
     } else {
-      checkName(problems, place, 'flow-place', area, false)
+      checkName(problems, place, placeRule, area, false)
     }
+    const replacementIds =
+      mode === 'legacy'
+        ? listElements(readProperty(options, 'replacement')).flatMap((node) => {
+            const flowName = context.flowNames.get(importKeyOf(parsed, node) ?? '')
+            if (flowName === undefined) {
+              problems.push({ ...place, rule: 'legacy-step', message: '現行の業務フローの置き換え先は、apps/web/flow の defineFlow を import して指す' })
+            }
+            return flowName === undefined ? [] : [flowName]
+          })
+        : []
     return [
       {
         id: name,
@@ -550,11 +734,10 @@ function readFlows(screen: ScreenText, reader: SourceReader, scenarios: readonly
         area,
         areaTitle: area === '' ? '' : screen.language.noun(area),
         precondition: precondition !== undefined && ts.isObjectLiteralExpression(precondition) ? (readString(readProperty(precondition, 'summary')) ?? null) : null,
-        steps:
-          stepsNode !== undefined && ts.isArrayLiteralExpression(stepsNode)
-            ? readFlowSteps(screen, parsed, stepsNode.elements, '', constants, scenarioByPlace, flowNames, roles, problems)
-            : [],
+        steps: stepsNode !== undefined && ts.isArrayLiteralExpression(stepsNode) ? readFlowSteps(context, parsed, stepsNode.elements, '', constants) : [],
         parentIds: [] as string[],
+        legacyIds: [] as string[],
+        replacementIds,
         ...place,
       },
     ]
@@ -565,7 +748,7 @@ function readFlows(screen: ScreenText, reader: SourceReader, scenarios: readonly
     (children.get(from) ?? []).some((child) => child === target || (!seen.has(child) && (seen.add(child), reaches(child, target, seen))))
   for (const flow of flows) {
     if (reaches(flow.id, flow.id)) {
-      problems.push({ file: flow.file, line: flow.line, rule: 'flow-cycle', message: `業務フロー「${flow.id}」が、子フローを通って自分を含んでいる` })
+      problems.push({ file: flow.file, line: flow.line, rule: 'flow-cycle', message: `${subject}「${flow.id}」が、子フローを通って自分を含んでいる` })
     }
   }
   return flows.map((flow) => ({ ...flow, parentIds: flows.filter((parent) => children.get(parent.id)?.includes(flow.id) === true).map((parent) => parent.id) }))
@@ -587,8 +770,26 @@ export function readFlowModel(reader: SourceReader, language: Language = prepare
   const roleTable = new Map(roles.map((role) => [`${role.file}#${role.variable}`, role]))
   const scenarios = readScenarios(screen, reader, roleTable, problems)
   const cases = readCases(screen, reader, scenarios, problems)
-  const flows = readFlows(screen, reader, scenarios, roleTable, problems)
+  const steps = readSteps(screen, reader, roleTable, problems)
+  const legacyTables = readLegacyTables(reader, problems)
+  const flowDefinitions = listFlowDefinitions(reader, flowRoot, 'defineFlow')
+  const legacyDefinitions = listFlowDefinitions(reader, legacyRoot, 'defineLegacyFlow')
+  const nameTable = (definitions: readonly FlowDefinition[]) =>
+    new Map(definitions.map((definition) => [`${definition.file}#${definition.name}`, readString(definition.call.arguments[0]) ?? definition.name]))
+  const context = {
+    screen,
+    scenarios: new Map(scenarios.map((scenario) => [`${scenario.file}#${scenario.variable}`, scenario])),
+    flowNames: nameTable(flowDefinitions),
+    legacyFlowNames: nameTable(legacyDefinitions),
+    steps: new Map(steps.map((step) => [step.key, step])),
+    tables: new Map(legacyTables.map((table) => [`${table.file}#${table.id}`, table.id])),
+    roles: roleTable,
+    problems,
+  }
+  // 置き換え先は現行の業務フローだけが持つ。
+  const flows = readFlowNodes({ ...context, mode: 'flow' }, reader, flowDefinitions).map((flow) => Object.fromEntries(Object.entries(flow).filter(([key]) => key !== 'replacementIds')) as FlowNode)
+  const legacyFlows = readFlowNodes({ ...context, mode: 'legacy' }, reader, legacyDefinitions)
   checkTestPlaces(reader, problems)
-  return { roles, scenarios, cases, flows, problems }
+  return { roles, scenarios, cases, flows, steps, legacyFlows, legacyTables, problems }
 }
 

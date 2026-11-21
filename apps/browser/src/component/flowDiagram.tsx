@@ -1,10 +1,10 @@
 // 業務フローのレーン図。担当ごとの横の帯（レーン）に、段を左から順に置き、矢印でつなぐ。
-// 子フローは中を開いて並べ、上に子フローの名前の帯を出す。
+// 子フローは中を開いて並べ、上に子フローの名前の帯を出す。現行の業務フローは、段ごとに変わり方（同じ・置き換え・廃止）を出す。
 import type { FlowNode, FlowStepNode } from '@app/translator/model-types'
 import { Link } from '@tanstack/react-router'
 import { useModel } from '../model'
 import { useText, useLabelFormat } from '../text'
-import { readStepKindLabels } from './kindLabel'
+import { readStepChangeLabels, readStepKindLabels } from './kindLabel'
 import { laneSize, arrangeLanes } from './laneLayout'
 
 const boxStyle: Readonly<Record<FlowStepNode['kind'], string>> = {
@@ -13,17 +13,20 @@ const boxStyle: Readonly<Record<FlowStepNode['kind'], string>> = {
   occur: 'border-event-line bg-event',
   elapse: 'border-time-line bg-time',
   nest: 'border-line bg-surface',
+  legacy: 'border-muted bg-canvas',
 }
 
 const { column: columnWidth, boxWidth, boxHeight, lane: laneHeight, label: labelWidth, group: groupHeight } = laneSize
 
-export function FlowDiagram({ flow }: { readonly flow: FlowNode }) {
+export function FlowDiagram({ flow, legacy = false }: { readonly flow: FlowNode; readonly legacy?: boolean }) {
   const text = useText()
   const labelFormat = useLabelFormat()
   const kindLabel = readStepKindLabels(text)
+  const changeLabel = readStepChangeLabels(text)
   const table = useModel()
   // ページのレーン図は、子フローをすべて開く。
-  const { steps, groups, lanes, top, width, height, measureBoxLeft, measureBoxTop } = arrangeLanes(text, table, flow, () => true)
+  const { steps, groups, lanes, top, width, height, measureBoxLeft, measureBoxTop } = arrangeLanes(text, table, flow, () => true, legacy)
+  const groupStyle = 'absolute flex items-center rounded-control border border-dashed border-muted bg-surface px-2 text-xs font-medium text-muted hover:text-ink'
 
   return (
     <figure aria-label={labelFormat.joinItem(flow.title, text.label('laneDiagram'))} className="flex rounded-control border border-line bg-surface">
@@ -48,22 +51,24 @@ export function FlowDiagram({ flow }: { readonly flow: FlowNode }) {
               style={{ top: top + index * laneHeight, height: laneHeight, width }}
             />
           ))}
-          {groups.map((group) => (
-            <Link
-              key={`${group.flowId}-${group.first}`}
-              to="/flow/$flowId"
-              params={{ flowId: group.flowId }}
-              className="absolute flex items-center rounded-control border border-dashed border-muted bg-surface px-2 text-xs font-medium text-muted hover:text-ink"
-              style={{
-                left: measureBoxLeft(group.first) - 8,
-                width: (group.last - group.first) * columnWidth + boxWidth + 16,
-                top: group.depth * groupHeight + 2,
-                height: groupHeight - 4,
-              }}
-            >
-              {text.label('childFlow')}: {group.title}
-            </Link>
-          ))}
+          {groups.map((group) => {
+            const style = {
+              left: measureBoxLeft(group.first) - 8,
+              width: (group.last - group.first) * columnWidth + boxWidth + 16,
+              top: group.depth * groupHeight + 2,
+              height: groupHeight - 4,
+            }
+            const label = `${text.label('childFlow')}: ${group.title}`
+            return legacy ? (
+              <Link key={`${group.flowId}-${group.first}`} to="/legacy/$legacyId" params={{ legacyId: group.flowId }} className={groupStyle} style={style}>
+                {label}
+              </Link>
+            ) : (
+              <Link key={`${group.flowId}-${group.first}`} to="/flow/$flowId" params={{ flowId: group.flowId }} className={groupStyle} style={style}>
+                {label}
+              </Link>
+            )
+          })}
           <svg className="pointer-events-none absolute left-0 top-0" width={width} height={height} aria-hidden="true">
             <defs>
               <marker id="arrowHead" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto">
@@ -107,6 +112,7 @@ export function FlowDiagram({ flow }: { readonly flow: FlowNode }) {
                   {kindLabel[step.kind]}
                   {diagramStep.pending ? `${labelFormat.mark}${text.label('pending')}` : ''}
                   {step.extensions.length > 0 ? `${labelFormat.mark}${text.label('extension')}` : ''}
+                  {step.change === null ? '' : `${labelFormat.mark}${changeLabel[step.change]}`}
                 </span>
                 <span className="text-xs font-medium leading-snug">{step.title}</span>
               </>

@@ -146,7 +146,7 @@ pnpm vocabulary:find 請求に載せていない入金   # → unbilledPayment
 export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoice', {
   precondition: { summary: '親会社（末締め翌月末払い）と、請求先を親会社にした子会社が、顧客として登録されている', seed: { customer: customers } },
   steps: [
-    outside(salesperson, 'deliverProduct'),
+    deliverProduct,                // システムの外の業務（1か所に値として書き、どの業務フローでも同じ値を使う）
     operate(createSales, { customer: '株式会社子', salesDate: '2026-10-15', salesKind: '通常', itemName: '運賃', salesAmount: '100000', taxRate: '10%' }),
     elapse('closingDate', '2026-10-31'),
     operate(closeInvoice, { ...october, breakdown: { currentSalesAmount: 100_000, taxAmount: 10_000, currentInvoiceAmount: 110_000 } }),
@@ -158,7 +158,7 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
       },
     }),
     operate(issueInvoice, { ...october, issueDate: '2026-11-02' }),
-    outside(accountant, 'sendInvoice'),
+    sendInvoice,
     nest(paymentManagement),
     elapse('closingDate', '2026-11-30'),
     operate(closeInvoice, { /* … */ breakdown: { previousInvoiceAmount: 110_000, currentPaymentAmount: 110_000, carriedAmount: 0, currentInvoiceAmount: 0 } }),
@@ -171,8 +171,8 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
 | 段 | 書き方 | 意味 | テストで流すとき |
 | --- | --- | --- | --- |
 | 画面の操作 | `operate(シナリオ, 値, 拡張)` | 1人が画面で目的を果たす | シナリオの手順と成功の保証を流す |
-| システムの外の業務 | `outside(担当, 名前)` | 商品を納品する・請求書を送る | 何もしない（流れ図に出す） |
-| 外のイベント | `occur(担当, 名前)` | 顧客が請求を支払う | 何もしない |
+| システムの外の業務 | `outside(担当, 名前)` で書いた値 | 商品を納品する・請求書を送る | 何もしない（流れ図に出す） |
+| 外のイベント | `occur(担当, 名前)` で書いた値 | 顧客が請求を支払う | 何もしない |
 | 時の経過 | `elapse(名詞, 'YYYY-MM-DD')` | 締め日になる | テストの今日の日付をその日にする |
 | 子フロー | `nest(業務フロー)` | 別の業務フローをひとまとまりで入れる | 子フローの段をその場で流す |
 
@@ -516,7 +516,7 @@ export const createSales = defineScenario('createSales', { actor: salesperson })
 export const closeInvoice = defineScenario('closeInvoice', { actor: accountant })    // 未着手
 
 export const monthlyInvoice = defineFlow('monthlyInvoice', {
-  steps: [outside(salesperson, 'deliverProduct'), operate(createSales), elapse('closingDate', '2026-10-31'), operate(closeInvoice)],
+  steps: [deliverProduct, operate(createSales), elapse('closingDate', '2026-10-31'), operate(closeInvoice)],
 })
 ```
 

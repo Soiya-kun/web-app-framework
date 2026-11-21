@@ -57,6 +57,30 @@ describe('このリポジトリのモデル', () => {
     expect(places).toEqual(expect.arrayContaining([['page', '/payments'], ['work', 'closeInvoice'], ['rule', 'packages/backend/src/domain/payment/payerPolicy.ts#decidePaymentCustomer']]))
   })
 
+  test('現行の業務フローを新しい業務フローと比べ、同じ・置き換え・廃止の段と、新しい段を求める', () => {
+    const legacy = model.legacyFlows.find((flow) => flow.id === 'legacyMonthlyInvoice')
+
+    expect(legacy).toMatchObject({ title: '現行の月次の請求', area: 'invoice', replacementIds: ['monthlyInvoice'] })
+    expect(legacy?.steps.map((step) => [step.title, step.change])).toEqual([
+      ['商品を納品する', 'same'],
+      ['売上を記入する', 'replaced'],
+      ['請求締め日になる', 'same'],
+      ['請求を印刷する', 'replaced'],
+      ['請求をコピーする', 'discontinued'],
+      ['請求を郵送する', 'replaced'],
+      ['請求を支払う', 'same'],
+      ['入金を記入する', 'replaced'],
+    ])
+    expect(legacy?.steps[3]?.replacements.map((replacement) => replacement.title)).toEqual(['請求を締める', '請求を発行する'])
+    expect(legacy?.steps[3]?.tableIds).toEqual(['legacySales', 'legacyInvoice'])
+    expect(legacy?.addedSteps.map((step) => [step.number, step.title])).toEqual([
+      ['5', '請求を閲覧する'],
+      ['8.3', '入金を閲覧する'],
+    ])
+    expect(model.flows.find((flow) => flow.id === 'monthlyInvoice')?.legacyIds).toEqual(['legacyMonthlyInvoice'])
+    expect(model.legacyTables.find((table) => table.id === 'legacyPayment')?.columns.at(-1)?.replacement).toEqual({ tableId: 'adjustment', column: 'adjustment_amount' })
+  })
+
   test('英語のモデルは、同じつながりを英語の見出し・手順で持つ（人が書いた拡張の条件は書いたまま）', () => {
     const englishModel = buildModel(repositoryRoot, 'en')
     const scenario = englishModel.scenarios.find((candidate) => candidate.id === 'registerPayment')
@@ -105,6 +129,24 @@ describe('書き方の規則の検査', () => {
     `import { decide, defineMeeting } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nimport { salesperson } from '../role/role'\nimport { meeting20261003 } from './meeting20261003'\nexport const meetingSecond = defineMeeting('2026-10-10', {\n  title: '第2回',\n  attendees: [salesperson],\n  agenda: [],\n  decisions: [\n    decide(createSales, '3つ', { question: meeting20261003.questions.salesKind }),\n    decide(createSales, 'もう一度', { question: meeting20261003.questions.salesKind }),\n  ],\n})\n`,
   )
 
+  put(
+    'apps/web/step/step.ts',
+    `import { outside } from '@app/flow'\nimport { salesperson } from '../role/role'\nexport const deliverProduct = outside(salesperson, 'deliverProduct')\nexport const shipProduct = outside(salesperson, 'deliverProduct')\n`,
+  )
+  put(
+    'apps/web/flow/sales/salesCreation.ts',
+    `import { defineFlow, operate, outside } from '@app/flow'\nimport { createSales } from '../../scenario/sales/createSales'\nimport { salesperson } from '../../role/role'\nimport { deliverProduct } from '../../step/step'\nexport const salesCreation = defineFlow('salesCreation', { steps: [deliverProduct, outside(salesperson, 'deliverProduct'), operate(createSales)] })\n`,
+  )
+  put(
+    'apps/web/legacy/table.ts',
+    `import { defineLegacyTable } from '@app/flow'\nexport const legacySales = defineLegacyTable('T_URIAGE', { title: '売上伝票', columns: [{ name: 'KINGAKU', title: '金額', replacement: 'sales.amount' }] })\n`,
+  )
+  put(
+    'apps/web/legacy/sales/sales.ts',
+    `import { defineLegacyFlow, operate, operateLegacy, outside } from '@app/flow'\nimport { salesCreation } from '../../flow/sales/salesCreation'\nimport { createSales } from '../../scenario/sales/createSales'\nimport { salesperson } from '../../role/role'\nimport { legacySales } from '../table'\nexport const sales = defineLegacyFlow('sales', {\n  replacement: salesCreation,\n  steps: [\n    outside(salesperson, 'deliverProduct'),\n    operate(createSales),\n    operateLegacy(salesperson, 'enterSales', { tables: [legacySales], replacement: 'createSales' }),\n  ],\n})\n`,
+  )
+  put('apps/web/legacy/legacyInvoice.ts', `import { defineLegacyFlow, elapse } from '@app/flow'\nexport const legacyInvoice = defineLegacyFlow('legacyInvoice', { steps: [elapse('closingDate')] })\n`)
+
   put('.claude/skills/review/SKILL.md', '---\nname: review\ndescription: レビューする\n---\n')
   put('apps/web/CLAUDE.md', '# 決まり\n')
   put('.cursorrules', '決まり\n')
@@ -129,6 +171,17 @@ describe('書き方の規則の検査', () => {
 
   test('議事録: 変数の名前は meeting と日付、課題の名前は単語帳の言葉、期限は打合せの日以後、場所は import した値', () => {
     expect(rules('apps/web/meeting/meeting20261003.ts')).toEqual(['question-name', 'question-deadline', 'meeting-place'])
+  })
+
+  test('段の値: システムの外の業務は apps/web/step の値を使い、変数の名前は段の名前と同じ', () => {
+    expect(rules('apps/web/step/step.ts')).toEqual(['step-name'])
+    expect(rules('apps/web/flow/sales/salesCreation.ts')).toEqual(['step-place'])
+  })
+
+  test('現行の業務フロー: legacy で始まる名前・領域のフォルダ・変わらない段は同じ値・画面の操作は書かない・置き換え先は値で指す', () => {
+    expect(rules('apps/web/legacy/sales/sales.ts')).toEqual(['legacy-name', 'legacy-step', 'legacy-step', 'legacy-step'])
+    expect(rules('apps/web/legacy/legacyInvoice.ts')).toEqual(['legacy-place'])
+    expect(rules('apps/web/legacy/table.ts')).toEqual(['legacy-table'])
   })
 
   test('AI への指示: Skill は議事録を作る minutes の1つだけで、ほかに AI に向けた指示のファイルを置かない', () => {

@@ -16,3 +16,7 @@
 - { id: assignee, category: noun, ja: { form: 担当者 }, description: 課題を解決する役割。 }
 - { id: raise, category: verb, ja: { dictionary: 挙げる, class: ichidan }, description: 打合せで課題を挙げること。 }
 - { id: resolve, category: verb, en: { past: resolved }, ja: { stem: 解決, class: suru }, description: 前の打合せで挙がった課題を、後の打合せで決めて片付けること。 }
+- { id: legacy, category: adjective, ja: { stem: 現行, class: no }, description: いまの業務と旧システム（AsIs）のこと。現行の業務フローは、新しい業務フロー（ToBe）のどれに置き換わるかを値で持つ。 }
+- { id: replacement, category: noun, ja: { form: 置き換え }, description: 現行の業務・段が変わる先の、新しい業務フロー・シナリオ・段。 }
+- { id: discontinue, category: verb, en: { noun: discontinuation }, ja: { stem: 廃止, class: suru }, description: 現行の業務・段が、新しい業務フローではなくなること。 }
+- { id: same, category: adjective, ja: { stem: 同じ, class: no }, description: 現行と新しい業務フローで、同じ値の段（変わらない業務）。 }

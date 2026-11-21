@@ -139,6 +139,39 @@ describe('キャンバス', () => {
     expect(screen.queryByRole('region', { name: '課題（0）' })).toBeNull()
   })
 
+  test('現行の一覧に、現行の業務フロー（置き換え先と変わり方の数）と旧システムのテーブルを出す', async () => {
+    await launchBrowser('/legacy')
+
+    const legacySection = screen.getByRole('region', { name: '現行の業務フロー（1）' })
+    expect(legacySection).toHaveTextContent('現行の月次の請求 → 月次の請求')
+    expect(legacySection).toHaveTextContent('同じ 3・置き換え 4・廃止 1・新しい段 2')
+    expect(within(screen.getByRole('table', { name: '旧システムのテーブル' })).getByRole('row', { name: /売上伝票/ })).toHaveTextContent('T_URIAGE')
+  })
+
+  test('現行の業務フローのページで、段ごとの変わり方と置き換え先、新しい段を、新しい業務フローと比べて出す', async () => {
+    const { user } = await launchBrowser('/legacy/legacyMonthlyInvoice')
+
+    expect(screen.getByRole('heading', { name: '現行の月次の請求' })).toBeVisible()
+    expect(screen.getByRole('figure', { name: '現行の月次の請求のレーン図' })).toHaveTextContent('旧システムの操作')
+    const comparison = screen.getByRole('table', { name: '現行の月次の請求の比較' })
+    expect(within(comparison).getByRole('row', { name: /請求を印刷する/ })).toHaveTextContent('置き換え請求を締める・請求を発行する売上伝票・請求')
+    expect(within(comparison).getByRole('row', { name: /請求をコピーする/ })).toHaveTextContent('廃止')
+    expect(within(comparison).getByRole('row', { name: /請求を支払う/ })).toHaveTextContent('同じ')
+    expect(screen.getByRole('region', { name: '新しい段（2）' })).toHaveTextContent('8.3入金を閲覧する')
+
+    await user.click(within(within(comparison).getByRole('row', { name: /売上を記入する/ })).getByRole('link', { name: '売上伝票' }))
+    expect(screen.getByRole('heading', { name: '売上伝票' })).toBeVisible()
+    expect(within(screen.getByRole('table', { name: '売上伝票の列' })).getByRole('row', { name: /売上日/ })).toHaveTextContent('sales.sales_date')
+  })
+
+  test('新しい業務フローのページから、置き換わる現行の業務フローへ移れる', async () => {
+    const { user } = await launchBrowser('/flow/monthlyInvoice')
+
+    const legacySection = screen.getByRole('region', { name: '現行の業務フロー' })
+    await user.click(within(legacySection).getByRole('link', { name: '現行の月次の請求' }))
+    expect(screen.getByRole('heading', { name: '現行の月次の請求' })).toBeVisible()
+  })
+
   test('キャンバスのシナリオのカードに、そのシナリオと拡張に付いた課題を出す', async () => {
     const { user } = await launchBrowser('/')
     const frame = screen.getByRole('region', { name: '月次の請求' })

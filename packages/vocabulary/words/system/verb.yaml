@@ -103,3 +103,5 @@
 - { id: subscribe, ja: { stem: 購読, class: suru } }
 - { id: observe, ja: { stem: 監視, class: suru } }
 - { id: notify, ja: { stem: 通知, class: suru } }
+- { id: print, ja: { stem: 印刷, class: suru } }
+- { id: mail, ja: { stem: 郵送, class: suru } }

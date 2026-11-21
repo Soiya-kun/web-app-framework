@@ -1,16 +1,16 @@
-import { defineFlow, elapse, occur, operate, outside } from '@app/flow'
+import { defineFlow, elapse, operate } from '@app/flow'
 import type { MemoryDatabase } from '@app/backend/testing'
 import { customers } from '../../test/billingSeed'
 import { closeInvoice } from '../../scenario/invoice/closeInvoice'
 import { createSales } from '../../scenario/sales/createSales'
-import { customer, salesperson } from '../../role/role'
+import { deliverProduct, sendReturn } from '../../step/step'
 
 export const salesReturn = defineFlow<Partial<MemoryDatabase>>('salesReturn', {
   precondition: { summary: '親会社（末締め翌月末払い）が顧客として登録されている', seed: { customer: customers } },
   steps: [
-    outside(salesperson, 'deliverProduct'),
+    deliverProduct,
     operate(createSales, { customer: '株式会社親', salesDate: '2026-10-05', salesKind: '通常', itemName: '運賃', salesAmount: '100000', taxRate: '10%' }),
-    occur(customer, 'sendReturn'),
+    sendReturn,
     // 返品は正の金額で入れ、負の金額の売上として持つ。
     operate(createSales, { customer: '株式会社親', salesDate: '2026-10-20', salesKind: '返品', itemName: '運賃', salesAmount: '20000', taxRate: '10%' }),
     elapse('closingDate', '2026-10-31'),

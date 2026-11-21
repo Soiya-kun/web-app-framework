@@ -41,6 +41,7 @@ export type Sentence = {
   readonly expectTable: (table: string, isEmpty: boolean) => string
   readonly expectSubject: (subject: string) => string
   // 業務フローの段
+  /** 時の経過。現行の業務フローは日付を持たない（date が空）。 */
   readonly elapse: (time: string, date: string) => string
   // 処理の手順（usecase・domain）
   readonly owned: (owner: string, item: string) => string
@@ -120,7 +121,7 @@ const japanese: Sentence = {
   confirmExtension: '拡張の扱いを確かめる',
   expectTable: (table, isEmpty) => `DB の${table}${isEmpty ? 'が空である' : 'の行が期待どおりである'}ことを確かめる`,
   expectSubject: (subject) => `${subject}が期待どおりであることを確かめる`,
-  elapse: (time, date) => `${time}になる（${date}）`,
+  elapse: (time, date) => (date === '' ? `${time}になる` : `${time}になる（${date}）`),
   owned: (owner, item) => `${owner}の${item}`,
   run: (code) => `${code}を実行する`,
   isName: (noun, negated) => `${noun}${negated ? 'でない' : 'である'}`,
@@ -187,7 +188,7 @@ const english: Sentence = {
   confirmExtension: 'Confirm the handling of the extension',
   expectTable: (table, isEmpty) => (isEmpty ? `Confirm that ${table} in the database is empty` : `Confirm the rows of ${table} in the database`),
   expectSubject: (subject) => `Confirm that ${subject} is as expected`,
-  elapse: (time, date) => `${time} arrives (${date})`,
+  elapse: (time, date) => (date === '' ? `${time} arrives` : `${time} arrives (${date})`),
   owned: (owner, item) => `${item} of ${owner}`,
   run: (code) => `Run ${code}`,
   isName: (noun, negated) => `${negated ? 'not ' : ''}${noun}`,

@@ -5,10 +5,17 @@ export type SourcePlace = { readonly file: string; readonly line: number }
 
 export type ModelInput = { readonly label: string; readonly value: string }
 
+/** 現行の業務フローの段の変わり方。同じ値の段（same）・置き換わる段（replaced）・なくなる段（discontinued）。 */
+export type StepChange = 'same' | 'replaced' | 'discontinued'
+
+/** 現行の段の置き換え先（新しい業務フローのシナリオ・システムの外の業務・業務フロー）。 */
+export type ReplacementNode = { readonly kind: 'scenario' | 'step' | 'flow'; readonly id: string; readonly title: string }
+
 export type FlowStepNode = SourcePlace & {
   /** フローの中の番号（1, 2, …）。子フローの中は、子フローの側で 1 から振る。 */
   readonly number: string
-  readonly kind: 'operate' | 'outside' | 'occur' | 'elapse' | 'nest'
+  /** legacy は旧システムの操作（現行の業務フローだけ）。 */
+  readonly kind: 'operate' | 'outside' | 'occur' | 'elapse' | 'nest' | 'legacy'
   /** 段の日本語（「売上を登録する」「請求締め日になる」など）。 */
   readonly title: string
   readonly actor: string | null
@@ -17,6 +24,12 @@ export type FlowStepNode = SourcePlace & {
   readonly flowId: string | null
   readonly inputs: readonly ModelInput[]
   readonly extensions: readonly FlowExtensionNode[]
+  /** 段の値の鍵。apps/web/step の値なら「ファイル#名前」、時の経過なら「elapse:名詞」。現行と新しい業務フローで同じ段かを比べるのに使う。 */
+  readonly stepKey: string | null
+  /** 置き換え先・旧システムのテーブル・変わり方（現行の業務フローの段だけ）。 */
+  readonly replacements: readonly ReplacementNode[]
+  readonly tableIds: readonly string[]
+  readonly change: StepChange | null
 }
 
 export type FlowExtensionNode = {
@@ -44,7 +57,7 @@ export type RoleNode = SourcePlace & {
  * 画面（page）・処理（work）・規則（rule）、そのほかの関数（source）。
  */
 export type MeetingPlaceNode = {
-  readonly kind: 'flow' | 'scenario' | 'extension' | 'page' | 'work' | 'rule' | 'source'
+  readonly kind: 'flow' | 'scenario' | 'extension' | 'page' | 'work' | 'rule' | 'source' | 'legacy' | 'legacyTable'
   /** 指しているものの id（業務フロー・シナリオ・画面の道筋・処理・規則）。source なら「ファイル#名前」。 */
   readonly id: string
   /** 拡張の名前（extension のとき）。 */
@@ -98,6 +111,38 @@ export type FlowNode = SourcePlace & {
   readonly steps: readonly FlowStepNode[]
   /** この業務フローを子フローにしている業務フロー。 */
   readonly parentIds: readonly string[]
+  /** この業務フローに置き換わる、現行の業務フロー。 */
+  readonly legacyIds: readonly string[]
+}
+
+/** 新しい業務フローにあって、現行の業務フローのどの段からも指されていない段（新しい業務）。 */
+export type AddedStepNode = { readonly number: string; readonly kind: FlowStepNode['kind']; readonly title: string; readonly scenarioId: string | null }
+
+/** 現行（AsIs）の業務フロー。 */
+export type LegacyFlowNode = FlowNode & {
+  /** 置き換え先の新しい業務フロー。なければ、この業務はなくなる。 */
+  readonly replacementIds: readonly string[]
+  readonly addedSteps: readonly AddedStepNode[]
+}
+
+export type LegacyColumnNode = {
+  readonly name: string
+  readonly title: string
+  readonly type: string
+  readonly note: string
+  /** 移す先の新しいテーブルの列。 */
+  readonly replacement: { readonly tableId: string; readonly column: string } | null
+}
+
+/** 旧システムのテーブル。 */
+export type LegacyTableNode = SourcePlace & {
+  /** 定義した変数の名前。 */
+  readonly id: string
+  /** 旧システムでの名前（物理名）。 */
+  readonly name: string
+  readonly title: string
+  readonly note: string
+  readonly columns: readonly LegacyColumnNode[]
 }
 
 export type CaseNode = SourcePlace & {
@@ -226,6 +271,9 @@ export type ModelProgress = {
   /** 課題の数と、そのうちまだ解決していないもの（0 になれば、要件定義で決めることは残っていない）。 */
   readonly questions: number
   readonly openQuestions: number
+  /** 現行の業務フローと旧システムのテーブルの数。 */
+  readonly legacyFlows: number
+  readonly legacyTables: number
 }
 
 export type Model = {
@@ -235,6 +283,8 @@ export type Model = {
   readonly meetings: readonly MeetingNode[]
   readonly questions: readonly QuestionNode[]
   readonly flows: readonly FlowNode[]
+  readonly legacyFlows: readonly LegacyFlowNode[]
+  readonly legacyTables: readonly LegacyTableNode[]
   readonly scenarios: readonly ScenarioNode[]
   readonly pages: readonly PageNode[]
   readonly endpoints: readonly EndpointNode[]

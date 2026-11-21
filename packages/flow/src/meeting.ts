@@ -2,6 +2,7 @@
 // どちらも、話している業務フロー・シナリオ・拡張・画面・処理などを値で持つので、名前を変えたり消したりすると型エラーになり、宙に浮かない。
 // 課題が解決したかどうかは持たない。後の打合せで、その課題を指して決めたこと（decide の question）から求める。
 import type { Flow, Scenario } from './definition'
+import type { LegacyFlow, LegacyTable } from './legacy'
 import type { Role } from './role'
 
 /** 議事録から指すシナリオ（場所を指すだけなので、種類と名前だけを見る）。 */
@@ -15,9 +16,9 @@ export type CodePlace = (...parameters: never[]) => unknown
 
 /**
  * 議事録の項目が話している場所。業務フロー（大きい粒度）・シナリオ・拡張（細かい粒度）か、
- * 画面の部品・処理・規則などの関数。
+ * 画面の部品・処理・規則などの関数、現行の業務フロー・旧システムのテーブル。
  */
-export type MeetingPlace = Flow<unknown> | ScenarioPlace | ExtensionPlace | CodePlace
+export type MeetingPlace = Flow<unknown> | ScenarioPlace | ExtensionPlace | CodePlace | LegacyFlow | LegacyTable
 
 export type Question = {
   readonly kind: 'question'

@@ -1,6 +1,8 @@
 import type {
   EndpointNode,
   FlowNode,
+  LegacyFlowNode,
+  LegacyTableNode,
   MeetingNode,
   Model,
   PageNode,
@@ -18,6 +20,8 @@ import { createContext, use, useMemo, type ReactNode } from 'react'
 export type ModelTable = {
   readonly model: Model
   readonly flows: ReadonlyMap<string, FlowNode>
+  readonly legacyFlows: ReadonlyMap<string, LegacyFlowNode>
+  readonly legacyTables: ReadonlyMap<string, LegacyTableNode>
   readonly scenarios: ReadonlyMap<string, ScenarioNode>
   readonly pages: ReadonlyMap<string, PageNode>
   readonly endpoints: ReadonlyMap<string, EndpointNode>
@@ -37,6 +41,8 @@ function prepareModelTable(model: Model): ModelTable {
   return {
     model,
     flows: prepareNodeTable(model.flows),
+    legacyFlows: prepareNodeTable(model.legacyFlows),
+    legacyTables: prepareNodeTable(model.legacyTables),
     scenarios: prepareNodeTable(model.scenarios),
     pages: prepareNodeTable(model.pages),
     endpoints: prepareNodeTable(model.endpoints),

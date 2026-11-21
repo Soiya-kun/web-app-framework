@@ -430,7 +430,7 @@ JSON は、解析して作る生成物として使う。ブラウザは、その
 export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoice', {
   precondition: { summary: '親会社と、請求先を親会社にした子会社が、顧客として登録されている', seed: { customer: customers } },
   steps: [
-    outside(salesperson, 'deliverProduct'),                      // システムの外の業務: 商品を納品する
+    deliverProduct,                                              // システムの外の業務: 商品を納品する（apps/web/step の値）
     operate(createSales, { customer: '株式会社子', … }),          // 画面の操作: 売上を登録する
     elapse('closingDate', '2026-10-31'),                         // 時の経過: 請求締め日になる
     operate(closeInvoice, { …october, breakdown: { currentInvoiceAmount: 110_000, … } }),
@@ -438,7 +438,7 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
       mistakenInvoice: { input: october, then: [operate(cancelClosing, october), …], resume: false },
     }),
     operate(issueInvoice, { …october, issueDate: '2026-11-02' }),
-    outside(accountant, 'sendInvoice'),                          // 請求を送る
+    sendInvoice,                                                 // 請求を送る
     nest(paymentManagement),                                     // 子フロー: 入金管理
     elapse('closingDate', '2026-11-30'),
     operate(closeInvoice, { …, breakdown: { previousInvoiceAmount: 110_000, currentPaymentAmount: 110_000, carriedAmount: 0 } }),
@@ -492,7 +492,7 @@ export const createSales = defineScenario('createSales', { actor: salesperson })
 export const closeInvoice = defineScenario('closeInvoice', { actor: accountant })    // 未着手
 
 export const monthlyInvoice = defineFlow('monthlyInvoice', {
-  steps: [outside(salesperson, 'deliverProduct'), operate(createSales), elapse('closingDate', '2026-10-31'), operate(closeInvoice), …],
+  steps: [deliverProduct, operate(createSales), elapse('closingDate', '2026-10-31'), operate(closeInvoice), …],
 })
 ```
 
@@ -623,7 +623,11 @@ export const meeting20261017 = defineMeeting('2026-10-17', {
 
 **AI に向けた指示は、この Skill の1つだけにする。** 文字起こしから議事録を作るところだけは、検査では決められない判断（どれが決めたことで、どれが課題か）が要るので Skill にした。ほかの書き方の決まりは、型・lint・`pnpm check` が止めるので、AI はその失敗を見て直せばよい。Skill がこれ1つであることも、検査（規則 `skill`）で止める。
 
-サンプルには、3回分の議事録（`apps/web/meeting`）を書いた。キックオフで業務フローの粒度の課題が挙がり、第2回でそれを決めて解決し、拡張の粒度の課題が新しく挙がる、という流れである。書き方の規則と、AI に議事録を作ってもらうときの決まりは [業務フローの書き方の規則](flow-rules.md) の7章にある。
+**現行の業務フローも型にする。** ヒアリングでは、いまの業務（AsIs）も聞く。現行の業務フローは `apps/web/legacy` に `defineLegacyFlow` で書き、どの新しい業務フロー（ToBe）に置き換わるかを値で指す。現行の業務は実装しないので、画面の操作の手順や処理は書かず、旧システムの操作（`operateLegacy`）と、必要なら旧システムのテーブル（`defineLegacyTable`）を書く。
+
+システムの外の業務と外のイベントは、`apps/web/step` に1つずつ値として書き、現行と新しい業務フローの両方で同じ値を使う。変わらない業務は同じ値なので「同じ」、変わる段には置き換え先（新しい業務フローのシナリオ・段・業務フロー）を値で書くので「置き換え」、どちらでもない段は「廃止」と、静的解析が比べる。新しい業務フローにしかない段は「新しい段」として並ぶ。対応関係は値で持つので、新しい業務フローの名前を変えたり消したりすると、現行の業務フローが型のエラーになる。旧システムのテーブルの列には、移す先の新しいテーブルの列を書き、検査でマイグレーションと照らし合わせる。
+
+サンプルには、3回分の議事録（`apps/web/meeting`）を書いた。キックオフで業務フローの粒度の課題が挙がり、第2回でそれを決めて解決し、拡張の粒度の課題が新しく挙がる、という流れである。現行の業務フローは「現行の月次の請求」と、旧システムのテーブル3つを書いた。書き方の規則と、AI に議事録を作ってもらうときの決まりは [業務フローの書き方の規則](flow-rules.md) の7章にある。
 
 ## 7. サンプルの業務 — 売上・請求・入金
 
@@ -703,6 +707,7 @@ flowchart LR
 | 2026-11-21 | 受託開発を前提に、役割と議事録を型にする。人の名前は書かず役割（開発チーム・業務部門・業務の相手）で書き、議事録の決めたこと・課題は業務フロー・シナリオ・拡張を値で指す。課題は担当の役割と期限を持ち、状態は後の回の回答から求める（6.10） |
 | 2026-11-21 | 議事録は、話したことを決めたことか課題に分けて書く。決めたことは業務フロー・シナリオ・拡張に加えて画面・処理などの関数も指し、前の回の課題を指して解決する。先方の承認は記録しない（返事は次の議事録に載る）。議事録は文字起こしやメモから AI が作って PR にし、開発チームと先方でレビューしてマージする。未解決の課題がなくなれば、要件定義で決めることは残っていない（6.10） |
 | 2026-11-21 | AI に向けた指示は、文字起こしから議事録を作る Skill（`.claude/skills/minutes`）の1つだけにする。ほかの決まりは CI（型・lint・`pnpm check`）で止め、Skill が1つだけであることも検査で止める（6.10） |
+| 2026-11-21 | 現行（AsIs）の業務フローも型にする（`apps/web/legacy`）。置き換え先の新しい業務フローを値で指し、システムの外の業務は `apps/web/step` の同じ値を共有して、同じ・置き換え・廃止・新しい段を静的解析で比べる。旧システムのテーブルも書け、列の移す先を検査する（6.10） |
 | 未決 | つながりの取り方。静的解析で作り、いまはテストの実行の記録は要らなかった（6.7） |
 
 ## 11. これから
