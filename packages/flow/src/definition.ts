@@ -1,6 +1,7 @@
 // 業務フローとシナリオの書き方。コーバーンのユースケースの目的のレベルに合わせる。
 // 業務フロー（要約）は段の並び、シナリオ（利用者の目的）は1人が1回の操作で目的を果たす手順、
 // usecase（下位機能）はバックエンドの処理。中身を書いていないシナリオ・拡張は「未着手」として扱う。
+import type { LegacyFlow, LegacyStep, Replacement } from './legacy'
 import type { Role } from './role'
 import type { Screen } from './screen'
 
@@ -61,17 +62,23 @@ export type FlowExtension = {
   readonly resume: boolean
 }
 
-export type FlowStep =
-  | {
-      readonly kind: 'operate'
-      readonly scenario: Scenario<unknown, string>
-      readonly input: unknown
-      readonly extensions: readonly FlowExtension[]
-    }
-  | { readonly kind: 'outside'; readonly actor: Role; readonly name: string }
-  | { readonly kind: 'occur'; readonly actor: Role; readonly name: string }
-  | { readonly kind: 'elapse'; readonly time: string; readonly date: string }
-  | { readonly kind: 'nest'; readonly flow: Flow<unknown> }
+/** 段: 画面の操作（シナリオ）。 */
+export type OperateStep = {
+  readonly kind: 'operate'
+  readonly scenario: Scenario<unknown, string>
+  readonly input: unknown
+  readonly extensions: readonly FlowExtension[]
+}
+/** 段: システムの外の業務。新しい業務フローでは、apps/web/step に書いた値を使う。 */
+export type OutsideStep = { readonly kind: 'outside'; readonly actor: Role; readonly name: string; readonly replacement?: undefined }
+/** 段: 外のイベント。新しい業務フローでは、apps/web/step に書いた値を使う。 */
+export type OccurStep = { readonly kind: 'occur'; readonly actor: Role; readonly name: string; readonly replacement?: undefined }
+/** 段: 時の経過。 */
+export type ElapseStep = { readonly kind: 'elapse'; readonly time: string; readonly date: string }
+/** 段: 子フロー。 */
+export type NestStep = { readonly kind: 'nest'; readonly flow: Flow<unknown> }
+
+export type FlowStep = OperateStep | OutsideStep | OccurStep | ElapseStep | NestStep
 
 /** 事前条件。summary は日本語の説明、seed はテストで最初に入れておくデータ。 */
 export type FlowPrecondition<Seed> = { readonly summary: string; readonly seed: Seed }
@@ -103,7 +110,7 @@ type OperateRest<Input, ExtensionName extends string> = [Input] extends [undefin
 export function operate<Input, ExtensionName extends string>(
   scenario: Scenario<Input, ExtensionName>,
   ...rest: OperateRest<Input, ExtensionName>
-): FlowStep {
+): OperateStep {
   const [input, extensions = {}] = rest as [unknown, Readonly<Partial<Record<string, ExtensionFlow<unknown>>>>?]
   const extensionList = Object.entries(extensions as Readonly<Record<string, ExtensionFlow<unknown>>>).map(([name, extension]) => ({
     name,
@@ -116,24 +123,43 @@ export function operate<Input, ExtensionName extends string>(
   return { kind: 'operate', scenario: scenario as Scenario<unknown, string>, input, extensions: extensionList }
 }
 
-/** 段: システムの外の業務（商品を納品する・請求書を送るなど）。name は動詞で始まる名前。 */
-export function outside(actor: Role, name: string): FlowStep {
-  return { kind: 'outside', actor, name }
+/** 置き換え先を1つでも、いくつでも受け取る。 */
+export function listReplacements(replacement: Replacement | readonly Replacement[] | undefined): readonly Replacement[] {
+  return replacement === undefined ? [] : Array.isArray(replacement) ? replacement : [replacement as Replacement]
 }
 
-/** 段: 外のイベント（代金が振り込まれるなど）。name は動詞で始まる名前。 */
-export function occur(actor: Role, name: string): FlowStep {
-  return { kind: 'occur', actor, name }
+/** 置き換え先の指定（現行の業務フローで、変わる段にだけ書く）。 */
+export type ReplacementOption = { readonly replacement: Replacement | readonly Replacement[] }
+
+/**
+ * 段: システムの外の業務（商品を納品する・請求書を送るなど）。name は動詞で始まる名前。
+ * 現行の業務フローで変わる段は、replacement に新しい業務フローの置き換え先を書く。
+ */
+export function outside(actor: Role, name: string): OutsideStep
+export function outside(actor: Role, name: string, option: ReplacementOption): LegacyStep
+export function outside(actor: Role, name: string, option?: ReplacementOption): OutsideStep | LegacyStep {
+  return option === undefined ? { kind: 'outside', actor, name } : { kind: 'outside', actor, name, replacement: listReplacements(option.replacement) }
 }
 
-/** 段: 時の経過（締め日になる）。テストでは今日の日付を date にする。 */
-export function elapse(time: string, date: string): FlowStep {
-  return { kind: 'elapse', time, date }
+/** 段: 外のイベント（代金が振り込まれるなど）。name は動詞で始まる名前。現行の業務フローで変わる段は replacement を書く。 */
+export function occur(actor: Role, name: string): OccurStep
+export function occur(actor: Role, name: string, option: ReplacementOption): LegacyStep
+export function occur(actor: Role, name: string, option?: ReplacementOption): OccurStep | LegacyStep {
+  return option === undefined ? { kind: 'occur', actor, name } : { kind: 'occur', actor, name, replacement: listReplacements(option.replacement) }
 }
 
-/** 段: 子フロー。 */
-export function nest(flow: Flow<unknown>): FlowStep {
-  return { kind: 'nest', flow }
+/** 段: 時の経過（締め日になる）。テストでは今日の日付を date にする。現行の業務フローは動かさないので、日付を書かない。 */
+export function elapse(time: string, date: string): ElapseStep
+export function elapse(time: string): LegacyStep
+export function elapse(time: string, date?: string): ElapseStep | LegacyStep {
+  return date === undefined ? { kind: 'elapse', time, date: undefined } : { kind: 'elapse', time, date }
+}
+
+/** 段: 子フロー。現行の業務フローの中では、現行の業務フローを入れる。 */
+export function nest(flow: Flow<unknown>): NestStep
+export function nest(flow: LegacyFlow): LegacyStep
+export function nest(flow: Flow<unknown> | LegacyFlow): NestStep | LegacyStep {
+  return flow.kind === 'flow' ? { kind: 'nest', flow } : { kind: 'nest', flow }
 }
 
 /** シナリオの手順を流す（ケースから使う）。未着手なら止める。 */

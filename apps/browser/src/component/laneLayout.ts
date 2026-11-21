@@ -49,6 +49,7 @@ export type LaneLayout = {
 function expandSteps(
   text: Text,
   table: ModelTable,
+  flowTable: ReadonlyMap<string, FlowNode>,
   flow: FlowNode,
   isOpened: (number: string) => boolean,
   prefix: string,
@@ -58,10 +59,10 @@ function expandSteps(
 ): void {
   for (const step of flow.steps) {
     const number = `${prefix}${step.number}`
-    const child = step.flowId === null ? undefined : table.flows.get(step.flowId)
+    const child = step.flowId === null ? undefined : flowTable.get(step.flowId)
     if (step.kind === 'nest' && child !== undefined && depth < 3 && isOpened(number)) {
       const first = steps.length
-      expandSteps(text, table, child, isOpened, `${number}.`, depth + 1, steps, groups)
+      expandSteps(text, table, flowTable, child, isOpened, `${number}.`, depth + 1, steps, groups)
       groups.push({ number, flowId: child.id, title: child.title, first, last: steps.length - 1, depth })
       continue
     }
@@ -73,10 +74,11 @@ function expandSteps(
   }
 }
 
-export function arrangeLanes(text: Text, table: ModelTable, flow: FlowNode, isOpened: (number: string) => boolean): LaneLayout {
+/** レーン図の配置。現行の業務フローなら、子フローを現行の業務フローから引く。 */
+export function arrangeLanes(text: Text, table: ModelTable, flow: FlowNode, isOpened: (number: string) => boolean, legacy = false): LaneLayout {
   const steps: LaneStep[] = []
   const groups: LaneGroup[] = []
-  expandSteps(text, table, flow, isOpened, '', 0, steps, groups)
+  expandSteps(text, table, legacy ? table.legacyFlows : table.flows, flow, isOpened, '', 0, steps, groups)
   const lanes = [...new Map(steps.map((step) => [step.laneKey, step.laneTitle])).entries()]
   const laneIndex = new Map(lanes.map(([laneKey], index) => [laneKey, index]))
   const groupDepth = groups.reduce((depth, group) => Math.max(depth, group.depth + 1), 0)

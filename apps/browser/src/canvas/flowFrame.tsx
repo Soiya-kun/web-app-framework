@@ -18,6 +18,7 @@ const kindStyle: Readonly<Record<FlowStepNode['kind'], string>> = {
   occur: 'border-l-occur bg-event',
   elapse: 'border-l-elapse bg-time',
   nest: 'border-l-nest',
+  legacy: 'border-l-nest bg-canvas',
 }
 
 /** カードの左端から、レールがカードに入るところまで。 */

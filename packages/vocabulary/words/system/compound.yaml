@@ -27,3 +27,7 @@
 - { id: installmentPayment, en: { tokens: installment payment }, ja: { form: 分割入金 }, description: 1つの請求の代金を、何回かに分けて入金すること。入金は合計して今回入金額に載る。 }
 - { id: bulkPayment, en: { tokens: bulk payment }, ja: { form: 一括入金 }, description: 未入金を繰り越した請求の今回請求額を、まとめて1回で入金すること。 }
 - { id: projectManager, en: { tokens: project manager }, ja: { form: PM }, description: 開発チームで、進め方と合意をまとめる役割。 }
+- { id: newStep, en: { tokens: new step, label: New Step }, ja: { form: 新しい段 } }
+- { id: stepChange, en: { tokens: step change, label: Change }, ja: { form: 変わり方 } }
+- { id: legacyOperation, en: { tokens: legacy operation, label: Legacy System Operation }, ja: { form: 旧システムの操作 } }
+- { id: legacyTable, en: { tokens: legacy table, label: Legacy System Table }, ja: { form: 旧システムのテーブル } }

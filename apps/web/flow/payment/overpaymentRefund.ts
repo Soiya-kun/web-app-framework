@@ -1,18 +1,18 @@
-import { defineFlow, elapse, occur, operate, outside } from '@app/flow'
+import { defineFlow, elapse, operate } from '@app/flow'
 import type { MemoryDatabase } from '@app/backend/testing'
 import { issuedOctoberSeed } from '../../test/billingSeed'
 import { closeInvoice } from '../../scenario/invoice/closeInvoice'
 import { createRefund } from '../../scenario/payment/createRefund'
 import { registerPayment } from '../../scenario/payment/registerPayment'
-import { accountant, customer } from '../../role/role'
+import { payInvoice, payRefund } from '../../step/step'
 
 export const overpaymentRefund = defineFlow<Partial<MemoryDatabase>>('overpaymentRefund', {
   precondition: { summary: '親会社の10月の請求（今回請求額 110,000 円）を発行済み', seed: issuedOctoberSeed },
   steps: [
-    occur(customer, 'payInvoice'),
+    payInvoice,
     operate(registerPayment, { paymentDate: '2026-11-10', paymentAmount: '120000', payerName: 'カ)オヤ', customer: '株式会社親' }),
     operate(createRefund),
-    outside(accountant, 'payRefund'),
+    payRefund,
     elapse('closingDate', '2026-11-30'),
     // 返金した 10,000 円を今回入金額から差し引き、繰越額は 0 になる。
     operate(closeInvoice, {

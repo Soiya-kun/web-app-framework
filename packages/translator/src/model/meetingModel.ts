@@ -1,10 +1,10 @@
-// 議事録（apps/web/meeting の defineMeeting）を読む。決めたこと・課題を、指している業務フロー・シナリオ・拡張・画面・処理と役割につなぐ。
+// 議事録（apps/web/meeting の defineMeeting）を読む。決めたこと・課題を、指している業務フロー・シナリオ・拡張・画面・処理・現行の業務フローと役割につなぐ。
 // 課題が解決したかどうかは議事録に書かない。後の打合せで、その課題を指して決めたこと（decide の question）をたどって求める。
 import { findUnknownTokens } from '@app/vocabulary'
 import ts from 'typescript'
 import type { ScenarioDraft } from './flowModel'
 import { lineOf, listExportedCalls, readProperty, readString, unwrap, type ParsedSource, type SourceReader } from './source'
-import type { DecisionNode, FlowNode, MeetingNode, MeetingPlaceNode, ModelProblem, PageNode, QuestionNode, RoleNode, RuleNode, WorkNode } from './types'
+import type { DecisionNode, FlowNode, LegacyFlowNode, LegacyTableNode, MeetingNode, MeetingPlaceNode, ModelProblem, PageNode, QuestionNode, RoleNode, RuleNode, WorkNode } from './types'
 
 export const meetingRoot = 'apps/web/meeting'
 
@@ -21,6 +21,8 @@ type Tables = {
   readonly pages: ReadonlyMap<string, PageNode>
   readonly works: ReadonlyMap<string, WorkNode>
   readonly rules: ReadonlyMap<string, RuleNode>
+  readonly legacyFlows: ReadonlyMap<string, LegacyFlowNode>
+  readonly legacyTables: ReadonlyMap<string, LegacyTableNode>
 }
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/
@@ -73,6 +75,14 @@ function readPlace(parsed: ParsedSource, node: ts.Expression, tables: Tables): M
   const rule = tables.rules.get(key)
   if (rule !== undefined) {
     return { kind: 'rule', id: rule.id, extension: null, title: rule.title }
+  }
+  const legacyFlow = tables.legacyFlows.get(key)
+  if (legacyFlow !== undefined) {
+    return { kind: 'legacy', id: legacyFlow.id, extension: null, title: legacyFlow.title }
+  }
+  const legacyTable = tables.legacyTables.get(key)
+  if (legacyTable !== undefined) {
+    return { kind: 'legacyTable', id: legacyTable.id, extension: null, title: legacyTable.title }
   }
   // そのほかの関数（画面の部品など）は、名前とファイルで出す。
   return { kind: 'source', id: key, extension: null, title: inner.text }

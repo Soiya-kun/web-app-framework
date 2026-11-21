@@ -11,15 +11,23 @@ export {
   outside,
 } from './definition'
 export type {
+  ElapseStep,
   ExtensionFlow,
   Flow,
   FlowExtension,
   FlowPrecondition,
   FlowStep,
+  NestStep,
+  OccurStep,
+  OperateStep,
+  OutsideStep,
+  ReplacementOption,
   Scenario,
   ScenarioExtension,
   ScenarioStep,
 } from './definition'
+export { defineLegacyFlow, defineLegacyTable, operateLegacy } from './legacy'
+export type { LegacyColumn, LegacyFlow, LegacyStep, LegacyTable, Replacement } from './legacy'
 export { listFlowPaths, numberSteps, runFlowPath } from './path'
 export type { FlowPath, PathAction } from './path'
 export type { CellExpectation, CellValue, Screen } from './screen'

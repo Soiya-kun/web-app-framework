@@ -3,6 +3,7 @@ import { conceptList, renderNounPhrase, type Locale } from '@app/vocabulary'
 import ts from 'typescript'
 import { readBackendModel } from './backendModel'
 import { readFlowModel, type ScenarioDraft } from './flowModel'
+import { checkLegacyTables, compareLegacyFlows } from './legacyModel'
 import { readMeetingModel } from './meetingModel'
 import { prepareLanguage } from '../language'
 import { prepareScreenText } from './screenText'
@@ -74,6 +75,8 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
   const draft = readFlowModel(reader, language)
   const { buttonTextOf } = prepareScreenText(language)
   const problems = [...draft.problems]
+  const legacy = compareLegacyFlows(draft.legacyFlows, draft.flows)
+  checkLegacyTables(draft.legacyTables, backend.tables, problems)
   const meeting = readMeetingModel(
     reader,
     {
@@ -83,6 +86,8 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
       pages: new Map(web.pages.map((page) => [`${page.file}#${page.component}`, page])),
       works: new Map(backend.works.map((work) => [`${work.file}#${work.id}`, work])),
       rules: new Map(backend.rules.map((rule) => [rule.id, rule])),
+      legacyFlows: new Map(legacy.legacyFlows.map((flow) => [`${flow.file}#${flow.id}`, flow])),
+      legacyTables: new Map(draft.legacyTables.map((table) => [`${table.file}#${table.id}`, table])),
     },
     problems,
   )
@@ -155,7 +160,9 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
     roles: draft.roles,
     meetings: meeting.meetings,
     questions: meeting.questions,
-    flows: draft.flows,
+    flows: legacy.flows,
+    legacyFlows: legacy.legacyFlows,
+    legacyTables: draft.legacyTables,
     scenarios,
     pages: web.pages,
     endpoints: backend.endpoints,
@@ -177,6 +184,8 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
       meetings: meeting.meetings.length,
       questions: meeting.questions.length,
       openQuestions: meeting.questions.filter((question) => question.decision === null).length,
+      legacyFlows: legacy.legacyFlows.length,
+      legacyTables: draft.legacyTables.length,
     },
   }
 }

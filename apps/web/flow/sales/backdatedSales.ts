@@ -1,15 +1,15 @@
-import { defineFlow, elapse, operate, outside } from '@app/flow'
+import { defineFlow, elapse, operate } from '@app/flow'
 import type { MemoryDatabase } from '@app/backend/testing'
 import { customers } from '../../test/billingSeed'
 import { closeInvoice } from '../../scenario/invoice/closeInvoice'
 import { issueInvoice } from '../../scenario/invoice/issueInvoice'
 import { createSales } from '../../scenario/sales/createSales'
-import { salesperson } from '../../role/role'
+import { deliverProduct } from '../../step/step'
 
 export const backdatedSales = defineFlow<Partial<MemoryDatabase>>('backdatedSales', {
   precondition: { summary: '親会社（末締め翌月末払い）が顧客として登録されている', seed: { customer: customers } },
   steps: [
-    outside(salesperson, 'deliverProduct'),
+    deliverProduct,
     operate(createSales, { customer: '株式会社親', salesDate: '2026-10-15', salesKind: '通常', itemName: '運賃', salesAmount: '100000', taxRate: '10%' }),
     elapse('closingDate', '2026-10-31'),
     operate(closeInvoice, {

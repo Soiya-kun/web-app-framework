@@ -12,6 +12,9 @@ import { CanvasPage } from './page/canvasPage'
 import { FlowPage } from './page/flowPage'
 import { GlossaryPage } from './page/glossaryPage'
 import { HomePage } from './page/homePage'
+import { LegacyListPage } from './page/legacyListPage'
+import { LegacyPage } from './page/legacyPage'
+import { LegacyTablePage } from './page/legacyTablePage'
 import { MeetingListPage } from './page/meetingListPage'
 import { MeetingPage } from './page/meetingPage'
 import { ScenarioPage } from './page/scenarioPage'
@@ -44,6 +47,9 @@ function RootLayout() {
           <Link to="/meetings" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
             {text.label('minutes')}
           </Link>
+          <Link to="/legacy" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
+            {text.label('legacy')}
+          </Link>
           <Link to="/glossary" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
             {text.label('glossary')}
           </Link>
@@ -69,6 +75,9 @@ const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: '/glossary', component: GlossaryPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/meetings', component: MeetingListPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/meeting/$meetingId', component: MeetingPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/legacy', component: LegacyListPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/legacy/$legacyId', component: LegacyPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/legacy/table/$tableId', component: LegacyTablePage }),
 ])
 
 /** 画面の道筋。静的なファイルとして置けるように、URL の # の後ろで道筋を持つ。テストではメモリ上の履歴を渡す。 */

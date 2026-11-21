@@ -1,15 +1,15 @@
-import { defineFlow, elapse, occur, operate } from '@app/flow'
+import { defineFlow, elapse, operate } from '@app/flow'
 import type { MemoryDatabase } from '@app/backend/testing'
 import { issuedOctoberSeed } from '../../test/billingSeed'
 import { closeInvoice } from '../../scenario/invoice/closeInvoice'
 import { createAdjustment } from '../../scenario/payment/createAdjustment'
 import { registerPayment } from '../../scenario/payment/registerPayment'
-import { customer } from '../../role/role'
+import { payInvoice } from '../../step/step'
 
 export const transferFeeDeduction = defineFlow<Partial<MemoryDatabase>>('transferFeeDeduction', {
   precondition: { summary: '親会社の10月の請求（今回請求額 110,000 円）を発行済み', seed: issuedOctoberSeed },
   steps: [
-    occur(customer, 'payInvoice'),
+    payInvoice,
     operate(registerPayment, { paymentDate: '2026-11-20', paymentAmount: '109560', payerName: 'カ)オヤ', customer: '株式会社親' }),
     operate(createAdjustment),
     elapse('closingDate', '2026-11-30'),
