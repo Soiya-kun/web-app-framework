@@ -45,14 +45,16 @@ describe('このリポジトリのモデル', () => {
     expect(nested?.parentIds).toEqual(['monthlyInvoice'])
   })
 
-  test('担当は役割の値から求め、議事録の課題は関係する業務フロー・シナリオ・拡張に付き、回答は後の回から求める', () => {
+  test('担当は役割の値から求め、議事録の課題と決めたことは指している場所に付き、課題の解決は後の回の決めたことから求める', () => {
     expect(model.roles.map((role) => [role.id, role.side])).toContainEqual(['accountant', 'business'])
     expect(model.flows.find((flow) => flow.id === 'monthlyInvoice')?.steps[0]).toMatchObject({ actor: 'salesperson', actorTitle: '営業担当' })
     const mistakenRefund = model.questions.find((question) => question.id === 'meeting20261017.mistakenRefund')
-    expect(mistakenRefund).toMatchObject({ assigneeId: 'approver', place: { kind: 'extension', scenarioId: 'registerPayment', extension: 'mistakenPayment' } })
-    expect(mistakenRefund?.answer?.meetingId).toBe('meeting20261031')
-    expect(model.questions.find((question) => question.id === 'meeting20261031.overdueReminder')).toMatchObject({ place: { kind: 'flow', flowId: 'overdueInvoice' }, answer: null })
-    expect(model.meetings.find((meeting) => meeting.id === 'meeting20261031')?.approval).toBeNull()
+    expect(mistakenRefund).toMatchObject({ assigneeId: 'approver', places: [{ kind: 'extension', id: 'registerPayment', extension: 'mistakenPayment' }] })
+    expect(mistakenRefund?.decision?.meetingId).toBe('meeting20261031')
+    expect(model.questions.find((question) => question.id === 'meeting20261031.overdueReminder')).toMatchObject({ places: [{ kind: 'flow', id: 'overdueInvoice' }], decision: null })
+    // 決めたことは、業務フロー・シナリオに加えて、画面・処理・規則も指せる。
+    const places = model.meetings.flatMap((meeting) => meeting.decisions.flatMap((decision) => decision.places.map((place) => [place.kind, place.id])))
+    expect(places).toEqual(expect.arrayContaining([['page', '/payments'], ['work', 'closeInvoice'], ['rule', 'packages/backend/src/domain/payment/payerPolicy.ts#decidePaymentCustomer']]))
   })
 
   test('英語のモデルは、同じつながりを英語の見出し・手順で持つ（人が書いた拡張の条件は書いたまま）', () => {
@@ -96,11 +98,11 @@ describe('書き方の規則の検査', () => {
   put('apps/web/src/salesPage.test.tsx', `test('画面のテスト', () => {})\n`)
   put(
     'apps/web/meeting/meeting20261003.ts',
-    `import { decide, defineMeeting, raise } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nimport { engineer, salesperson } from '../role/role'\nexport const meeting20261003 = defineMeeting('2026-10-03', {\n  title: '第1回',\n  attendees: [engineer, salesperson],\n  agenda: [createSales],\n  decisions: [decide(createSales, '決めたこと')],\n  questions: {\n    salesKind: raise(createSales, '区分はいくつか', { assignee: salesperson, deadline: '2026-10-10' }),\n    salesFoo: raise(createSales, '名前が単語帳にない', { assignee: salesperson, deadline: '2026-10-01' }),\n  },\n  approval: { on: '2026-10-05', by: engineer },\n})\n`,
+    `import { decide, defineMeeting, raise } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nimport { engineer, salesperson } from '../role/role'\nexport const meeting20261003 = defineMeeting('2026-10-03', {\n  title: '第1回',\n  attendees: [engineer, salesperson],\n  agenda: [createSales],\n  decisions: [decide(createSales, '決めたこと')],\n  questions: {\n    salesKind: raise(createSales, '区分はいくつか', { assignee: salesperson, deadline: '2026-10-10' }),\n    salesFoo: raise(createSales, '名前が単語帳にない', { assignee: salesperson, deadline: '2026-10-01' }),\n    salesTax: raise('createSales', '場所を文字で書いた', { assignee: salesperson, deadline: '2026-10-10' }),\n  },\n})\n`,
   )
   put(
     'apps/web/meeting/meeting20261010.ts',
-    `import { answer, defineMeeting } from '@app/flow'\nimport { salesperson } from '../role/role'\nimport { meeting20261003 } from './meeting20261003'\nexport const meetingSecond = defineMeeting('2026-10-10', {\n  title: '第2回',\n  attendees: [salesperson],\n  agenda: [],\n  answers: [answer(meeting20261003.questions.salesKind, '3つ'), answer(meeting20261003.questions.salesKind, 'もう一度')],\n})\n`,
+    `import { decide, defineMeeting } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nimport { salesperson } from '../role/role'\nimport { meeting20261003 } from './meeting20261003'\nexport const meetingSecond = defineMeeting('2026-10-10', {\n  title: '第2回',\n  attendees: [salesperson],\n  agenda: [],\n  decisions: [\n    decide(createSales, '3つ', { question: meeting20261003.questions.salesKind }),\n    decide(createSales, 'もう一度', { question: meeting20261003.questions.salesKind }),\n  ],\n})\n`,
   )
 
   const model = buildModel(fixtureRoot)
@@ -122,13 +124,13 @@ describe('書き方の規則の検査', () => {
     expect(rules('apps/web/src/salesPage.test.tsx')).toEqual(['test-place'])
   })
 
-  test('議事録: 変数の名前は meeting と日付、課題の名前は単語帳の言葉、期限は打合せの日以後、承認は業務部門', () => {
-    expect(rules('apps/web/meeting/meeting20261003.ts')).toEqual(['question-name', 'question-deadline', 'approval'])
+  test('議事録: 変数の名前は meeting と日付、課題の名前は単語帳の言葉、期限は打合せの日以後、場所は import した値', () => {
+    expect(rules('apps/web/meeting/meeting20261003.ts')).toEqual(['question-name', 'question-deadline', 'meeting-place'])
   })
 
-  test('議事録: 回答は、挙げた打合せより後の打合せで1回だけ', () => {
-    expect(rules('apps/web/meeting/meeting20261010.ts')).toEqual(['meeting', 'answer'])
-    expect(model.questions.find((question) => question.key === 'salesKind')?.answer).toMatchObject({ meetingId: 'meetingSecond', text: '3つ' })
+  test('議事録: 課題は、挙げた打合せより後の打合せで決めて、1回だけ解決する', () => {
+    expect(rules('apps/web/meeting/meeting20261010.ts')).toEqual(['meeting', 'decision-question'])
+    expect(model.questions.find((question) => question.key === 'salesKind')?.decision).toMatchObject({ meetingId: 'meetingSecond', text: '3つ' })
   })
 
   test('未着手のシナリオ・ケースは数える（問題にはしない）', () => {

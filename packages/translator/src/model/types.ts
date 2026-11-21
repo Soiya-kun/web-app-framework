@@ -39,14 +39,24 @@ export type RoleNode = SourcePlace & {
   readonly sideTitle: string
 }
 
-/** 議事録の項目が話している場所。業務フロー（大きい粒度）・シナリオ・拡張（細かい粒度）。 */
+/**
+ * 議事録の項目が話している場所。業務フロー（大きい粒度）・シナリオ・拡張（細かい粒度）と、
+ * 画面（page）・処理（work）・規則（rule）、そのほかの関数（source）。
+ */
 export type MeetingPlaceNode = {
-  readonly kind: 'flow' | 'scenario' | 'extension'
-  readonly flowId: string | null
-  readonly scenarioId: string | null
+  readonly kind: 'flow' | 'scenario' | 'extension' | 'page' | 'work' | 'rule' | 'source'
+  /** 指しているものの id（業務フロー・シナリオ・画面の道筋・処理・規則）。source なら「ファイル#名前」。 */
+  readonly id: string
   /** 拡張の名前（extension のとき）。 */
   readonly extension: string | null
   readonly title: string
+}
+
+/** 決めたこと。前の回の課題を解決するなら、その課題を指す。 */
+export type DecisionNode = {
+  readonly places: readonly MeetingPlaceNode[]
+  readonly text: string
+  readonly questionId: string | null
 }
 
 /** 打合せの議事録。 */
@@ -57,16 +67,12 @@ export type MeetingNode = SourcePlace & {
   readonly title: string
   readonly attendeeIds: readonly string[]
   readonly agenda: readonly MeetingPlaceNode[]
-  readonly decisions: readonly { readonly place: MeetingPlaceNode; readonly text: string }[]
+  readonly decisions: readonly DecisionNode[]
   /** この回で挙がった課題。 */
   readonly questionIds: readonly string[]
-  /** 前の回までの課題への回答。 */
-  readonly answers: readonly { readonly questionId: string; readonly text: string }[]
-  /** 業務部門の承認。null なら未承認。 */
-  readonly approval: { readonly on: string; readonly byId: string } | null
 }
 
-/** 課題。答えたかどうかは、後の回の回答から求める。 */
+/** 課題。解決したかどうかは、後の回でその課題を指して決めたことから求める。 */
 export type QuestionNode = SourcePlace & {
   /** 挙げた議事録と課題の名前（meeting20261003.overpaymentHandling）。 */
   readonly id: string
@@ -74,11 +80,12 @@ export type QuestionNode = SourcePlace & {
   readonly meetingId: string
   /** 挙げた打合せの日。 */
   readonly date: string
-  readonly place: MeetingPlaceNode
+  readonly places: readonly MeetingPlaceNode[]
   readonly text: string
   readonly assigneeId: string
   readonly deadline: string
-  readonly answer: { readonly meetingId: string; readonly date: string; readonly text: string } | null
+  /** 解決した決定（後の回の議事録・日・決めたこと）。まだなら null。 */
+  readonly decision: { readonly meetingId: string; readonly date: string; readonly text: string } | null
 }
 
 export type FlowNode = SourcePlace & {
@@ -214,10 +221,9 @@ export type ModelProgress = {
   readonly pendingExtensions: number
   readonly cases: number
   readonly pendingCases: number
-  /** 議事録の数と、そのうち業務部門の承認がないもの。 */
+  /** 議事録の数。 */
   readonly meetings: number
-  readonly unapprovedMeetings: number
-  /** 課題の数と、そのうちまだ回答がないもの。 */
+  /** 課題の数と、そのうちまだ解決していないもの（0 になれば、要件定義で決めることは残っていない）。 */
   readonly questions: number
   readonly openQuestions: number
 }

@@ -6,11 +6,13 @@ TypeScript（React + Hono）で業務 Web アプリを作るための土台（�
 - 識別子の英単語を単語帳で絞り、処理を日本語に機械翻訳して読めるようにする。
 - 単語帳から画面の文言ファイル（日本語・英語）を生成し、画面・コード・設計の言葉をそろえる。
 - 業務フローを TypeScript で書き、そのまま E2E として流す。コードのブラウザで、業務フローからシナリオ・処理・SQL までたどって読む。
-- 受託開発の要件定義のために、役割と議事録も TypeScript で書く。課題は担当の役割と期限を持ち、話した業務フロー・シナリオ・拡張の場所に残る。先方はブラウザで業務フローと議事録を確かめる。
+- 受託開発の要件定義のために、役割と議事録も TypeScript で書く。話したことは決めたことか課題にし、業務フロー・画面・処理に型でつなぐ。先方はブラウザで業務フローと議事録を確かめる。
 
 まず読むもの: [このリポジトリの考え方](docs/concept.md)（業務フローからコードまでを一続きに読む、という全体の話）。
 
 業務フロー・シナリオ・ケース・役割・議事録の書き方は [docs/flow-rules.md](docs/flow-rules.md)。
+
+要件定義は、「開発チームがヒアリング・提案する → 先方が返事をする → 文字起こしやメモから AI が議事録を作って PR にする → 開発チームと先方でレビューしてマージする」のサイクルで会話すればよい。未解決の課題がなくなれば、決めることは残っていない（[docs/flow-rules.md の 7.3](docs/flow-rules.md#73-要件定義の進め方--このサイクルで会話すればよい)）。
 
 要求と方針は [docs/requirements.md](docs/requirements.md)、業務の作りは [docs/domain-model.md](docs/domain-model.md)、単語帳の設計は [docs/vocabulary-design.md](docs/vocabulary-design.md)、処理の訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)（英語は [backend-process.en.md](docs/generated/backend-process.en.md)）、SQL の台帳は [docs/generated/sql-ledger.md](docs/generated/sql-ledger.md)。
 

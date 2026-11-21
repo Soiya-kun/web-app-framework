@@ -79,6 +79,9 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
       roles: new Map(draft.roles.map((role) => [`${role.file}#${role.variable}`, role])),
       flows: new Map(draft.flows.map((flow) => [`${flow.file}#${flow.id}`, flow])),
       scenarios: new Map(draft.scenarios.map((scenario) => [`${scenario.file}#${scenario.variable}`, scenario])),
+      pages: new Map(web.pages.map((page) => [`${page.file}#${page.component}`, page])),
+      works: new Map(backend.works.map((work) => [`${work.file}#${work.id}`, work])),
+      rules: new Map(backend.rules.map((rule) => [rule.id, rule])),
     },
     problems,
   )
@@ -170,9 +173,8 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
       cases: allCases.length,
       pendingCases: allCases.filter((caseNode) => caseNode.pending).length,
       meetings: meeting.meetings.length,
-      unapprovedMeetings: meeting.meetings.filter((item) => item.approval === null).length,
       questions: meeting.questions.length,
-      openQuestions: meeting.questions.filter((question) => question.answer === null).length,
+      openQuestions: meeting.questions.filter((question) => question.decision === null).length,
     },
   }
 }
