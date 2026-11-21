@@ -12,7 +12,7 @@ TypeScript（React + Hono）で業務 Web アプリを作るための土台（�
 
 業務フロー・シナリオ・ケース・役割・議事録の書き方は [docs/flow-rules.md](docs/flow-rules.md)。
 
-要件定義は、「開発チームがヒアリング・提案する → 先方が返事をする → 文字起こしやメモから AI が議事録を作って PR にする → 開発チームと先方でレビューしてマージする」のサイクルで会話すればよい。未解決の課題がなくなれば、決めることは残っていない（[docs/flow-rules.md の 7.3](docs/flow-rules.md#73-要件定義の進め方--このサイクルで会話すればよい)）。
+要件定義は、「開発チームがヒアリング・提案する → 先方が返事をする → 文字起こしやメモから AI が議事録を作って PR にする → 開発チームと先方でレビューしてマージする」のサイクルで会話すればよい。未解決の課題がなくなれば、決めることは残っていない（[docs/flow-rules.md の 7.3](docs/flow-rules.md#73-要件定義の進め方--このサイクルで会話すればよい)）。AI に向けた指示は、議事録を作る Skill（`.claude/skills/minutes`）の1つだけで、ほかの決まりはすべて CI で止める。
 
 要求と方針は [docs/requirements.md](docs/requirements.md)、業務の作りは [docs/domain-model.md](docs/domain-model.md)、単語帳の設計は [docs/vocabulary-design.md](docs/vocabulary-design.md)、処理の訳は [docs/generated/backend-process.md](docs/generated/backend-process.md)（英語は [backend-process.en.md](docs/generated/backend-process.en.md)）、SQL の台帳は [docs/generated/sql-ledger.md](docs/generated/sql-ledger.md)。
 
@@ -51,3 +51,4 @@ CI（`.github/workflows/check.yml`）は、main への push と Pull Request ご
 | `packages/flow` | 業務フロー・シナリオ・ケース・役割・議事録の書き方と、画面の操作の部品 |
 | `packages/translator` | 日本語翻訳ツール・SQL の台帳の生成・コードのブラウザのモデル（静的解析） |
 | `infra` | AWS の CDK |
+| `.claude/skills/minutes` | 文字起こしから議事録を作る Skill。AI に向けた指示はこれ1つだけで、ほかの決まりは CI で止める |
