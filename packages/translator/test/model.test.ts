@@ -105,6 +105,9 @@ describe('書き方の規則の検査', () => {
     `import { decide, defineMeeting } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nimport { salesperson } from '../role/role'\nimport { meeting20261003 } from './meeting20261003'\nexport const meetingSecond = defineMeeting('2026-10-10', {\n  title: '第2回',\n  attendees: [salesperson],\n  agenda: [],\n  decisions: [\n    decide(createSales, '3つ', { question: meeting20261003.questions.salesKind }),\n    decide(createSales, 'もう一度', { question: meeting20261003.questions.salesKind }),\n  ],\n})\n`,
   )
 
+  put('.claude/skills/review/SKILL.md', '---\nname: review\ndescription: レビューする\n---\n')
+  put('apps/web/CLAUDE.md', '# 決まり\n')
+  put('.cursorrules', '決まり\n')
   const model = buildModel(fixtureRoot)
   const rules = (file: string) => model.problems.filter((problem) => problem.file === file).map((problem) => problem.rule)
 
@@ -126,6 +129,13 @@ describe('書き方の規則の検査', () => {
 
   test('議事録: 変数の名前は meeting と日付、課題の名前は単語帳の言葉、期限は打合せの日以後、場所は import した値', () => {
     expect(rules('apps/web/meeting/meeting20261003.ts')).toEqual(['question-name', 'question-deadline', 'meeting-place'])
+  })
+
+  test('AI への指示: Skill は議事録を作る minutes の1つだけで、ほかに AI に向けた指示のファイルを置かない', () => {
+    expect(rules('.claude/skills')).toEqual(['skill'])
+    expect(rules('.claude/skills/minutes/SKILL.md')).toEqual(['skill'])
+    expect(rules('apps/web/CLAUDE.md')).toEqual(['skill'])
+    expect(rules('.cursorrules')).toEqual(['skill'])
   })
 
   test('議事録: 課題は、挙げた打合せより後の打合せで決めて、1回だけ解決する', () => {

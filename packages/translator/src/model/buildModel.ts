@@ -6,6 +6,7 @@ import { readFlowModel, type ScenarioDraft } from './flowModel'
 import { readMeetingModel } from './meetingModel'
 import { prepareLanguage } from '../language'
 import { prepareScreenText } from './screenText'
+import { readSkillProblems } from './skillModel'
 import { prepareSourceReader, readString, unwrap } from './source'
 import type { FlowStepNode, GlossaryEntry, Model, PageNode, ScenarioNode, ScenarioUse } from './types'
 import { readWebModel, type WebModel } from './webModel'
@@ -85,6 +86,7 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
     },
     problems,
   )
+  readSkillProblems(root, problems)
 
   // シナリオを使う段と、拡張を流す経路。
   const usedIn = new Map<string, ScenarioUse[]>()
