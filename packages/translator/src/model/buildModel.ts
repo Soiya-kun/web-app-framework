@@ -3,6 +3,7 @@ import { conceptList, renderNounPhrase, type Locale } from '@app/vocabulary'
 import ts from 'typescript'
 import { readBackendModel } from './backendModel'
 import { readFlowModel, type ScenarioDraft } from './flowModel'
+import { listUnestimatedScenarios, readEstimates } from './estimateModel'
 import { checkLegacyTables, compareLegacyFlows } from './legacyModel'
 import { readMeetingModel } from './meetingModel'
 import { prepareLanguage } from '../language'
@@ -77,20 +78,18 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
   const problems = [...draft.problems]
   const legacy = compareLegacyFlows(draft.legacyFlows, draft.flows)
   checkLegacyTables(draft.legacyTables, backend.tables, problems)
-  const meeting = readMeetingModel(
-    reader,
-    {
-      roles: new Map(draft.roles.map((role) => [`${role.file}#${role.variable}`, role])),
-      flows: new Map(draft.flows.map((flow) => [`${flow.file}#${flow.id}`, flow])),
-      scenarios: new Map(draft.scenarios.map((scenario) => [`${scenario.file}#${scenario.variable}`, scenario])),
-      pages: new Map(web.pages.map((page) => [`${page.file}#${page.component}`, page])),
-      works: new Map(backend.works.map((work) => [`${work.file}#${work.id}`, work])),
-      rules: new Map(backend.rules.map((rule) => [rule.id, rule])),
-      legacyFlows: new Map(legacy.legacyFlows.map((flow) => [`${flow.file}#${flow.id}`, flow])),
-      legacyTables: new Map(draft.legacyTables.map((table) => [`${table.file}#${table.id}`, table])),
-    },
-    problems,
-  )
+  const placeTables = {
+    roles: new Map(draft.roles.map((role) => [`${role.file}#${role.variable}`, role])),
+    flows: new Map(draft.flows.map((flow) => [`${flow.file}#${flow.id}`, flow])),
+    scenarios: new Map(draft.scenarios.map((scenario) => [`${scenario.file}#${scenario.variable}`, scenario])),
+    pages: new Map(web.pages.map((page) => [`${page.file}#${page.component}`, page])),
+    works: new Map(backend.works.map((work) => [`${work.file}#${work.id}`, work])),
+    rules: new Map(backend.rules.map((rule) => [rule.id, rule])),
+    legacyFlows: new Map(legacy.legacyFlows.map((flow) => [`${flow.file}#${flow.id}`, flow])),
+    legacyTables: new Map(draft.legacyTables.map((table) => [`${table.file}#${table.id}`, table])),
+  }
+  const meeting = readMeetingModel(reader, placeTables, problems)
+  const estimates = readEstimates(reader, placeTables, problems)
   readSkillProblems(root, problems)
 
   // シナリオを使う段と、拡張を流す経路。
@@ -152,6 +151,7 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
     }
   })
 
+  const unestimatedScenarioIds = listUnestimatedScenarios(estimates, scenarios, legacy.flows)
   const countSteps = (steps: readonly FlowStepNode[]): number => steps.reduce((count, step) => count + 1 + step.extensions.reduce((sum, extension) => sum + countSteps(extension.then), 0), 0)
   const allExtensions = scenarios.flatMap((scenario) => scenario.extensions)
   const allCases = scenarios.flatMap((scenario) => scenario.cases)
@@ -160,6 +160,8 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
     roles: draft.roles,
     meetings: meeting.meetings,
     questions: meeting.questions,
+    estimates,
+    unestimatedScenarioIds,
     flows: legacy.flows,
     legacyFlows: legacy.legacyFlows,
     legacyTables: draft.legacyTables,
@@ -186,6 +188,9 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
       openQuestions: meeting.questions.filter((question) => question.decision === null).length,
       legacyFlows: legacy.legacyFlows.length,
       legacyTables: draft.legacyTables.length,
+      estimates: estimates.length,
+      estimateAmount: estimates.at(-1)?.totalAmount ?? 0,
+      unestimatedScenarios: unestimatedScenarioIds.length,
     },
   }
 }

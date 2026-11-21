@@ -1,5 +1,6 @@
 import type {
   EndpointNode,
+  EstimateNode,
   FlowNode,
   LegacyFlowNode,
   LegacyTableNode,
@@ -32,6 +33,7 @@ export type ModelTable = {
   readonly roles: ReadonlyMap<string, RoleNode>
   readonly meetings: ReadonlyMap<string, MeetingNode>
   readonly questions: ReadonlyMap<string, QuestionNode>
+  readonly estimates: ReadonlyMap<string, EstimateNode>
 }
 
 const ModelContext = createContext<ModelTable | null>(null)
@@ -53,6 +55,7 @@ function prepareModelTable(model: Model): ModelTable {
     roles: prepareNodeTable(model.roles),
     meetings: prepareNodeTable(model.meetings),
     questions: prepareNodeTable(model.questions),
+    estimates: prepareNodeTable(model.estimates),
   }
 }
 

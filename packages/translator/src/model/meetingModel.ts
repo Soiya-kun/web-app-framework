@@ -13,8 +13,8 @@ export type MeetingModel = {
   readonly questions: QuestionNode[]
 }
 
-/** 議事録から指せるもの。キーは「定義したファイル#名前」。 */
-type Tables = {
+/** 議事録・見積から指せるもの。キーは「定義したファイル#名前」。 */
+export type PlaceTables = {
   readonly roles: ReadonlyMap<string, RoleNode>
   readonly flows: ReadonlyMap<string, FlowNode>
   readonly scenarios: ReadonlyMap<string, ScenarioDraft>
@@ -41,8 +41,8 @@ function placeKeyOf(parsed: ParsedSource, node: ts.Expression | undefined): stri
   return imported.file === null ? undefined : `${imported.file}#${imported.name}`
 }
 
-/** 議事録の項目が話している場所（業務フロー・シナリオ・拡張・画面・処理・規則・そのほかの関数）。 */
-function readPlace(parsed: ParsedSource, node: ts.Expression, tables: Tables): MeetingPlaceNode | undefined {
+/** 議事録・見積の項目が指している場所（業務フロー・シナリオ・拡張・画面・処理・規則・現行の業務フロー・そのほかの関数）。 */
+export function readPlace(parsed: ParsedSource, node: ts.Expression, tables: PlaceTables): MeetingPlaceNode | undefined {
   const inner = unwrap(node)
   if (ts.isCallExpression(inner) && ts.isIdentifier(inner.expression) && inner.expression.text === 'extensionOf') {
     const scenario = tables.scenarios.get(placeKeyOf(parsed, inner.arguments[0]) ?? '')
@@ -98,7 +98,7 @@ function callOf(node: ts.Expression, calleeName: string): ts.CallExpression | un
   return ts.isCallExpression(inner) && ts.isIdentifier(inner.expression) && inner.expression.text === calleeName ? inner : undefined
 }
 
-export function readMeetingModel(reader: SourceReader, tables: Tables, problems: ModelProblem[]): MeetingModel {
+export function readMeetingModel(reader: SourceReader, tables: PlaceTables, problems: ModelProblem[]): MeetingModel {
   const meetings: MeetingNode[] = []
   const questions: QuestionNode[] = []
   const pendingDecisions: { readonly questionKey: string; readonly meetingId: string; readonly date: string; readonly text: string; readonly file: string; readonly line: number }[] = []

@@ -168,6 +168,25 @@ describe('キャンバス', () => {
     expect(within(screen.getByRole('table', { name: '売上伝票の列' })).getByRole('row', { name: /売上日/ })).toHaveTextContent('sales.sales_date')
   })
 
+  test('見積の一覧に版ごとの合計と、いちばん新しい見積にないシナリオを出し、1つの版の項目と対象・前の版との差を出す', async () => {
+    const { user } = await launchBrowser('/estimates')
+
+    const estimates = screen.getByRole('table', { name: '見積' })
+    expect(within(estimates).getByRole('row', { name: /概算見積/ })).toHaveTextContent('￥6,400,000')
+    expect(screen.getByRole('region', { name: '未見積のシナリオ（1）' })).toHaveTextContent('調整を登録する')
+
+    await user.click(within(estimates).getByRole('link', { name: '見積（第3回の打合せのあと）' }))
+    const items = screen.getByRole('table', { name: '見積（第3回の打合せのあと）の見積項目' })
+    expect(within(items).getByRole('row', { name: /売上の登録/ })).toHaveTextContent('売上を登録する・売上登録￥400,000')
+    expect(within(items).getByRole('row', { name: /合計/ })).toHaveTextContent('概算見積（-￥600,000）￥5,800,000')
+  })
+
+  test('シナリオのページに、そのシナリオを指すいちばん新しい見積の項目を出す', async () => {
+    await launchBrowser('/scenario/createSales')
+
+    expect(screen.getByRole('region', { name: '見積（￥400,000）' })).toHaveTextContent('売上の登録￥400,000')
+  })
+
   test('新しい業務フローのページから、置き換わる現行の業務フローへ移れる', async () => {
     const { user } = await launchBrowser('/flow/monthlyInvoice')
 

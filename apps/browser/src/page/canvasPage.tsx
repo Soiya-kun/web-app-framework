@@ -431,6 +431,9 @@ function CanvasScreen({ store }: { readonly store: CanvasStore }) {
               <Link to="/legacy" className="rounded-lg px-2.5 py-1 text-muted hover:bg-canvas hover:text-ink">
                 {text.label('legacy')}
               </Link>
+              <Link to="/estimates" className="rounded-lg px-2.5 py-1 text-muted hover:bg-canvas hover:text-ink">
+                {text.label('estimate')}
+              </Link>
               <Link to="/glossary" className="rounded-lg px-2.5 py-1 text-muted hover:bg-canvas hover:text-ink">
                 {text.label('glossary')}
               </Link>

@@ -3,6 +3,7 @@ import { PlaceMinutes } from '../component/meetingPart'
 import { Cell, HeaderCell, PageTitle, Section, SourcePlace, Table, TextLink } from '../component/part'
 import { useModel } from '../model'
 import { useLabelFormat, useText } from '../text'
+import { PlaceEstimate } from '../component/estimatePart'
 
 const legacyTableRoute = getRouteApi('/legacy/table/$tableId')
 
@@ -70,6 +71,7 @@ export function LegacyTablePage() {
           ))}
         </ul>
       </Section>
+      <PlaceEstimate matchPlace={(place) => place.kind === 'legacyTable' && place.id === table.id} />
       <PlaceMinutes matchPlace={(place) => place.kind === 'legacyTable' && place.id === table.id} />
     </>
   )

@@ -7,6 +7,7 @@ import { PlaceMinutes } from '../component/meetingPart'
 import { Badge, Cell, HeaderCell, PageTitle, Section, SourcePlace, StepList, Table, TextLink } from '../component/part'
 import { useModel } from '../model'
 import { useLabelFormat, useText } from '../text'
+import { PlaceEstimate } from '../component/estimatePart'
 
 const legacyRoute = getRouteApi('/legacy/$legacyId')
 
@@ -87,6 +88,7 @@ export function LegacyPage() {
       </Section>
       <ScreenComparison legacy={legacy} />
       <NewStepList legacy={legacy} />
+      <PlaceEstimate matchPlace={(place) => place.kind === 'legacy' && place.id === legacy.id} />
       <PlaceMinutes matchPlace={(place) => place.kind === 'legacy' && place.id === legacy.id} />
     </>
   )

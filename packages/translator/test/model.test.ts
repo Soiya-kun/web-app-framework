@@ -92,6 +92,21 @@ describe('このリポジトリのモデル', () => {
     expect(model.legacyTables.find((table) => table.id === 'legacyPayment')?.columns.at(-1)?.replacement).toEqual({ tableId: 'adjustment', column: 'adjustment_amount' })
   })
 
+  test('見積の項目は対象（業務フロー・シナリオ・画面・現行の業務フロー・旧システムのテーブル）を指し、いちばん新しい見積にないシナリオを数える', () => {
+    expect(model.estimates.map((estimate) => [estimate.id, estimate.totalAmount])).toEqual([
+      ['estimate20260920', 6_400_000],
+      ['estimate20261031', 5_800_000],
+    ])
+    const latest = model.estimates.at(-1)
+    expect(latest?.items.find((item) => item.title === '売上の登録')?.targets.map((target) => [target.kind, target.id])).toEqual([
+      ['scenario', 'createSales'],
+      ['page', '/sales/new'],
+    ])
+    expect(latest?.items.find((item) => item.title === '旧システムのデータの移行')?.targets.map((target) => target.kind)).toEqual(['legacyTable', 'legacyTable', 'legacyTable'])
+    expect(model.estimates[0]?.items.find((item) => item.title === '現行の請求業務からの移行')?.targets).toMatchObject([{ kind: 'legacy', id: 'legacyMonthlyInvoice' }])
+    expect(model.unestimatedScenarioIds).toEqual(['createAdjustment'])
+  })
+
   test('英語のモデルは、同じつながりを英語の見出し・手順で持つ（人が書いた拡張の条件は書いたまま）', () => {
     const englishModel = buildModel(repositoryRoot, 'en')
     const scenario = englishModel.scenarios.find((candidate) => candidate.id === 'registerPayment')
@@ -158,6 +173,11 @@ describe('書き方の規則の検査', () => {
   )
   put('apps/web/legacy/legacyInvoice.ts', `import { defineLegacyFlow, elapse } from '@app/flow'\nexport const legacyInvoice = defineLegacyFlow('legacyInvoice', { steps: [elapse('closingDate')] })\n`)
 
+  put(
+    'apps/web/estimate/estimate20261001.ts',
+    `import { defineEstimate } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nexport const estimateFirst = defineEstimate('2026-10-01', {\n  title: '見積',\n  items: [\n    { title: '売上の登録', amount: 300_000, targets: [createSales] },\n    { title: '金額がない' },\n    { title: '対象を文字で書いた', amount: 100_000, targets: ['createSales'] },\n  ],\n})\n`,
+  )
+
   put('.claude/skills/review/SKILL.md', '---\nname: review\ndescription: レビューする\n---\n')
   put('apps/web/CLAUDE.md', '# 決まり\n')
   put('.cursorrules', '決まり\n')
@@ -193,6 +213,11 @@ describe('書き方の規則の検査', () => {
     expect(rules('apps/web/legacy/sales/sales.ts')).toEqual(['legacy-name', 'legacy-step', 'legacy-step', 'legacy-step', 'legacy-step'])
     expect(rules('apps/web/legacy/legacyInvoice.ts')).toEqual(['legacy-place'])
     expect(rules('apps/web/legacy/table.ts')).toEqual(['legacy-table'])
+  })
+
+  test('見積: 変数の名前は estimate と日付、項目は名前と金額、対象は import した値', () => {
+    expect(rules('apps/web/estimate/estimate20261001.ts')).toEqual(['estimate', 'estimate-item', 'estimate-item'])
+    expect(model.estimates.map((estimate) => [estimate.id, estimate.totalAmount])).toEqual([['estimateFirst', 400_000]])
   })
 
   test('AI への指示: Skill は議事録を作る minutes の1つだけで、ほかに AI に向けた指示のファイルを置かない', () => {

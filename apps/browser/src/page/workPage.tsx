@@ -4,6 +4,7 @@ import { PlaceMinutes, prepareWorkMatch } from '../component/meetingPart'
 import { Badge, PageTitle, Section, SourcePlace, TextLink } from '../component/part'
 import { useModel } from '../model'
 import { useText, useLabelFormat } from '../text'
+import { PlaceEstimate } from '../component/estimatePart'
 
 const workRoute = getRouteApi('/work/$workId')
 
@@ -98,6 +99,7 @@ export function WorkPage() {
           </ul>
         </Section>
       </div>
+      <PlaceEstimate matchPlace={prepareWorkMatch(work)} />
       <PlaceMinutes matchPlace={prepareWorkMatch(work)} />
     </>
   )

@@ -5,6 +5,7 @@ import { useModel } from '../model'
 import { readCaseKindLabels } from '../component/kindLabel'
 import { useText, useLabelFormat } from '../text'
 import { PlaceMinutes, prepareScenarioMatch } from '../component/meetingPart'
+import { PlaceEstimate } from '../component/estimatePart'
 
 const scenarioRoute = getRouteApi('/scenario/$scenarioId')
 
@@ -167,6 +168,7 @@ export function ScenarioPage() {
           </ul>
         </Section>
       </div>
+      <PlaceEstimate matchPlace={prepareScenarioMatch(scenario)} />
       <PlaceMinutes matchPlace={prepareScenarioMatch(scenario)} />
     </>
   )

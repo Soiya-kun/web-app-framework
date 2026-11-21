@@ -46,7 +46,7 @@
 - { id: shift, ja: { dictionary: ずらす, class: godan } }
 - { id: place, en: { noun: placement }, ja: { dictionary: 当てはめる, class: ichidan } }
 - { id: attach, en: { noun: attachment }, ja: { dictionary: 付ける, class: ichidan, noun: 付与 } }
-- { id: sum, en: { past: summed, gerund: summing }, ja: { stem: 合計, class: suru } }
+- { id: sum, en: { past: summed, gerund: summing, noun: sum }, ja: { stem: 合計, class: suru } }
 - { id: calculate, en: { noun: calculation }, ja: { stem: 計算, class: suru } }
 - { id: display, ja: { stem: 表示, class: suru } }
 - { id: bill, en: { noun: billing }, ja: { dictionary: 請求に載せる, class: ichidan, noun: 請求への計上 } }

@@ -26,6 +26,8 @@ export type {
   ScenarioExtension,
   ScenarioStep,
 } from './definition'
+export { defineEstimate } from './estimate'
+export type { Estimate, EstimateItem } from './estimate'
 export { defineLegacyFlow, defineLegacyTable, operateLegacy } from './legacy'
 export type { LegacyColumn, LegacyFlow, LegacyScreen, LegacyScreenStep, LegacyStep, LegacyTable, Replacement } from './legacy'
 export { listFlowPaths, numberSteps, runFlowPath } from './path'
