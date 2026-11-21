@@ -27,7 +27,7 @@ export type {
   ScenarioStep,
 } from './definition'
 export { defineLegacyFlow, defineLegacyTable, operateLegacy } from './legacy'
-export type { LegacyColumn, LegacyFlow, LegacyStep, LegacyTable, Replacement } from './legacy'
+export type { LegacyColumn, LegacyFlow, LegacyScreen, LegacyScreenStep, LegacyStep, LegacyTable, Replacement } from './legacy'
 export { listFlowPaths, numberSteps, runFlowPath } from './path'
 export type { FlowPath, PathAction } from './path'
 export type { CellExpectation, CellValue, Screen } from './screen'

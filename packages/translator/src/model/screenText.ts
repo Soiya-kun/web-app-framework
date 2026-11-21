@@ -205,15 +205,41 @@ export function prepareScreenText(language: Language) {
     return scope === '' || language.locale === 'ja' ? `${scope}${step}` : `${scope}${step.charAt(0).toLowerCase()}${step.slice(1)}`
   }
 
-  /** 関数の本体を、Screen の操作の手順の並びにする。Screen の操作でない文は、コードのまま出す。 */
-  function translateScreenBody(body: ts.ConciseBody, constants: Constants = new Map()): { steps: string[]; flat: boolean } {
+  /** 旧システムの画面の操作を手順にする。画面・項目・ボタンの名前は、書いた文言のまま出す。 */
+  function translateLegacyCall(call: ts.CallExpression, constants: Constants = new Map()): string | undefined {
+    if (!ts.isPropertyAccessExpression(call.expression) || !ts.isIdentifier(call.expression.expression)) {
+      return undefined
+    }
+    const [first, second] = call.arguments
+    const value = (node: ts.Expression | undefined) => (node === undefined ? '' : valueOf(node, constants))
+    const name = (node: ts.Expression | undefined) => readString(node) ?? value(node)
+    switch (call.expression.name.text) {
+      case 'go':
+        return sentence.go(name(first))
+      case 'follow':
+        return sentence.follow(value(first))
+      case 'fill':
+        return sentence.fill(name(first), value(second))
+      case 'choose':
+        return sentence.choose(name(first), value(second))
+      case 'press':
+        return sentence.press(name(first))
+      case 'expectText':
+        return sentence.expectText(value(first))
+      default:
+        return undefined
+    }
+  }
+
+  /** 関数の本体を、Screen の操作の手順の並びにする（legacy なら旧システムの画面の操作）。Screen の操作でない文は、コードのまま出す。 */
+  function translateScreenBody(body: ts.ConciseBody, constants: Constants = new Map(), legacy = false): { steps: string[]; flat: boolean } {
     const statements = ts.isBlock(body) ? [...body.statements] : []
     let flat = ts.isBlock(body)
     const steps = statements.map((statement) => {
       if (ts.isExpressionStatement(statement)) {
         const expression = unwrap(statement.expression)
         if (ts.isCallExpression(expression)) {
-          const translated = translateScreenCall(expression, constants)
+          const translated = legacy ? translateLegacyCall(expression, constants) : translateScreenCall(expression, constants)
           if (translated !== undefined) {
             return translated
           }

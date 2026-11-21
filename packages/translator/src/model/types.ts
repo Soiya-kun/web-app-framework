@@ -30,6 +30,9 @@ export type FlowStepNode = SourcePlace & {
   readonly replacements: readonly ReplacementNode[]
   readonly tableIds: readonly string[]
   readonly change: StepChange | null
+  /** 旧システムの画面の手順と、そのあと確かめること（旧システムの操作に書いたときだけ）。 */
+  readonly screenSteps: readonly string[]
+  readonly guarantee: readonly string[]
 }
 
 export type FlowExtensionNode = {

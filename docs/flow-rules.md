@@ -216,7 +216,7 @@ describeScenario(registerPayment, (cases) => {
 | `question-name`・`question-deadline` | 課題の名前は単語帳の言葉。期限は YYYY-MM-DD で、打合せの日以後 |
 | `decision-question` | 課題を解決する決定は `{ question: 議事録.questions.課題の名前 }` の形で、課題を挙げた打合せより後の打合せで1回だけ |
 | `legacy-name`・`legacy-place` | 現行の業務フローは `apps/web/legacy/<領域>/` に `defineLegacyFlow(名前, { replacement, steps })` で書く。名前は変数と同じ・単語帳の言葉・名詞句で、`legacy` で始める |
-| `legacy-step` | 現行の業務フローに画面の操作（`operate`）は書かない。変わらない業務は `apps/web/step` の値を使う。置き換え先・旧システムのテーブルは値を import して指す |
+| `legacy-step` | 現行の業務フローに画面の操作（`operate`）は書かない。変わらない業務は `apps/web/step` の値を使う。置き換え先・旧システムのテーブルは値を import して指す。旧システムの画面の手順は、画面の操作を並べるだけ |
 | `legacy-table` | 旧システムのテーブルは列の名前と意味を書く。列の移す先（`テーブル.列`）は、新しいテーブル（マイグレーション）にあるものにする |
 | `skill` | Skill は `.claude/skills/minutes`（文字起こしから議事録を作る）の1つだけで、先頭に `name: minutes` と `description` を書く。ほかの Skill・AI に向けた指示のファイル（`CLAUDE.md`・`AGENTS.md`・`.cursorrules` など）・置き場所（`.claude/commands`・`.agents` など）は置かない |
 
@@ -328,11 +328,28 @@ export const legacyMonthlyInvoice = defineLegacyFlow('legacyMonthlyInvoice', {
 | --- | --- |
 | 変わらない業務・イベント | `apps/web/step` の値（新しい業務フローと同じ値） |
 | 変わる業務・イベント | `outside(担当, 名前, { replacement })`・`occur(担当, 名前, { replacement })` |
-| 旧システムの操作 | `operateLegacy(担当, 名前, { tables, replacement })` |
+| 旧システムの操作 | `operateLegacy(担当, 名前, { tables, replacement, operate, confirm })` |
 | 時の経過 | `elapse(名詞)`（日付は書かない） |
 | 子フロー | `nest(現行の業務フロー)` |
 
 - 置き換え先（`replacement`）は、新しい業務フローのシナリオ・`apps/web/step` の値・業務フローを値で指す。いくつでもよい。新しい業務フローやシナリオの名前を変えたり消したりすると、型のエラーになる。
+- 旧システムの操作には、残したければ画面の手順（`operate`）と、そのあと確かめること（`confirm`）を書ける。実装はないので動かさず、スタブの E2E のように手順の形で残す。画面・項目・ボタンの名前は、旧システムの画面の文言をそのまま書く。画面の操作（`await screen.…`）を並べるだけにする。
+
+```ts
+operateLegacy(accountant, 'enterSales', {
+  tables: [legacySales],
+  replacement: createSales,
+  operate: async (screen) => {
+    await screen.go('売上伝票入力')              // 旧システムのメニューの名前
+    await screen.fill('得意先コード', '000123')
+    await screen.press('登録(F12)')
+  },
+  confirm: async (screen) => {
+    await screen.expectText('登録しました')
+  },
+})
+```
+
 - 旧システムのテーブルは `defineLegacyTable(物理名, { title, note, columns })` で書く。列には物理名・意味・型・備考と、移す先の新しいテーブルの列（`replacement: 'sales.sales_date'`）を書く。移す先は検査でマイグレーションと照らし合わせる。
 
 静的解析は、現行の業務フローの段を、置き換え先の新しい業務フロー（子フローの中まで）と比べる。
@@ -369,7 +386,7 @@ export const legacyMonthlyInvoice = defineLegacyFlow('legacyMonthlyInvoice', {
 
 - 一覧: 進み具合（議事録の数、課題と未解決の数を含む）・規則の問題・業務フロー（領域ごと。未着手の数付き）・シナリオ・処理・テーブルの一覧と、名前の検索。
 - 現行（上のナビゲーションの「現行」）: 現行の業務フロー（領域ごと。置き換え先と、同じ・置き換え・廃止・新しい段の数）と、旧システムのテーブルの一覧。
-- 現行の業務フロー: レーン図（旧システムの操作と、段ごとの変わり方）、新しい業務フローとの比べ（段・変わり方・置き換え先・旧システムのテーブル）、新しい段、指している課題と決めたこと。
+- 現行の業務フロー: レーン図（旧システムの操作と、段ごとの変わり方）、新しい業務フローとの比べ（段・変わり方・置き換え先・旧システムのテーブル）、画面の比較（旧システムの画面の手順と、置き換え先のシナリオの手順を並べる）、新しい段、指している課題と決めたこと。
 - 旧システムのテーブル: 列（意味・物理名・型・備考・移す先の新しいテーブルの列）と、使っている現行の業務フローの段。
 - 議事録（上のナビゲーションの「議事録」）: 未解決の課題（期限の順。担当の役割・期限・期日超過）、議事録の一覧（日付・決めたこと・課題・解決した課題の数）、役割の一覧（立場ごと）。
 - 1回の議事録: 出席者（立場ごと）、議題、決めたこと（指している場所と、解決した課題）、課題（場所・担当・期限・状態）。場所を押すと、その業務フロー・シナリオ・処理のページへ移る。

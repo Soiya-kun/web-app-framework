@@ -4,7 +4,7 @@ import { FlowDiagram } from '../component/flowDiagram'
 import { readStepKindLabels } from '../component/kindLabel'
 import { ChangeBadge, ReplacementList, useChangeSummary } from '../component/legacyPart'
 import { PlaceMinutes } from '../component/meetingPart'
-import { Badge, Cell, HeaderCell, PageTitle, Section, SourcePlace, Table, TextLink } from '../component/part'
+import { Badge, Cell, HeaderCell, PageTitle, Section, SourcePlace, StepList, Table, TextLink } from '../component/part'
 import { useModel } from '../model'
 import { useLabelFormat, useText } from '../text'
 
@@ -85,6 +85,7 @@ export function LegacyPage() {
           </tbody>
         </Table>
       </Section>
+      <ScreenComparison legacy={legacy} />
       <NewStepList legacy={legacy} />
       <PlaceMinutes matchPlace={(place) => place.kind === 'legacy' && place.id === legacy.id} />
     </>
@@ -111,6 +112,57 @@ function NewStepList({ legacy }: { readonly legacy: LegacyFlowNode }) {
           </li>
         ))}
       </ul>
+    </Section>
+  )
+}
+
+/** 画面の手順を残した旧システムの操作と、置き換え先のシナリオの手順を並べる。 */
+function ScreenComparison({ legacy }: { readonly legacy: LegacyFlowNode }) {
+  const text = useText()
+  const labelFormat = useLabelFormat()
+  const { scenarios } = useModel()
+  const operationSteps = legacy.steps.filter((step) => step.screenSteps.length > 0)
+  if (operationSteps.length === 0) {
+    return null
+  }
+  return (
+    <Section title={labelFormat.joinItem(text.label('screen'), text.label('comparison'))}>
+      <div className="flex flex-col gap-5">
+        {operationSteps.map((step) => (
+          <div key={step.number} className="grid gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <h3 className="text-sm font-bold">
+                {step.number}. {step.title}
+                <span className="ml-2 text-xs font-normal text-muted">{text.label('legacyOperation')}</span>
+              </h3>
+              <StepList label={labelFormat.joinItem(step.title, text.label('step'))} steps={step.screenSteps} />
+              {step.guarantee.length === 0 ? null : <p className="text-xs text-muted">{labelFormat.joinNote(text.label('successGuarantee'), step.guarantee.join(labelFormat.mark))}</p>}
+            </div>
+            <div className="flex flex-col gap-3">
+              {step.replacements.flatMap((replacement) => {
+                const scenario = replacement.kind === 'scenario' ? scenarios.get(replacement.id) : undefined
+                return scenario === undefined
+                  ? []
+                  : [
+                      <div key={scenario.id} className="flex flex-col gap-1">
+                        <h3 className="text-sm font-bold">
+                          <TextLink to="/scenario/$scenarioId" params={{ scenarioId: scenario.id }}>
+                            {scenario.title}
+                          </TextLink>
+                          <span className="ml-2 text-xs font-normal text-muted">{text.label('replacement')}</span>
+                        </h3>
+                        {scenario.pending ? (
+                          <Badge tone="pending">{text.label('pending')}</Badge>
+                        ) : (
+                          <StepList label={labelFormat.joinItem(scenario.title, text.label('step'))} steps={scenario.steps} />
+                        )}
+                      </div>,
+                    ]
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </Section>
   )
 }

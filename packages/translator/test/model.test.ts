@@ -73,6 +73,17 @@ describe('このリポジトリのモデル', () => {
     ])
     expect(legacy?.steps[3]?.replacements.map((replacement) => replacement.title)).toEqual(['請求を締める', '請求を発行する'])
     expect(legacy?.steps[3]?.tableIds).toEqual(['legacySales', 'legacyInvoice'])
+    // 旧システムの画面の手順は、書いた文言のまま日本語の手順にする。
+    expect(legacy?.steps[1]?.screenSteps).toEqual([
+      '「売上伝票入力」を開く',
+      '得意先コードに「000123」を入れる',
+      '売上日に「20261015」を入れる',
+      '品名に「運賃」を入れる',
+      '金額に「100000」を入れる',
+      '「登録(F12)」を押す',
+    ])
+    expect(legacy?.steps[1]?.guarantee).toEqual(['「登録しました」と出ることを確かめる'])
+    expect(legacy?.steps[0]?.screenSteps).toEqual([])
     expect(legacy?.addedSteps.map((step) => [step.number, step.title])).toEqual([
       ['5', '請求を閲覧する'],
       ['8.3', '入金を閲覧する'],
@@ -143,7 +154,7 @@ describe('書き方の規則の検査', () => {
   )
   put(
     'apps/web/legacy/sales/sales.ts',
-    `import { defineLegacyFlow, operate, operateLegacy, outside } from '@app/flow'\nimport { salesCreation } from '../../flow/sales/salesCreation'\nimport { createSales } from '../../scenario/sales/createSales'\nimport { salesperson } from '../../role/role'\nimport { legacySales } from '../table'\nexport const sales = defineLegacyFlow('sales', {\n  replacement: salesCreation,\n  steps: [\n    outside(salesperson, 'deliverProduct'),\n    operate(createSales),\n    operateLegacy(salesperson, 'enterSales', { tables: [legacySales], replacement: 'createSales' }),\n  ],\n})\n`,
+    `import { defineLegacyFlow, operate, operateLegacy, outside } from '@app/flow'\nimport { salesCreation } from '../../flow/sales/salesCreation'\nimport { createSales } from '../../scenario/sales/createSales'\nimport { salesperson } from '../../role/role'\nimport { legacySales } from '../table'\nexport const sales = defineLegacyFlow('sales', {\n  replacement: salesCreation,\n  steps: [\n    outside(salesperson, 'deliverProduct'),\n    operate(createSales),\n    operateLegacy(salesperson, 'enterSales', { tables: [legacySales], replacement: 'createSales', operate: async (screen) => { if (screen) { await screen.press('登録') } } }),\n  ],\n})\n`,
   )
   put('apps/web/legacy/legacyInvoice.ts', `import { defineLegacyFlow, elapse } from '@app/flow'\nexport const legacyInvoice = defineLegacyFlow('legacyInvoice', { steps: [elapse('closingDate')] })\n`)
 
@@ -178,8 +189,8 @@ describe('書き方の規則の検査', () => {
     expect(rules('apps/web/flow/sales/salesCreation.ts')).toEqual(['step-place'])
   })
 
-  test('現行の業務フロー: legacy で始まる名前・領域のフォルダ・変わらない段は同じ値・画面の操作は書かない・置き換え先は値で指す', () => {
-    expect(rules('apps/web/legacy/sales/sales.ts')).toEqual(['legacy-name', 'legacy-step', 'legacy-step', 'legacy-step'])
+  test('現行の業務フロー: legacy で始まる名前・領域のフォルダ・変わらない段は同じ値・画面の操作は書かない・置き換え先は値で指す・旧システムの画面の手順は操作の並びだけ', () => {
+    expect(rules('apps/web/legacy/sales/sales.ts')).toEqual(['legacy-name', 'legacy-step', 'legacy-step', 'legacy-step', 'legacy-step'])
     expect(rules('apps/web/legacy/legacyInvoice.ts')).toEqual(['legacy-place'])
     expect(rules('apps/web/legacy/table.ts')).toEqual(['legacy-table'])
   })
