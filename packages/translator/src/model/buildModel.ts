@@ -3,7 +3,7 @@ import { conceptList, renderNounPhrase, type Locale } from '@app/vocabulary'
 import ts from 'typescript'
 import { readBackendModel } from './backendModel'
 import { readFlowModel, type ScenarioDraft } from './flowModel'
-import { listUnestimatedScenarios, readEstimates } from './estimateModel'
+import { allocateEfforts, listMissingEffortScenarios, listUnestimatedScenarios, readEfforts, readEstimates } from './estimateModel'
 import { checkLegacyTables, compareLegacyFlows } from './legacyModel'
 import { readMeetingModel } from './meetingModel'
 import { prepareLanguage } from '../language'
@@ -89,7 +89,8 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
     legacyTables: new Map(draft.legacyTables.map((table) => [`${table.file}#${table.id}`, table])),
   }
   const meeting = readMeetingModel(reader, placeTables, problems)
-  const estimates = readEstimates(reader, placeTables, problems)
+  const estimateDrafts = readEstimates(reader, placeTables, problems)
+  const effortDrafts = readEfforts(reader, placeTables, problems)
   readSkillProblems(root, problems)
 
   // シナリオを使う段と、拡張を流す経路。
@@ -151,7 +152,9 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
     }
   })
 
+  const { estimates, efforts } = allocateEfforts(estimateDrafts, effortDrafts, scenarios, legacy.flows)
   const unestimatedScenarioIds = listUnestimatedScenarios(estimates, scenarios, legacy.flows)
+  const missingEffortScenarioIds = listMissingEffortScenarios(efforts, scenarios, legacy.flows)
   const countSteps = (steps: readonly FlowStepNode[]): number => steps.reduce((count, step) => count + 1 + step.extensions.reduce((sum, extension) => sum + countSteps(extension.then), 0), 0)
   const allExtensions = scenarios.flatMap((scenario) => scenario.extensions)
   const allCases = scenarios.flatMap((scenario) => scenario.cases)
@@ -162,6 +165,8 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
     questions: meeting.questions,
     estimates,
     unestimatedScenarioIds,
+    efforts,
+    missingEffortScenarioIds,
     flows: legacy.flows,
     legacyFlows: legacy.legacyFlows,
     legacyTables: draft.legacyTables,
@@ -191,6 +196,9 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
       estimates: estimates.length,
       estimateAmount: estimates.at(-1)?.totalAmount ?? 0,
       unestimatedScenarios: unestimatedScenarioIds.length,
+      auditEffort: efforts.reduce((sum, effort) => sum + effort.audit, 0),
+      manualEffort: efforts.reduce((sum, effort) => sum + effort.manual, 0),
+      missingEffortScenarios: missingEffortScenarioIds.length,
     },
   }
 }

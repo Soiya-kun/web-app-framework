@@ -21,3 +21,6 @@
 - { id: discontinue, category: verb, en: { noun: discontinuation }, ja: { stem: 廃止, class: suru }, description: 現行の業務・段が、新しい業務フローではなくなること。 }
 - { id: same, category: adjective, ja: { stem: 同じ, class: no }, description: 現行と新しい業務フローで、同じ値の段（変わらない業務）。 }
 - { id: estimate, category: verb, en: { noun: estimate }, ja: { stem: 見積, class: suru }, description: 受託開発の見積。項目の名前と金額が最小の単位で、対象（業務フロー・シナリオ・画面・処理・現行の業務フロー）を値で指せる。 }
+- { id: effort, category: noun, ja: { form: 工数 }, description: 機能を作るのにかかる人日。監査の工数（AI 開発の時代の実際の工数）と、人手の工数（人がコーディングとテストをする場合。営業の再見積に使う）を持つ。 }
+- { id: audit, category: verb, ja: { stem: 監査, class: suru }, description: AI が作った機能を、それでよいと人が確かめること。 }
+- { id: manual, category: adjective, ja: { stem: 人手, class: no }, description: AI を使わず、人がコーディングとテストをする場合のこと（ウォーターフォールの見積の考え方）。 }

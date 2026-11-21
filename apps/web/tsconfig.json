@@ -22,6 +22,7 @@
     "step",
     "legacy",
     "estimate",
+    "effort",
     "vite.config.ts"
   ]
 }

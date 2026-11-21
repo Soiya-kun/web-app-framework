@@ -1,11 +1,13 @@
-// 見積（apps/web/estimate の defineEstimate）を読む。項目の名前と金額と、指している対象（業務フロー・シナリオ・画面・処理・現行の業務フロー）。
-// いちばん新しい見積で、どの項目からも指されていないシナリオを「見積にないシナリオ」として数える（見積は任意なので、止めない）。
+// 見積（apps/web/estimate の defineEstimate）と機能ごとの工数（apps/web/effort の defineEffort）を読む。
+// いちばん新しい見積で、どの項目からも指されていないシナリオを「未見積のシナリオ」として数える（見積は任意なので、止めない）。
+// 工数は、いちばん新しい見積の項目のうち、対象をいちばん直接に指している項目に割り当てる。
 import ts from 'typescript'
 import { readPlace, type PlaceTables } from './meetingModel'
 import { lineOf, listExportedCalls, readProperty, readString, unwrap, type SourceReader } from './source'
-import type { EstimateItemNode, EstimateNode, FlowNode, FlowStepNode, MeetingPlaceNode, ModelProblem, ScenarioNode } from './types'
+import type { EffortNode, EstimateItemNode, EstimateNode, FlowNode, FlowStepNode, MeetingPlaceNode, ModelProblem, ScenarioNode } from './types'
 
 export const estimateRoot = 'apps/web/estimate'
+export const effortRoot = 'apps/web/effort'
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/
 
@@ -56,7 +58,7 @@ export function readEstimates(reader: SourceReader, tables: PlaceTables, problem
             }
             return [resolved]
           })
-          return [{ title, amount, targets }]
+          return [{ title, amount, targets, audit: null, manual: null }]
         },
       )
       return [
@@ -64,6 +66,7 @@ export function readEstimates(reader: SourceReader, tables: PlaceTables, problem
           id: variable,
           date,
           title: readString(readProperty(options, 'title')) ?? variable,
+          rate: readAmount(readProperty(options, 'rate')) ?? null,
           items,
           totalAmount: items.reduce((sum, item) => sum + item.amount, 0),
           ...place,
@@ -90,14 +93,9 @@ function listFlowScenarios(flowId: string, flows: ReadonlyMap<string, FlowNode>,
   return readSteps(flow.steps)
 }
 
-/** いちばん新しい見積で、どの項目からも指されていないシナリオ。見積がなければ空。 */
-export function listUnestimatedScenarios(estimates: readonly EstimateNode[], scenarios: readonly ScenarioNode[], flows: readonly FlowNode[]): string[] {
-  const latest = estimates.at(-1)
-  if (latest === undefined) {
-    return []
-  }
+/** 対象の並びのどれにも当たらないシナリオ。業務フローの対象はその中のシナリオに、画面・処理の対象はそれを開く・通るシナリオに当たる。 */
+function listUncoveredScenarios(targets: readonly MeetingPlaceNode[], scenarios: readonly ScenarioNode[], flows: readonly FlowNode[]): string[] {
   const flowTable = new Map(flows.map((flow) => [flow.id, flow]))
-  const targets = latest.items.flatMap((item) => item.targets)
   const coveredByFlow = new Set(targets.flatMap((target) => (target.kind === 'flow' ? listFlowScenarios(target.id, flowTable) : [])))
   return scenarios
     .filter(
@@ -111,4 +109,86 @@ export function listUnestimatedScenarios(estimates: readonly EstimateNode[], sce
         ),
     )
     .map((scenario) => scenario.id)
+}
+
+/** いちばん新しい見積で、どの項目からも指されていないシナリオ。見積がなければ空。 */
+export function listUnestimatedScenarios(estimates: readonly EstimateNode[], scenarios: readonly ScenarioNode[], flows: readonly FlowNode[]): string[] {
+  const latest = estimates.at(-1)
+  return latest === undefined ? [] : listUncoveredScenarios(latest.items.flatMap((item) => item.targets), scenarios, flows)
+}
+
+/** 工数を書いていないシナリオ。工数がひとつもなければ空。 */
+export function listMissingEffortScenarios(efforts: readonly EffortNode[], scenarios: readonly ScenarioNode[], flows: readonly FlowNode[]): string[] {
+  return efforts.length === 0 ? [] : listUncoveredScenarios(efforts.map((effort) => effort.target), scenarios, flows)
+}
+
+function isSamePlace(left: MeetingPlaceNode, right: MeetingPlaceNode): boolean {
+  return left.kind === right.kind && left.id === right.id && left.extension === right.extension
+}
+
+/** 機能ごとの工数（apps/web/effort の defineEffort）を読む。 */
+export function readEfforts(reader: SourceReader, tables: PlaceTables, problems: ModelProblem[]): Omit<EffortNode, 'itemIndex'>[] {
+  const efforts: Omit<EffortNode, 'itemIndex'>[] = []
+  for (const file of reader.list(effortRoot, (path) => path.endsWith('.ts') && !path.endsWith('.test.ts'))) {
+    const parsed = reader.read(file)
+    for (const { call } of listExportedCalls(parsed, 'defineEffort')) {
+      const itemsNode = call.arguments[0] === undefined ? undefined : unwrap(call.arguments[0])
+      for (const element of itemsNode !== undefined && ts.isArrayLiteralExpression(itemsNode) ? itemsNode.elements : []) {
+        const item = unwrap(element)
+        const place = { file, line: lineOf(parsed, element) }
+        const targetNode = ts.isObjectLiteralExpression(item) ? readProperty(item, 'target') : undefined
+        const target = targetNode === undefined ? undefined : readPlace(parsed, targetNode, tables)
+        const audit = ts.isObjectLiteralExpression(item) ? readAmount(readProperty(item, 'audit')) : undefined
+        const manual = ts.isObjectLiteralExpression(item) ? readAmount(readProperty(item, 'manual')) : undefined
+        if (target === undefined || audit === undefined || manual === undefined || audit < 0 || manual < 0) {
+          problems.push({ ...place, rule: 'effort', message: '工数は { target: 対象を import した値, audit: 監査の人日, manual: 人がコーディングとテストをする場合の人日 } にする（人日は 0 以上の数）' })
+          continue
+        }
+        if (efforts.some((effort) => isSamePlace(effort.target, target))) {
+          problems.push({ ...place, rule: 'effort', message: `「${target.title}」の工数を2つ書いている（1つの対象に1つにする）` })
+          continue
+        }
+        efforts.push({ target, audit, manual, ...place })
+      }
+    }
+  }
+  return efforts
+}
+
+/**
+ * 工数を、いちばん新しい見積の項目に割り当てる。対象をいちばん直接に指している項目にする
+ * （同じ対象 > 業務フローの中のシナリオ > シナリオが開く画面・通る処理）。同じ強さなら前の項目。
+ */
+export function allocateEfforts(
+  estimates: readonly EstimateNode[],
+  efforts: readonly Omit<EffortNode, 'itemIndex'>[],
+  scenarios: readonly ScenarioNode[],
+  flows: readonly FlowNode[],
+): { readonly estimates: EstimateNode[]; readonly efforts: EffortNode[] } {
+  const latest = estimates.at(-1)
+  if (latest === undefined) {
+    return { estimates: [...estimates], efforts: efforts.map((effort) => ({ ...effort, itemIndex: null })) }
+  }
+  const flowTable = new Map(flows.map((flow) => [flow.id, flow]))
+  const scenarioTable = new Map(scenarios.map((scenario) => [scenario.id, scenario]))
+  const strengthOf = (itemTarget: MeetingPlaceNode, target: MeetingPlaceNode): number => {
+    if (isSamePlace(itemTarget, target)) {
+      return 3
+    }
+    const isScenario = target.kind === 'scenario' || target.kind === 'extension'
+    if (itemTarget.kind === 'flow' && isScenario && listFlowScenarios(itemTarget.id, flowTable).includes(target.id)) {
+      return 2
+    }
+    const scenario = itemTarget.kind === 'scenario' ? scenarioTable.get(itemTarget.id) : undefined
+    return scenario !== undefined && ((target.kind === 'page' && scenario.pageIds.includes(target.id)) || (target.kind === 'work' && scenario.workIds.includes(target.id))) ? 1 : 0
+  }
+  const allocated = efforts.map((effort): EffortNode => {
+    const strengths = latest.items.map((item) => Math.max(0, ...item.targets.map((itemTarget) => strengthOf(itemTarget, effort.target))))
+    const best = Math.max(0, ...strengths)
+    return { ...effort, itemIndex: best === 0 ? null : strengths.indexOf(best) }
+  })
+  const sum = (index: number, key: 'audit' | 'manual') =>
+    allocated.filter((effort) => effort.itemIndex === index).reduce((total, effort) => total + effort[key], 0)
+  const items = latest.items.map((item, index) => ({ ...item, audit: sum(index, 'audit'), manual: sum(index, 'manual') }))
+  return { estimates: [...estimates.slice(0, -1), { ...latest, items }], efforts: allocated }
 }

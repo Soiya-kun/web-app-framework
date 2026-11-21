@@ -17,10 +17,12 @@ export type Estimate = {
   /** 見積の日（YYYY-MM-DD）。 */
   readonly date: string
   readonly title: string
+  /** 1人日の単価（円）。機能ごとの工数（defineEffort）を金額にするのに使う。書かなくてもよい。 */
+  readonly rate: number | undefined
   readonly items: readonly EstimateItem[]
 }
 
 /** 見積を書く。変数の名前は estimate と日付（estimate20261031）にする。版ごとに1ファイル。 */
-export function defineEstimate(date: string, definition: { readonly title: string; readonly items: readonly EstimateItem[] }): Estimate {
-  return { kind: 'estimate', date, title: definition.title, items: definition.items }
+export function defineEstimate(date: string, definition: { readonly title: string; readonly rate?: number; readonly items: readonly EstimateItem[] }): Estimate {
+  return { kind: 'estimate', date, title: definition.title, rate: definition.rate, items: definition.items }
 }

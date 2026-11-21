@@ -26,6 +26,8 @@ export type {
   ScenarioExtension,
   ScenarioStep,
 } from './definition'
+export { defineEffort } from './effort'
+export type { Effort, EffortItem } from './effort'
 export { defineEstimate } from './estimate'
 export type { Estimate, EstimateItem } from './estimate'
 export { defineLegacyFlow, defineLegacyTable, operateLegacy } from './legacy'
