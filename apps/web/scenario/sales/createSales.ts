@@ -1,4 +1,5 @@
 import { defineScenario } from '@app/flow'
+import { salesperson } from '../../role/role'
 
 /** 売上登録の画面に入れる値。選択肢は画面に出る名前で書く。 */
 export type SalesInput = {
@@ -11,7 +12,7 @@ export type SalesInput = {
 }
 
 export const createSales = defineScenario('createSales', {
-  actor: 'salesperson',
+  actor: salesperson,
   operate: async (screen, sales: SalesInput) => {
     await screen.go('salesCreate')
     await screen.choose('customer', sales.customer)

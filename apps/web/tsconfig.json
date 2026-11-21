@@ -17,6 +17,8 @@
     "test",
     "scenario",
     "flow",
+    "role",
+    "meeting",
     "vite.config.ts"
   ]
 }

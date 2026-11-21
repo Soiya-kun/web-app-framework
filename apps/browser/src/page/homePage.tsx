@@ -73,12 +73,14 @@ export function HomePage() {
         </Section>
       )}
       <Section title={text.label('progress')}>
-        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
           {[
             [text.label('flow'), labelFormat.joinNote(String(progress.flows), `${text.label('step')} ${progress.flowSteps}`)],
             [text.label('scenario'), labelFormat.joinNote(String(progress.scenarios), `${text.label('pending')} ${progress.pendingScenarios}`)],
             [text.label('extension'), labelFormat.joinNote(String(progress.extensions), `${text.label('pending')} ${progress.pendingExtensions}`)],
             [text.label('case'), labelFormat.joinNote(String(progress.cases), `${text.label('pending')} ${progress.pendingCases}`)],
+            [text.label('minutes'), labelFormat.joinNote(String(progress.meetings), `${text.label('unapproved')} ${progress.unapprovedMeetings}`)],
+            [text.label('question'), labelFormat.joinNote(String(progress.questions), `${text.label('unanswered')} ${progress.openQuestions}`)],
           ].map(([labelText, detail]) => (
             <div key={labelText} className="flex flex-col rounded-control bg-canvas px-3 py-2">
               <dt className="text-xs text-muted">{labelText}</dt>

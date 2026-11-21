@@ -3,6 +3,7 @@ import { conceptList, renderNounPhrase, type Locale } from '@app/vocabulary'
 import ts from 'typescript'
 import { readBackendModel } from './backendModel'
 import { readFlowModel, type ScenarioDraft } from './flowModel'
+import { readMeetingModel } from './meetingModel'
 import { prepareLanguage } from '../language'
 import { prepareScreenText } from './screenText'
 import { prepareSourceReader, readString, unwrap } from './source'
@@ -72,6 +73,15 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
   const draft = readFlowModel(reader, language)
   const { buttonTextOf } = prepareScreenText(language)
   const problems = [...draft.problems]
+  const meeting = readMeetingModel(
+    reader,
+    {
+      roles: new Map(draft.roles.map((role) => [`${role.file}#${role.variable}`, role])),
+      flows: new Map(draft.flows.map((flow) => [`${flow.file}#${flow.id}`, flow])),
+      scenarios: new Map(draft.scenarios.map((scenario) => [`${scenario.file}#${scenario.variable}`, scenario])),
+    },
+    problems,
+  )
 
   // シナリオを使う段と、拡張を流す経路。
   const usedIn = new Map<string, ScenarioUse[]>()
@@ -137,6 +147,9 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
   const allCases = scenarios.flatMap((scenario) => scenario.cases)
   return {
     locale,
+    roles: draft.roles,
+    meetings: meeting.meetings,
+    questions: meeting.questions,
     flows: draft.flows,
     scenarios,
     pages: web.pages,
@@ -156,6 +169,10 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
       pendingExtensions: allExtensions.filter((extension) => extension.pending).length,
       cases: allCases.length,
       pendingCases: allCases.filter((caseNode) => caseNode.pending).length,
+      meetings: meeting.meetings.length,
+      unapprovedMeetings: meeting.meetings.filter((item) => item.approval === null).length,
+      questions: meeting.questions.length,
+      openQuestions: meeting.questions.filter((question) => question.answer === null).length,
     },
   }
 }

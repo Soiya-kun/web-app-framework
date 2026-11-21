@@ -5,6 +5,7 @@ import { Badge, Cell, HeaderCell, PageTitle, Section, SourcePlace, Table, TextLi
 import { useModel, type ModelTable } from '../model'
 import { readStepKindLabels } from '../component/kindLabel'
 import { useText, useLabelFormat } from '../text'
+import { PlaceMinutes } from '../component/meetingPart'
 
 const flowRoute = getRouteApi('/flow/$flowId')
 
@@ -145,6 +146,7 @@ export function FlowPage() {
           ))}
         </ul>
       </Section>
+      <PlaceMinutes flow={flow} />
     </>
   )
 }

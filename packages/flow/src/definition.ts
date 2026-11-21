@@ -1,6 +1,7 @@
 // 業務フローとシナリオの書き方。コーバーンのユースケースの目的のレベルに合わせる。
 // 業務フロー（要約）は段の並び、シナリオ（利用者の目的）は1人が1回の操作で目的を果たす手順、
 // usecase（下位機能）はバックエンドの処理。中身を書いていないシナリオ・拡張は「未着手」として扱う。
+import type { Role } from './role'
 import type { Screen } from './screen'
 
 /** 画面を操作する手順。input はフローやケースから渡す値。 */
@@ -18,8 +19,8 @@ export type Scenario<Input = undefined, ExtensionName extends string = string> =
   readonly kind: 'scenario'
   /** 動詞で始まる名前（単語帳の言葉）。変数の名前と同じにする。 */
   readonly name: string
-  /** 主アクター（単語帳の名詞）。 */
-  readonly actor: string
+  /** 主アクター（defineRole で書いた役割）。 */
+  readonly actor: Role
   /** 主成功シナリオの手順。なければ未着手。 */
   readonly operate: ScenarioStep<Input> | undefined
   /** 成功の保証（うまくいったときに確かめること）。 */
@@ -28,7 +29,7 @@ export type Scenario<Input = undefined, ExtensionName extends string = string> =
 }
 
 type ScenarioDefinition<Input, ExtensionName extends string> = {
-  readonly actor: string
+  readonly actor: Role
   readonly operate?: ScenarioStep<Input>
   readonly confirm?: ScenarioStep<Input>
   readonly extensions?: Readonly<Record<ExtensionName, ScenarioExtension<Input>>>
@@ -67,8 +68,8 @@ export type FlowStep =
       readonly input: unknown
       readonly extensions: readonly FlowExtension[]
     }
-  | { readonly kind: 'outside'; readonly actor: string; readonly name: string }
-  | { readonly kind: 'occur'; readonly actor: string; readonly name: string }
+  | { readonly kind: 'outside'; readonly actor: Role; readonly name: string }
+  | { readonly kind: 'occur'; readonly actor: Role; readonly name: string }
   | { readonly kind: 'elapse'; readonly time: string; readonly date: string }
   | { readonly kind: 'nest'; readonly flow: Flow<unknown> }
 
@@ -116,12 +117,12 @@ export function operate<Input, ExtensionName extends string>(
 }
 
 /** 段: システムの外の業務（商品を納品する・請求書を送るなど）。name は動詞で始まる名前。 */
-export function outside(actor: string, name: string): FlowStep {
+export function outside(actor: Role, name: string): FlowStep {
   return { kind: 'outside', actor, name }
 }
 
 /** 段: 外のイベント（代金が振り込まれるなど）。name は動詞で始まる名前。 */
-export function occur(actor: string, name: string): FlowStep {
+export function occur(actor: Role, name: string): FlowStep {
   return { kind: 'occur', actor, name }
 }
 

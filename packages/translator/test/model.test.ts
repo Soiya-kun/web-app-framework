@@ -45,6 +45,16 @@ describe('このリポジトリのモデル', () => {
     expect(nested?.parentIds).toEqual(['monthlyInvoice'])
   })
 
+  test('担当は役割の値から求め、議事録の課題は関係する業務フロー・シナリオ・拡張に付き、回答は後の回から求める', () => {
+    expect(model.roles.map((role) => [role.id, role.side])).toContainEqual(['accountant', 'business'])
+    expect(model.flows.find((flow) => flow.id === 'monthlyInvoice')?.steps[0]).toMatchObject({ actor: 'salesperson', actorTitle: '営業担当' })
+    const mistakenRefund = model.questions.find((question) => question.id === 'meeting20261017.mistakenRefund')
+    expect(mistakenRefund).toMatchObject({ assigneeId: 'approver', place: { kind: 'extension', scenarioId: 'registerPayment', extension: 'mistakenPayment' } })
+    expect(mistakenRefund?.answer?.meetingId).toBe('meeting20261031')
+    expect(model.questions.find((question) => question.id === 'meeting20261031.overdueReminder')).toMatchObject({ place: { kind: 'flow', flowId: 'overdueInvoice' }, answer: null })
+    expect(model.meetings.find((meeting) => meeting.id === 'meeting20261031')?.approval).toBeNull()
+  })
+
   test('英語のモデルは、同じつながりを英語の見出し・手順で持つ（人が書いた拡張の条件は書いたまま）', () => {
     const englishModel = buildModel(repositoryRoot, 'en')
     const scenario = englishModel.scenarios.find((candidate) => candidate.id === 'registerPayment')
@@ -67,8 +77,12 @@ describe('書き方の規則の検査', () => {
     writeFileSync(join(fixtureRoot, file), content)
   }
   put(
+    'apps/web/role/role.ts',
+    `import { defineRole } from '@app/flow'\nexport const salesperson = defineRole('salesperson', { side: 'business' })\nexport const engineer = defineRole('engineer', { side: 'vendor' })\n`,
+  )
+  put(
     'apps/web/scenario/sales/createSales.ts',
-    `import { defineScenario } from '@app/flow'\nexport const createSales = defineScenario('createSales', { actor: 'salesperson' })\n`,
+    `import { defineScenario } from '@app/flow'\nimport { salesperson } from '../../role/role'\nexport const createSales = defineScenario('createSales', { actor: salesperson })\n`,
   )
   put(
     'apps/web/scenario/sales/tidySales.ts',
@@ -80,12 +94,20 @@ describe('書き方の規則の検査', () => {
   )
   put('apps/web/flow/registerSales.ts', `import { defineFlow, operate } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nexport const registerSales = defineFlow('registerSales', { steps: [operate(createSales), elapse('closingDate', '10/31')] })\n`)
   put('apps/web/src/salesPage.test.tsx', `test('画面のテスト', () => {})\n`)
+  put(
+    'apps/web/meeting/meeting20261003.ts',
+    `import { decide, defineMeeting, raise } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nimport { engineer, salesperson } from '../role/role'\nexport const meeting20261003 = defineMeeting('2026-10-03', {\n  title: '第1回',\n  attendees: [engineer, salesperson],\n  agenda: [createSales],\n  decisions: [decide(createSales, '決めたこと')],\n  questions: {\n    salesKind: raise(createSales, '区分はいくつか', { assignee: salesperson, deadline: '2026-10-10' }),\n    salesFoo: raise(createSales, '名前が単語帳にない', { assignee: salesperson, deadline: '2026-10-01' }),\n  },\n  approval: { on: '2026-10-05', by: engineer },\n})\n`,
+  )
+  put(
+    'apps/web/meeting/meeting20261010.ts',
+    `import { answer, defineMeeting } from '@app/flow'\nimport { salesperson } from '../role/role'\nimport { meeting20261003 } from './meeting20261003'\nexport const meetingSecond = defineMeeting('2026-10-10', {\n  title: '第2回',\n  attendees: [salesperson],\n  agenda: [],\n  answers: [answer(meeting20261003.questions.salesKind, '3つ'), answer(meeting20261003.questions.salesKind, 'もう一度')],\n})\n`,
+  )
 
   const model = buildModel(fixtureRoot)
   const rules = (file: string) => model.problems.filter((problem) => problem.file === file).map((problem) => problem.rule)
 
   test('シナリオ: 単語帳と動詞で始まる名前・手順の並び・画面を開くところから・業務フローに入っているか', () => {
-    expect(rules('apps/web/scenario/sales/tidySales.ts')).toEqual(['scenario-name', 'scenario-name', 'scenario-flat', 'scenario-start', 'scenario-orphan'])
+    expect(rules('apps/web/scenario/sales/tidySales.ts')).toEqual(['scenario-name', 'scenario-name', 'actor', 'scenario-flat', 'scenario-start', 'scenario-orphan'])
   })
 
   test('ケース: describeScenario だけを書き、主成功シナリオは1つ', () => {
@@ -98,6 +120,15 @@ describe('書き方の規則の検査', () => {
 
   test('画面のテストは scenario と flow にだけ置く', () => {
     expect(rules('apps/web/src/salesPage.test.tsx')).toEqual(['test-place'])
+  })
+
+  test('議事録: 変数の名前は meeting と日付、課題の名前は単語帳の言葉、期限は打合せの日以後、承認は業務部門', () => {
+    expect(rules('apps/web/meeting/meeting20261003.ts')).toEqual(['question-name', 'question-deadline', 'approval'])
+  })
+
+  test('議事録: 回答は、挙げた打合せより後の打合せで1回だけ', () => {
+    expect(rules('apps/web/meeting/meeting20261010.ts')).toEqual(['meeting', 'answer'])
+    expect(model.questions.find((question) => question.key === 'salesKind')?.answer).toMatchObject({ meetingId: 'meetingSecond', text: '3つ' })
   })
 
   test('未着手のシナリオ・ケースは数える（問題にはしない）', () => {

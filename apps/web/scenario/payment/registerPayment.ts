@@ -1,4 +1,5 @@
 import { defineScenario } from '@app/flow'
+import { accountant } from '../../role/role'
 
 /** 入金登録の画面に入れる値。顧客が空なら、振込依頼人名から自動で特定させる。 */
 export type PaymentInput = {
@@ -9,7 +10,7 @@ export type PaymentInput = {
 }
 
 export const registerPayment = defineScenario('registerPayment', {
-  actor: 'accountant',
+  actor: accountant,
   operate: async (screen, payment: PaymentInput) => {
     await screen.go('paymentCreate')
     await screen.fill('paymentDate', payment.paymentDate)

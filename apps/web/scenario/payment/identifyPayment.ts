@@ -1,4 +1,5 @@
 import { defineScenario } from '@app/flow'
+import { accountant } from '../../role/role'
 
 /** 仮受の入金と、特定した顧客。 */
 export type IdentifyInput = {
@@ -7,7 +8,7 @@ export type IdentifyInput = {
 }
 
 export const identifyPayment = defineScenario('identifyPayment', {
-  actor: 'accountant',
+  actor: accountant,
   operate: async (screen, identify: IdentifyInput) => {
     await screen.go('paymentList')
     await screen.row(identify.payerName).choose('customer', identify.customer)

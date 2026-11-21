@@ -4,7 +4,7 @@ import ts from 'typescript'
 import { prepareLanguage, type Language } from '../language'
 import { prepareScreenText, type ScreenText } from './screenText'
 import { collectCalls, lineOf, listExportedCalls, readProperty, readString, unwrap, type ParsedSource, type SourceReader } from './source'
-import type { CaseNode, FlowExtensionNode, FlowNode, FlowStepNode, ModelInput, ModelProblem } from './types'
+import type { CaseNode, FlowExtensionNode, FlowNode, FlowStepNode, ModelInput, ModelProblem, RoleNode } from './types'
 
 export const scenarioRoot = 'apps/web/scenario'
 export const flowRoot = 'apps/web/flow'
@@ -24,7 +24,10 @@ export type ScenarioDraft = {
   readonly line: number
 }
 
+export const roleRoot = 'apps/web/role'
+
 export type FlowModelDraft = {
+  readonly roles: RoleNode[]
   readonly scenarios: ScenarioDraft[]
   readonly cases: Map<string, { testFile: string; cases: CaseNode[] }>
   readonly flows: FlowNode[]
@@ -66,6 +69,42 @@ function checkName(problems: ModelProblem[], place: { file: string; line: number
   }
 }
 
+type RoleTable = ReadonlyMap<string, RoleNode>
+
+/** apps/web/role の defineRole（名前・立場）を読む。 */
+function readRoles(screen: ScreenText, reader: SourceReader, problems: ModelProblem[]): RoleNode[] {
+  return reader
+    .list(roleRoot, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
+    .flatMap((file) => {
+      const parsed = reader.read(file)
+      return listExportedCalls(parsed, 'defineRole').flatMap(({ name: variable, call }) => {
+        const place = { file, line: lineOf(parsed, call) }
+        const name = readString(call.arguments[0]) ?? variable
+        if (name !== variable) {
+          problems.push({ ...place, rule: 'role', message: `役割の名前「${name}」を変数の名前「${variable}」と同じにする` })
+        }
+        checkName(problems, place, 'role', name, false)
+        const options = call.arguments[1]
+        const side = options !== undefined && ts.isObjectLiteralExpression(options) ? readString(readProperty(options, 'side')) : undefined
+        if (side !== 'vendor' && side !== 'business' && side !== 'external') {
+          problems.push({ ...place, rule: 'role', message: `役割「${name}」の立場（side）は vendor・business・external のどれかにする` })
+          return []
+        }
+        return [{ id: name, variable, title: screen.language.noun(name), side, sideTitle: screen.language.noun(side), ...place }]
+      })
+    })
+}
+
+/** import した役割の値から、役割を引く。 */
+function resolveRole(parsed: ParsedSource, node: ts.Expression | undefined, roles: RoleTable): RoleNode | undefined {
+  const inner = node === undefined ? undefined : unwrap(node)
+  if (inner === undefined || !ts.isIdentifier(inner)) {
+    return undefined
+  }
+  const imported = parsed.imports.get(inner.text)
+  return imported === undefined ? undefined : roles.get(`${imported.file}#${imported.name}`)
+}
+
 /** 手順の最初の文が、画面を開く操作（await screen.go(…)）か。 */
 function startsWithGo(body: ts.ConciseBody): boolean {
   const [first] = ts.isBlock(body) ? body.statements : []
@@ -73,7 +112,7 @@ function startsWithGo(body: ts.ConciseBody): boolean {
   return expression !== undefined && ts.isCallExpression(expression) && ts.isPropertyAccessExpression(expression.expression) && expression.expression.name.text === 'go'
 }
 
-function readScenarios(screen: ScreenText, reader: SourceReader, problems: ModelProblem[]): ScenarioDraft[] {
+function readScenarios(screen: ScreenText, reader: SourceReader, roles: RoleTable, problems: ModelProblem[]): ScenarioDraft[] {
   const files = reader.list(scenarioRoot, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
   return files.flatMap((file) => {
     const parsed = reader.read(file)
@@ -89,8 +128,11 @@ function readScenarios(screen: ScreenText, reader: SourceReader, problems: Model
         problems.push({ ...place, rule: 'scenario-name', message: `シナリオの名前「${name}」を変数の名前「${variable}」と同じにする` })
       }
       checkName(problems, place, 'scenario-name', name, true)
-      const actor = readString(readProperty(options, 'actor')) ?? ''
-      checkName(problems, place, 'actor', actor, null)
+      const actorRole = resolveRole(parsed, readProperty(options, 'actor'), roles)
+      if (actorRole === undefined) {
+        problems.push({ ...place, rule: 'actor', message: `シナリオ「${name}」の担当（actor）は、${roleRoot} の defineRole の役割を import して渡す` })
+      }
+      const actor = actorRole?.id ?? ''
       const operate = functionBodyOf(readProperty(options, 'operate'))
       const confirm = functionBodyOf(readProperty(options, 'confirm'))
       const operateSteps = operate === null ? { steps: [], flat: true } : screen.translateScreenBody(operate.body)
@@ -372,6 +414,7 @@ function readFlowSteps(
   constants: ReadonlyMap<string, ts.Expression>,
   scenarios: ReadonlyMap<string, ScenarioDraft>,
   flowNames: ReadonlyMap<string, string>,
+  roles: RoleTable,
   problems: ModelProblem[],
 ): FlowStepNode[] {
   const extensionLetters = 'abcdefghijklmnopqrstuvwxyz'
@@ -419,7 +462,7 @@ function readFlowSteps(
                   inputs: inputsOf(readProperty(property.initializer, 'input')),
                   then:
                     thenNode !== undefined && ts.isArrayLiteralExpression(thenNode)
-                      ? readFlowSteps(screen, parsed, thenNode.elements, `${key}.`, constants, scenarios, flowNames, problems)
+                      ? readFlowSteps(screen, parsed, thenNode.elements, `${key}.`, constants, scenarios, flowNames, roles, problems)
                       : [],
                   resume: resumeNode?.kind !== ts.SyntaxKind.FalseKeyword,
                 },
@@ -440,9 +483,12 @@ function readFlowSteps(
       ]
     }
     if (kind === 'outside' || kind === 'occur') {
-      const actor = readString(first) ?? ''
+      const actorRole = resolveRole(parsed, first, roles)
+      if (actorRole === undefined) {
+        problems.push({ ...place, rule: 'step-name', message: `段「${kind}」の担当は、${roleRoot} の defineRole の役割を import して渡す` })
+      }
+      const actor = actorRole?.id ?? ''
       const name = readString(second) ?? ''
-      checkName(problems, place, 'step-name', actor, null)
       checkName(problems, place, 'step-name', name, true)
       return [{ ...base, kind, title: screen.translateName(name), actor, actorTitle: screen.language.noun(actor) }]
     }
@@ -469,7 +515,7 @@ function readFlowSteps(
   })
 }
 
-function readFlows(screen: ScreenText, reader: SourceReader, scenarios: readonly ScenarioDraft[], problems: ModelProblem[]): FlowNode[] {
+function readFlows(screen: ScreenText, reader: SourceReader, scenarios: readonly ScenarioDraft[], roles: RoleTable, problems: ModelProblem[]): FlowNode[] {
   const files = reader.list(flowRoot, (file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
   const definitions = files.flatMap((file) => listExportedCalls(reader.read(file), 'defineFlow').map((definition) => ({ ...definition, file })))
   const flowNames = new Map(definitions.map((definition) => [`${definition.file}#${definition.name}`, readString(definition.call.arguments[0]) ?? definition.name]))
@@ -506,7 +552,7 @@ function readFlows(screen: ScreenText, reader: SourceReader, scenarios: readonly
         precondition: precondition !== undefined && ts.isObjectLiteralExpression(precondition) ? (readString(readProperty(precondition, 'summary')) ?? null) : null,
         steps:
           stepsNode !== undefined && ts.isArrayLiteralExpression(stepsNode)
-            ? readFlowSteps(screen, parsed, stepsNode.elements, '', constants, scenarioByPlace, flowNames, problems)
+            ? readFlowSteps(screen, parsed, stepsNode.elements, '', constants, scenarioByPlace, flowNames, roles, problems)
             : [],
         parentIds: [] as string[],
         ...place,
@@ -537,10 +583,12 @@ function checkTestPlaces(reader: SourceReader, problems: ModelProblem[]): void {
 export function readFlowModel(reader: SourceReader, language: Language = prepareLanguage('ja')): FlowModelDraft {
   const screen = prepareScreenText(language)
   const problems: ModelProblem[] = []
-  const scenarios = readScenarios(screen, reader, problems)
+  const roles = readRoles(screen, reader, problems)
+  const roleTable = new Map(roles.map((role) => [`${role.file}#${role.variable}`, role]))
+  const scenarios = readScenarios(screen, reader, roleTable, problems)
   const cases = readCases(screen, reader, scenarios, problems)
-  const flows = readFlows(screen, reader, scenarios, problems)
+  const flows = readFlows(screen, reader, scenarios, roleTable, problems)
   checkTestPlaces(reader, problems)
-  return { scenarios, cases, flows, problems }
+  return { roles, scenarios, cases, flows, problems }
 }
 

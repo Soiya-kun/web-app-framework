@@ -2,7 +2,7 @@
 
 この文書は、このリポジトリが何を目指し、なぜこの形にしたのかを、頭から順に読めるようにまとめた読み物である。決めたことを一覧で見るなら [要求と方針](requirements.md)、サンプルの業務は [業務の作り](domain-model.md)、単語帳の仕組みの詳細は [単語帳の設計](vocabulary-design.md) にある。ここでは、それらがどうつながっているかを話す。
 
-書いた時点: 2026-11-19。言葉・コード・テストの土台、業務フロー・シナリオの書き方、コードのブラウザ（6章）までできている。
+書いた時点: 2026-11-21。言葉・コード・テストの土台、業務フロー・シナリオの書き方、コードのブラウザ、役割と議事録（6章）までできている。
 
 ## 目次
 
@@ -430,7 +430,7 @@ JSON は、解析して作る生成物として使う。ブラウザは、その
 export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoice', {
   precondition: { summary: '親会社と、請求先を親会社にした子会社が、顧客として登録されている', seed: { customer: customers } },
   steps: [
-    outside('salesperson', 'deliverProduct'),                    // システムの外の業務: 商品を納品する
+    outside(salesperson, 'deliverProduct'),                      // システムの外の業務: 商品を納品する
     operate(createSales, { customer: '株式会社子', … }),          // 画面の操作: 売上を登録する
     elapse('closingDate', '2026-10-31'),                         // 時の経過: 請求締め日になる
     operate(closeInvoice, { …october, breakdown: { currentInvoiceAmount: 110_000, … } }),
@@ -438,7 +438,7 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
       mistakenInvoice: { input: october, then: [operate(cancelClosing, october), …], resume: false },
     }),
     operate(issueInvoice, { …october, issueDate: '2026-11-02' }),
-    outside('accountant', 'sendInvoice'),                        // 請求を送る
+    outside(accountant, 'sendInvoice'),                          // 請求を送る
     nest(paymentManagement),                                     // 子フロー: 入金管理
     elapse('closingDate', '2026-11-30'),
     operate(closeInvoice, { …, breakdown: { previousInvoiceAmount: 110_000, currentPaymentAmount: 110_000, carriedAmount: 0 } }),
@@ -446,12 +446,12 @@ export const monthlyInvoice = defineFlow<Partial<MemoryDatabase>>('monthlyInvoic
 })
 ```
 
-シナリオは、コーバーンのユースケースの書式に合わせて、主アクター・主成功シナリオの手順・成功の保証・拡張を持つ。
+シナリオは、コーバーンのユースケースの書式に合わせて、主アクター・主成功シナリオの手順・成功の保証・拡張を持つ。主アクターと段の担当は、役割（6.10）の値で渡す。
 
 ```ts
 // apps/web/scenario/payment/registerPayment.ts — シナリオ「入金を記録する」
 export const registerPayment = defineScenario('registerPayment', {
-  actor: 'accountant',
+  actor: accountant,
   operate: async (screen, payment: PaymentInput) => {
     await screen.go('paymentCreate')
     await screen.fill('paymentDate', payment.paymentDate)
@@ -488,15 +488,15 @@ export const registerPayment = defineScenario('registerPayment', {
 **段階1: 担当と目的を並べる。** ヒアリングの最初は、業務フローの段を並べ、シナリオは名前と担当だけにする。
 
 ```ts
-export const createSales = defineScenario('createSales', { actor: 'salesperson' })     // 未着手
-export const closeInvoice = defineScenario('closeInvoice', { actor: 'accountant' })    // 未着手
+export const createSales = defineScenario('createSales', { actor: salesperson })     // 未着手
+export const closeInvoice = defineScenario('closeInvoice', { actor: accountant })    // 未着手
 
 export const monthlyInvoice = defineFlow('monthlyInvoice', {
-  steps: [outside('salesperson', 'deliverProduct'), operate(createSales), elapse('closingDate', '2026-10-31'), operate(closeInvoice), …],
+  steps: [outside(salesperson, 'deliverProduct'), operate(createSales), elapse('closingDate', '2026-10-31'), operate(closeInvoice), …],
 })
 ```
 
-この時点で、ブラウザには担当ごとのレーン図が出て、シナリオはすべて「未着手」と出る。打合せでは、このレーン図を見ながら「抜けている業務はないか」「この順で合っているか」を話す。名前は日本語で決めてから `vocabulary:find` で英語の名前にする。単語帳にない言葉が出たら、そこで単語帳に足す。単語帳がヒアリングとともに育つ。
+この時点で、ブラウザには担当ごとのレーン図が出て、シナリオはすべて「未着手」と出る。打合せでは、このレーン図を見ながら「抜けている業務はないか」「この順で合っているか」を話し、決めたことと課題を議事録（6.10）に残す。名前は日本語で決めてから `vocabulary:find` で英語の名前にする。単語帳にない言葉が出たら、そこで単語帳に足す。単語帳がヒアリングとともに育つ。
 
 **段階2: 主な流れを書く。** シナリオに、うまくいく場合の画面の操作（`operate`）と成功の保証（`confirm`）を書く。手順を書くとシナリオに値が要るようになり、業務フローの段が型のエラーになる。業務フローに値を書くと、業務フローの E2E がその段まで進む。画面がまだなければテストは失敗するが、それは「この業務の画面はまだない」という正しい状態である。
 
@@ -562,7 +562,7 @@ E2E は「段から段へ、結果がちゃんと引き継がれるか」を確�
 
 ブラウザ（`apps/browser`）は、生成したモデル（JSON）を読む静的な画面である。`pnpm dev:browser` で開く。静的なファイルにして、本番と同じ CloudFront・S3 に置くこともできる。
 
-最初の画面はキャンバスである。Figma のように画面の外まで広がる領域に業務フローをフレームとして並べ、ドラッグで動かし、Ctrl（⌘）＋ホイールで拡大・縮小する。段を押すとその下にシナリオのカードが開き、カードの中の処理を押すと右に処理のカード、さらに SQL・テーブルのカードがつながって開く。子フローも、その場で開いて中の段を並べられる。フレームはドラッグで動かせ、名前で探すとその段のカードを開いて寄せる。開いた状態はブラウザに保存し、次に開いたときに戻す。業務フローの木を、上から下へ「開いていく」ことで読む。操作の詳細は [業務フローの書き方の規則](flow-rules.md) の7章にある。
+最初の画面はキャンバスである。Figma のように画面の外まで広がる領域に業務フローをフレームとして並べ、ドラッグで動かし、Ctrl（⌘）＋ホイールで拡大・縮小する。段を押すとその下にシナリオのカードが開き、カードの中の処理を押すと右に処理のカード、さらに SQL・テーブルのカードがつながって開く。子フローも、その場で開いて中の段を並べられる。フレームはドラッグで動かせ、名前で探すとその段のカードを開いて寄せる。開いた状態はブラウザに保存し、次に開いたときに戻す。業務フローの木を、上から下へ「開いていく」ことで読む。操作の詳細は [業務フローの書き方の規則](flow-rules.md) の8章にある。
 
 一覧と詳細のページもある。
 
@@ -575,10 +575,42 @@ E2E は「段から段へ、結果がちゃんと引き継がれるか」を確�
 | 処理 | usecase の日本語訳、通る規則（domain の関数の訳）、リポジトリの呼び出しと SQL、API の入口、使うシナリオ |
 | SQL・テーブル | SQL の全文、使うテーブル・処理、テーブルの列の日本語 |
 | 用語集 | 単語帳の業務の言葉と説明（日本語・英語・名前で探せる） |
+| 議事録 | 未回答の課題（担当の役割・期限・期日超過）、議事録の一覧と1回ごとのページ（承認・出席者・議題・回答・決めたこと・課題）、役割の一覧 |
 
 ブラウザの文言も、アプリと同じ単語帳から生成した文言の表を引く。
 
 参考にしている kawakin-core-system の設計 Viewer は、既存のコードとテストに、後からコメント（`@test-design` など）で意味を足して表示している。後から足す形だと、コメントとコードのずれを防ぐ規則が増えていく。このリポジトリでは、構造そのもの（業務フロー・シナリオ・ケースの定義）を正本にし、日本語は単語帳から生成するので、意味を足すためのコメントは要らない。
+
+### 6.10 受託開発で要件定義を進める（実装済み）
+
+このリポジトリは、受託開発で先方と要件定義を進めることを前提にしている（2026-11-21 決定）。GitHub でコードを書くのは開発チームだけで、先方にはブラウザをそのまま全部見せる。先方が読む成果物は2つある。新しいシステムの業務フロー（業務フローの粒度なら、業務部門の人でも確かめられる）と、打合せの議事録である。
+
+**役割を型にする。** 人の名前は書かず、役割だけで書く。役割は `defineRole` で書き、開発チーム（PM・エンジニア）・業務部門（経理担当・営業担当・承認者）・業務の相手（顧客）の3つの立場に分ける。業務フローの担当も、議事録の出席者も、課題の担当も、同じ役割の値を指す。
+
+**議事録も型にする。** 議事録は、先方がレビューする成果物なので、業務フローと同じく TypeScript で書く（`apps/web/meeting`）。決めたこと・課題・回答は、話している業務フロー・シナリオ・拡張を値で指す。
+
+```ts
+export const meeting20261017 = defineMeeting('2026-10-17', {
+  title: '第2回（入金の業務）',
+  attendees: [projectManager, engineer, accountant, approver],
+  agenda: [paymentManagement, overpaymentRefund, transferFeeDeduction, registerPayment],
+  answers: [answer(meeting20261003.questions.overpaymentHandling, '請求先から返金の依頼があれば返金し、なければ次の請求で差し引く')],
+  decisions: [decide(extensionOf(registerPayment, 'unidentifiedPayer'), '振込人を特定できない入金は仮受にし、入金の一覧で顧客を特定する')],
+  questions: {
+    mistakenRefund: raise(extensionOf(registerPayment, 'mistakenPayment'), '他社宛の誤入金を返金するとき、誰の承認が要るか', { assignee: approver, deadline: '2026-10-31' }),
+  },
+  approval: { on: '2026-10-20', by: approver },
+})
+```
+
+こうすると、次のことが型と検査で守られる。
+
+- **課題が、関係する業務の場所に残る。** 課題は、業務フロー（大きい粒度）・シナリオ・拡張（細かい粒度）のどれかを指す。ブラウザは、その場所のページとキャンバスのカードに課題を出す。木が細かくなっても、課題は話した場所に付いたまま残る。
+- **課題が宙に浮かない。** 指している業務フローやシナリオの名前を変えたり消したりすると、議事録が型のエラーになる。
+- **課題の状態を書かない。** 課題には担当（役割）と期限を持たせ、回答は後の回の議事録に `answer` で書く。回答済み・未回答・期日超過は、ブラウザが議事録をたどって求める。状態の書き忘れでずれることがない。
+- **先方の承認を記録する。** 先方が議事録のページを確かめたら、開発チームが承認の日と役割を書く。書くまでは「未承認」と出る。
+
+打合せは、大きい粒度から始めて、会話しながら木を育てる（6.5）。キックオフでは業務フローの段だけを並べて「抜けている業務はないか」を話し、回を重ねるごとにシナリオ・拡張の粒度へ下りていく。サンプルには、3回分の議事録（`apps/web/meeting`）を書いた。キックオフで業務フローの粒度の課題が挙がり、第2回で回答して拡張の粒度の課題が新しく挙がり、第3回はまだ先方の承認を待っている、という流れである。書き方の規則は [業務フローの書き方の規則](flow-rules.md) の7章にある。
 
 ## 7. サンプルの業務 — 売上・請求・入金
 
@@ -655,8 +687,10 @@ flowchart LR
 | 2026-11-20 | このシステムで起こる業務の場面（分割入金・過入金・返金・振込手数料など）を、すべて業務フローとして書く。画面のない操作（返金・調整・顧客の登録など）は未着手のシナリオにして、ブラウザに未着手として出す。業務フローは領域（請求・入金・売上・顧客）のフォルダに置く |
 | 2026-11-20 | コードのブラウザと処理の訳を英語でも出す。モデルは同じ解析から日本語と英語の2つを作り、ブラウザで切り替える。人が日本語で書いたもの（事前条件・拡張の条件・ケースの見出し）は書いたまま出す |
 | 2026-11-20 | 単語帳を、ファイル名と API・画面のパスにも当てる（lint の `app/known-file-name`・`app/known-path`）。道具が決める名前（main・setup・test など）は対象外 |
+| 2026-11-21 | 受託開発を前提に、役割と議事録を型にする。人の名前は書かず役割（開発チーム・業務部門・業務の相手）で書き、議事録の決めたこと・課題は業務フロー・シナリオ・拡張を値で指す。課題は担当の役割と期限を持ち、状態は後の回の回答から求める。先方の承認は開発チームが記録する（6.10） |
 | 未決 | つながりの取り方。静的解析で作り、いまはテストの実行の記録は要らなかった（6.7） |
 
 ## 11. これから
 
-- 土台の側: 配備の自動化（CI は `.github/workflows/check.yml` で `pnpm check`・DB の契約テスト・実ブラウザの E2E を流す）、Cognito によるログイン、請求書の PDF。
+- 土台の側: 配備の自動化・Cognito によるログイン・請求書の PDF は、当面作らない（2026-11-21）。CI は `.github/workflows/check.yml` で `pnpm check`・DB の契約テスト・実ブラウザの E2E を流す。
+- 要件定義の側: 役割と議事録（6.10）を、実際の打合せで使いながら直していく。

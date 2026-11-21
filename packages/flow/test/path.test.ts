@@ -2,7 +2,12 @@
 import { describe, expect, test } from 'vitest'
 import { defineFlow, defineScenario, elapse, nest, occur, operate, outside } from '../src/definition'
 import { listFlowPaths, runFlowPath } from '../src/path'
+import { defineRole } from '../src/role'
 import type { Screen } from '../src/screen'
+
+const accountant = defineRole('accountant', { side: 'business' })
+const salesperson = defineRole('salesperson', { side: 'business' })
+const customer = defineRole('customer', { side: 'external' })
 
 const calls: string[] = []
 const record = (name: string) => async (_screen: Screen, input: string) => {
@@ -10,22 +15,22 @@ const record = (name: string) => async (_screen: Screen, input: string) => {
 }
 
 const registerPayment = defineScenario('registerPayment', {
-  actor: 'accountant',
+  actor: accountant,
   operate: record('registerPayment'),
   confirm: record('confirm'),
   extensions: { unidentifiedPayer: { condition: '振込依頼人名から顧客を特定できない', confirm: record('unidentified') } },
 })
-const identifyPayment = defineScenario('identifyPayment', { actor: 'accountant', operate: record('identifyPayment') })
-const browsePayments = defineScenario('browsePayments', { actor: 'accountant' })
+const identifyPayment = defineScenario('identifyPayment', { actor: accountant, operate: record('identifyPayment') })
+const browsePayments = defineScenario('browsePayments', { actor: accountant })
 
 const child = defineFlow('paymentManagement', {
   steps: [
-    occur('customer', 'payInvoice'),
+    occur(customer, 'payInvoice'),
     operate(registerPayment, 'main', { unidentifiedPayer: { input: 'unknown', then: [operate(identifyPayment, 'later')] } }),
   ],
 })
 const parent = defineFlow('monthlyInvoice', {
-  steps: [outside('salesperson', 'deliverProduct'), elapse('closingDate', '2026-10-31'), nest(child), operate(browsePayments)],
+  steps: [outside(salesperson, 'deliverProduct'), elapse('closingDate', '2026-10-31'), nest(child), operate(browsePayments)],
 })
 
 describe('listFlowPaths', () => {
