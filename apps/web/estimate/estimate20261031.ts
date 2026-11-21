@@ -17,6 +17,7 @@ import { SalesCreatePage } from '../src/sales/salesCreatePage'
 
 export const estimate20261031 = defineEstimate('2026-10-31', {
   title: '見積（第3回の打合せのあと）',
+  rate: 80_000,
   items: [
     { title: '要件定義（打合せ・議事録）', amount: 1_000_000 },
     { title: '売上の登録', amount: 400_000, targets: [createSales, SalesCreatePage] },

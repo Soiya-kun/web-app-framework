@@ -107,6 +107,29 @@ describe('このリポジトリのモデル', () => {
     expect(model.unestimatedScenarioIds).toEqual(['createAdjustment'])
   })
 
+  test('機能ごとの工数を、いちばん新しい見積の項目のうち対象をいちばん直接に指す項目に割り当て、どれにも当たらない工数を残す', () => {
+    const latest = model.estimates.at(-1)
+    expect(latest?.rate).toBe(80_000)
+    expect(latest?.items.map((item) => [item.title, item.manual, item.audit])).toEqual([
+      ['要件定義（打合せ・議事録）', 0, 0],
+      ['売上の登録', 5, 0.5],
+      ['請求の締めと締めの取消', 11, 1.5],
+      ['請求の閲覧と発行', 8, 0.75],
+      ['期日超過の請求の閲覧', 3, 0.25],
+      ['入金の記録と特定', 12, 1],
+      ['返金の登録', 4, 0.5],
+      ['顧客の登録', 3, 0.25],
+      // 業務フローの中のシナリオは、シナリオを直接に指す項目に割り当てるので、業務フローそのものの工数だけが残る。
+      ['業務フローの E2E', 5, 1],
+      ['旧システムのデータの移行', 12, 1.5],
+      ['出精値引', 0, 0],
+    ])
+    expect(model.estimates[0]?.items[0]?.manual).toBeNull()
+    expect(model.efforts.filter((effort) => effort.itemIndex === null).map((effort) => effort.target.id)).toEqual(['createAdjustment'])
+    expect(model.missingEffortScenarioIds).toEqual([])
+    expect([model.progress.manualEffort, model.progress.auditEffort]).toEqual([66, 7.5])
+  })
+
   test('英語のモデルは、同じつながりを英語の見出し・手順で持つ（人が書いた拡張の条件は書いたまま）', () => {
     const englishModel = buildModel(repositoryRoot, 'en')
     const scenario = englishModel.scenarios.find((candidate) => candidate.id === 'registerPayment')
@@ -178,6 +201,11 @@ describe('書き方の規則の検査', () => {
     `import { defineEstimate } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nexport const estimateFirst = defineEstimate('2026-10-01', {\n  title: '見積',\n  items: [\n    { title: '売上の登録', amount: 300_000, targets: [createSales] },\n    { title: '金額がない' },\n    { title: '対象を文字で書いた', amount: 100_000, targets: ['createSales'] },\n  ],\n})\n`,
   )
 
+  put(
+    'apps/web/effort/effort.ts',
+    `import { defineEffort } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nexport const effort = defineEffort([\n  { target: createSales, audit: 0.5, manual: 3 },\n  { target: createSales, audit: 1, manual: 2 },\n  { target: createSales, audit: 1 },\n  { target: 'createSales', audit: 1, manual: 2 },\n])\n`,
+  )
+
   put('.claude/skills/review/SKILL.md', '---\nname: review\ndescription: レビューする\n---\n')
   put('apps/web/CLAUDE.md', '# 決まり\n')
   put('.cursorrules', '決まり\n')
@@ -218,6 +246,11 @@ describe('書き方の規則の検査', () => {
   test('見積: 変数の名前は estimate と日付、項目は名前と金額、対象は import した値', () => {
     expect(rules('apps/web/estimate/estimate20261001.ts')).toEqual(['estimate', 'estimate-item', 'estimate-item'])
     expect(model.estimates.map((estimate) => [estimate.id, estimate.totalAmount])).toEqual([['estimateFirst', 400_000]])
+  })
+
+  test('工数: 対象は import した値、監査と人手の人日は 0 以上の数、1つの対象に1つ', () => {
+    expect(rules('apps/web/effort/effort.ts')).toEqual(['effort', 'effort', 'effort'])
+    expect(model.efforts.map((effort) => [effort.target.id, effort.manual, effort.itemIndex])).toEqual([['createSales', 3, 0]])
   })
 
   test('AI への指示: Skill は議事録を作る minutes の1つだけで、ほかに AI に向けた指示のファイルを置かない', () => {

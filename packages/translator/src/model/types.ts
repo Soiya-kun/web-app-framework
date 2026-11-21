@@ -109,6 +109,18 @@ export type EstimateItemNode = {
   readonly title: string
   readonly amount: number
   readonly targets: readonly MeetingPlaceNode[]
+  /** この項目に割り当てた、機能ごとの工数の合計（人日）。いちばん新しい版だけ。 */
+  readonly audit: number | null
+  readonly manual: number | null
+}
+
+/** 機能ごとの工数（人日）。監査の工数と、人がコーディングとテストをする場合の工数。 */
+export type EffortNode = SourcePlace & {
+  readonly target: MeetingPlaceNode
+  readonly audit: number
+  readonly manual: number
+  /** 割り当てた、いちばん新しい見積の項目の番号（0 から）。どの項目にも当たらなければ null（未見積の工数）。 */
+  readonly itemIndex: number | null
 }
 
 /** 見積（版ごとに1つ）。 */
@@ -117,6 +129,8 @@ export type EstimateNode = SourcePlace & {
   readonly id: string
   readonly date: string
   readonly title: string
+  /** 1人日の単価（円）。 */
+  readonly rate: number | null
   readonly items: readonly EstimateItemNode[]
   readonly totalAmount: number
 }
@@ -298,6 +312,10 @@ export type ModelProgress = {
   readonly estimates: number
   readonly estimateAmount: number
   readonly unestimatedScenarios: number
+  /** 機能ごとの工数の合計（人日）と、工数を書いていないシナリオの数。 */
+  readonly auditEffort: number
+  readonly manualEffort: number
+  readonly missingEffortScenarios: number
 }
 
 export type Model = {
@@ -309,6 +327,9 @@ export type Model = {
   /** 見積（日付の順）と、いちばん新しい見積のどの項目からも指されていないシナリオ。 */
   readonly estimates: readonly EstimateNode[]
   readonly unestimatedScenarioIds: readonly string[]
+  /** 機能ごとの工数と、工数を書いていないシナリオ。 */
+  readonly efforts: readonly EffortNode[]
+  readonly missingEffortScenarioIds: readonly string[]
   readonly flows: readonly FlowNode[]
   readonly legacyFlows: readonly LegacyFlowNode[]
   readonly legacyTables: readonly LegacyTableNode[]

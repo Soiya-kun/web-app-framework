@@ -7,7 +7,7 @@ import { defineConfig, type Plugin } from 'vitest/config'
 const repositoryRoot = join(import.meta.dirname, '../..')
 const generator = [join(import.meta.dirname, 'node_modules/.bin/tsx'), [join(repositoryRoot, 'packages/translator/src/model/cli.ts')]] as const
 // モデルの作り直しのもとになるソース（業務フロー・シナリオ・画面・バックエンド・単語帳）。
-const watchedDirectories = ['.claude/skills', 'apps/web/flow', 'apps/web/scenario', 'apps/web/role', 'apps/web/meeting', 'apps/web/step', 'apps/web/legacy', 'apps/web/estimate', 'apps/web/src', 'packages/backend/src', 'packages/backend/database', 'packages/vocabulary/words']
+const watchedDirectories = ['.claude/skills', 'apps/web/flow', 'apps/web/scenario', 'apps/web/role', 'apps/web/meeting', 'apps/web/step', 'apps/web/legacy', 'apps/web/estimate', 'apps/web/effort', 'apps/web/src', 'packages/backend/src', 'packages/backend/database', 'packages/vocabulary/words']
 
 /**
  * モデル（generated/model.json）を作る。起動・ビルドの前に1回作り、開発中はソースが変わるたびに後ろで作り直す。

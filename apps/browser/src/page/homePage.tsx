@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useYenFormat } from '../component/estimatePart'
+import { useEffortFormat, useYenFormat } from '../component/estimatePart'
 import { arrangeFlowAreas, sumPendingSteps } from '../component/flowArea'
 import { Badge, Cell, HeaderCell, PageTitle, Section, Table, TextLink } from '../component/part'
 import { useModel } from '../model'
@@ -10,6 +10,7 @@ export function HomePage() {
   const text = useText()
   const labelFormat = useLabelFormat()
   const formatYen = useYenFormat()
+  const formatEffort = useEffortFormat()
   const { model, scenarios } = useModel()
   const [query, setQuery] = useState('')
   const { progress } = model
@@ -85,6 +86,7 @@ export function HomePage() {
             [text.label('question'), labelFormat.joinNote(String(progress.questions), `${text.label('unresolved')} ${progress.openQuestions}`)],
             [text.label('legacyFlow'), labelFormat.joinNote(String(progress.legacyFlows), `${text.label('legacyTable')} ${progress.legacyTables}`)],
             [text.label('estimate'), labelFormat.joinNote(formatYen(progress.estimateAmount), `${text.label('unestimatedScenario')} ${progress.unestimatedScenarios}`)],
+            [text.label('effort'), labelFormat.joinNote(formatEffort({ manual: progress.manualEffort, audit: progress.auditEffort }), `${text.label('missingEffort')} ${progress.missingEffortScenarios}`)],
           ].map(([labelText, detail]) => (
             <div key={labelText} className="flex flex-col rounded-control bg-canvas px-3 py-2">
               <dt className="text-xs text-muted">{labelText}</dt>

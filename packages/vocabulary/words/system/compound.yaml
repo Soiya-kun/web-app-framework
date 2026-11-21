@@ -32,3 +32,6 @@
 - { id: legacyOperation, en: { tokens: legacy operation, label: Legacy System Operation }, ja: { form: 旧システムの操作 } }
 - { id: legacyTable, en: { tokens: legacy table, label: Legacy System Table }, ja: { form: 旧システムのテーブル } }
 - { id: estimateItem, en: { tokens: estimate item, label: Estimate Item }, ja: { form: 見積項目 } }
+- { id: effortRate, en: { tokens: effort rate, label: Day Rate }, ja: { form: 人日単価 } }
+- { id: missingEffort, en: { tokens: missing effort, label: Scenarios Without Effort }, ja: { form: 工数のないシナリオ } }
+- { id: effortDay, en: { tokens: effort day, label: Person-Days }, ja: { form: 人日 } }

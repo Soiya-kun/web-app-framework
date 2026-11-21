@@ -8,7 +8,7 @@ TypeScript（React + Hono）で業務 Web アプリを作るための土台（�
 - 業務フローを TypeScript で書き、そのまま E2E として流す。コードのブラウザで、業務フローからシナリオ・処理・SQL までたどって読む。
 - 受託開発の要件定義のために、役割と議事録も TypeScript で書く。話したことは決めたことか課題にし、業務フロー・画面・処理に型でつなぐ。先方はブラウザで業務フローと議事録を確かめる。
 - 現行（AsIs）の業務フローと旧システムのテーブルも TypeScript で書き、新しい業務フロー（ToBe）への置き換えを型で持つ。同じ・置き換え・廃止・新しい段を比べて見られる。
-- 見積も TypeScript で取り込み（任意）、項目から現行・新しい業務フロー・機能まで追える。見積にないシナリオも数える。
+- 見積も TypeScript で取り込み（任意）、項目から現行・新しい業務フロー・機能まで追える。見積にないシナリオも数える。機能ごとの工数（監査の工数・人手の工数）も持て、要件が固まったあとの新しいシステムの金額を元の見積と比べられる。
 
 まず読むもの: [このリポジトリの考え方](docs/concept.md)（業務フローからコードまでを一続きに読む、という全体の話）。
 
@@ -44,7 +44,7 @@ CI（`.github/workflows/check.yml`）は、main への push と Pull Request ご
 
 | 場所 | 内容 |
 | --- | --- |
-| `apps/web` | React の画面。`scenario` にシナリオとケース（画面の結合テスト）、`flow` に業務フロー（E2E）、`role` に役割、`step` にシステムの外の業務の値、`meeting` に議事録、`legacy` に現行の業務フローと旧システムのテーブル、`estimate` に見積 |
+| `apps/web` | React の画面。`scenario` にシナリオとケース（画面の結合テスト）、`flow` に業務フロー（E2E）、`role` に役割、`step` にシステムの外の業務の値、`meeting` に議事録、`legacy` に現行の業務フローと旧システムのテーブル、`estimate` に見積、`effort` に機能ごとの工数 |
 | `apps/browser` | コードのブラウザ（業務フロー・シナリオ・処理・SQL・議事録・現行の業務フロー・見積を読む） |
 | `apps/server` | 本番の API サーバーとマイグレーションの実行（Dockerfile） |
 | `packages/backend` | Hono の API（domain・usecase・repository・handler） |

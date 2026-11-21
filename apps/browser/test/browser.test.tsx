@@ -179,12 +179,19 @@ describe('キャンバス', () => {
     const items = screen.getByRole('table', { name: '見積（第3回の打合せのあと）の見積項目' })
     expect(within(items).getByRole('row', { name: /売上の登録/ })).toHaveTextContent('売上を登録する・売上登録￥400,000')
     expect(within(items).getByRole('row', { name: /合計/ })).toHaveTextContent('概算見積（-￥600,000）￥5,800,000')
+    // いちばん新しい版には、項目に割り当てた工数と、人日単価をかけた金額を出す。
+    expect(within(items).getByRole('row', { name: /請求の締めと締めの取消/ })).toHaveTextContent('￥800,00011 人日￥880,0001.5 人日￥120,000')
+    const effort = screen.getByRole('region', { name: '工数' })
+    expect(effort).toHaveTextContent('人手の工数66 人日・￥5,280,000（見積 -￥520,000）')
+    expect(effort).toHaveTextContent('監査の工数7.5 人日・￥600,000')
+    expect(effort).toHaveTextContent('未見積の工数（1）調整を登録する・人手の工数 3 人日・監査の工数 0.25 人日')
   })
 
   test('シナリオのページに、そのシナリオを指すいちばん新しい見積の項目を出す', async () => {
     await launchBrowser('/scenario/createSales')
 
     expect(screen.getByRole('region', { name: '見積（￥400,000）' })).toHaveTextContent('売上の登録￥400,000')
+    expect(screen.getByRole('region', { name: '見積（￥400,000）' })).toHaveTextContent('売上を登録する（人手の工数 5 人日・監査の工数 0.5 人日）')
   })
 
   test('新しい業務フローのページから、置き換わる現行の業務フローへ移れる', async () => {
