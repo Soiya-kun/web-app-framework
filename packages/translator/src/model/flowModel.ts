@@ -778,11 +778,15 @@ function readFlowNodes(context: StepContext, reader: SourceReader, definitions: 
   return flows.map((flow) => ({ ...flow, parentIds: flows.filter((parent) => children.get(parent.id)?.includes(flow.id) === true).map((parent) => parent.id) }))
 }
 
-/** apps/web の画面のテストは、scenario（シナリオのケース）と flow（業務フローの E2E）、e2e（同じ業務フローを実ブラウザで流す）にだけ置く。 */
+/**
+ * apps/web の画面のテストは、scenario（シナリオのケース）と flow（業務フローの E2E）、e2e（同じ業務フローを実ブラウザで流す）、
+ * mock（同じ業務フローをモックの開発パネルで流す道具のテスト）にだけ置く。
+ */
 function checkTestPlaces(reader: SourceReader, problems: ModelProblem[]): void {
+  const toolRoots = ['apps/web/e2e/', 'apps/web/mock/']
   for (const file of reader.list('apps/web', (path) => /\.test\.tsx?$/.test(path))) {
-    if (!file.startsWith(`${scenarioRoot}/`) && !file.startsWith(`${flowRoot}/`) && !file.startsWith('apps/web/e2e/')) {
-      problems.push({ file, line: 1, rule: 'test-place', message: '画面のテストは apps/web/scenario のシナリオのケースか、apps/web/flow の業務フローに書く（apps/web/e2e は同じ業務フローを実ブラウザで流すだけ）' })
+    if (!file.startsWith(`${scenarioRoot}/`) && !file.startsWith(`${flowRoot}/`) && !toolRoots.some((root) => file.startsWith(root))) {
+      problems.push({ file, line: 1, rule: 'test-place', message: '画面のテストは apps/web/scenario のシナリオのケースか、apps/web/flow の業務フローに書く（apps/web/e2e・apps/web/mock は同じ業務フローを実ブラウザ・モックで流す道具）' })
     }
   }
 }

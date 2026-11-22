@@ -160,6 +160,7 @@
 - { id: lane, ja: { form: レーン, attach: direct } }
 - { id: diagram, ja: { form: 図, attach: direct } }
 - { id: mainline, ja: { form: 本線 } }
+- { id: mock, ja: { form: モック, attach: direct }, description: 'メモリの DB で画面を動かす開発の道具（pnpm dev:mock）' }
 - { id: note, ja: { form: 備考 } }
 - { id: course, ja: { form: 経路 } }
 # ブラウザ（レーン図）の部品で使う名詞。

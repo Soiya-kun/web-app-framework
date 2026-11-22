@@ -12,7 +12,8 @@ export default defineConfig(
   // 名前（変数・関数・型）だけでなく、ファイル名と、API・画面のパスも単語帳の言葉にする。
   {
     files: ['apps/**/*.{ts,tsx}', 'packages/backend/**/*.ts'],
-    ignores: ['**/*.config.ts'],
+    // モック（pnpm dev:mock の API サーバーと開発パネル）は開発の道具なので対象外（業務の言葉を持たない）。
+    ignores: ['**/*.config.ts', 'apps/web/mock/**'],
     plugins: { app: appPlugin },
     rules: {
       'app/known-words': 'error',

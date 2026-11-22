@@ -8,6 +8,7 @@ import { useText, useLabelFormat } from '../text'
 import { useChangeSummary } from '../component/legacyPart'
 import { PlaceMinutes, prepareFlowMatch } from '../component/meetingPart'
 import { PlaceEstimate } from '../component/estimatePart'
+import { MockLink } from '../component/mockLink'
 
 const flowRoute = getRouteApi('/flow/$flowId')
 
@@ -96,6 +97,11 @@ export function FlowPage() {
                   {step.scenarioId !== null && table.scenarios.get(step.scenarioId)?.pending === true ? (
                     <Badge tone="pending">{text.label('pending')}</Badge>
                   ) : null}
+                  {step.kind === 'operate' && step.scenarioId !== null ? (
+                    <div>
+                      <MockLink flowId={flow.id} number={step.number} />
+                    </div>
+                  ) : null}
                 </Cell>
                 <Cell>{kindLabel[step.kind]}</Cell>
                 <Cell>
@@ -119,6 +125,7 @@ export function FlowPage() {
                   <span className="font-medium">
                     {extension.key}. {extension.condition}
                   </span>
+                  <MockLink flowId={flow.id} number={extension.key} />
                   <ol className="flex list-decimal flex-col gap-0.5 pl-6">
                     <li>
                       {labelFormat.joinNote(step.title, labelFormat.joinSequence(extension.inputs.map((input) => `${input.label} ${input.value}`)))}
