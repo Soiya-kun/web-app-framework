@@ -208,7 +208,7 @@ describeScenario(registerPayment, (cases) => {
 | `case-place` | ケースはシナリオの隣の `.test.tsx` に、`describeScenario` だけで書く |
 | `case-main` | 主成功シナリオのケースは1つ |
 | `case-extension` | 拡張のケースは、シナリオにある拡張を指す |
-| `test-place` | `apps/web` の画面のテストは、`scenario` と `flow` にだけ置く（`e2e` は、同じ業務フローを実ブラウザで流すだけ） |
+| `test-place` | `apps/web` の画面のテストは、`scenario` と `flow` にだけ置く（`e2e` は同じ業務フローを実ブラウザで流すだけ、`mock` は同じ業務フローをモックの開発パネルで流す道具のテスト） |
 | `role` | 役割は `apps/web/role` に `defineRole(名前, { side })` で書く。名前は変数と同じ・単語帳の名詞、立場は `vendor`・`business`・`external` |
 | `meeting` | 議事録は `defineMeeting('YYYY-MM-DD', { … })` で、変数の名前は `meeting` と日付 |
 | `meeting-place` | 議題・決めたこと・課題は、業務フロー・シナリオ・`extensionOf(シナリオ, 拡張)`・関数を、ファイルから import して指す |

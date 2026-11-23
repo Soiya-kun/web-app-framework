@@ -26,7 +26,8 @@
     "vocabulary:find": "pnpm --silent --filter @app/vocabulary run find",
     "model": "pnpm --filter @app/translator model",
     "flow:check": "pnpm --filter @app/translator model --check",
-    "dev:browser": "pnpm --filter @app/browser dev"
+    "dev:browser": "pnpm --filter @app/browser dev",
+    "dev:mock": "tsx apps/web/mock/memoryServer.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

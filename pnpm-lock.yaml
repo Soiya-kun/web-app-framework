@@ -310,6 +310,9 @@ importers:
       '@app/flow':
         specifier: workspace:*
         version: link:../../packages/flow
+      '@app/translator':
+        specifier: workspace:*
+        version: link:../../packages/translator
       '@hono/node-server':
         specifier: ^2.1.9
         version: 2.1.9(hono@4.13.19)

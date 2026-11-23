@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p e2e",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p e2e && tsc --noEmit -p mock",
     "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
@@ -19,6 +19,7 @@
   "devDependencies": {
     "@app/backend": "workspace:*",
     "@app/flow": "workspace:*",
+    "@app/translator": "workspace:*",
     "@hono/node-server": "^2.1.9",
     "@tailwindcss/vite": "^4.3.5",
     "@testing-library/dom": "^10.4.2",
