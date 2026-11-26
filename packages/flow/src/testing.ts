@@ -24,7 +24,8 @@ function ensureEqual(actual: unknown, expected: unknown, subject: string): void 
 }
 
 export function prepareTestingScreen(option: TestingScreenOption): Screen {
-  return prepareScope(option, async () => within(document.body))
+  // 操作の範囲は画面の中（main）。画面の上のナビゲーションは go だけが使う（同じ名前のリンクと取り違えない）。
+  return prepareScope(option, async () => within(document.querySelector<HTMLElement>('main') ?? document.body))
 }
 
 function prepareScope(option: TestingScreenOption, readScope: () => Promise<Scope>): Screen {

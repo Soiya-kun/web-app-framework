@@ -8,7 +8,9 @@ import { checkLegacyTables, compareLegacyFlows } from './legacyModel'
 import { readMeetingModel } from './meetingModel'
 import { prepareLanguage } from '../language'
 import { prepareScreenText } from './screenText'
+import { buildScreens, readStyleTokens } from './screenModel'
 import { readSkillProblems } from './skillModel'
+import { readTransitions } from './transitionModel'
 import { prepareSourceReader, readString, unwrap } from './source'
 import type { FlowStepNode, GlossaryEntry, Model, PageNode, ScenarioNode, ScenarioUse } from './types'
 import { readWebModel, type WebModel } from './webModel'
@@ -152,6 +154,17 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
     }
   })
 
+  const transitions = readTransitions(prepareScreenText(language), reader, web.pages, web.navigation, problems)
+  const screens = buildScreens(prepareScreenText(language), {
+    pages: web.pages,
+    navigation: web.navigation,
+    scenarios,
+    endpoints: backend.endpoints,
+    works: backend.works,
+    statements: backend.statements,
+    tables: backend.tables,
+    transitions,
+  })
   const { estimates, efforts } = allocateEfforts(estimateDrafts, effortDrafts, scenarios, legacy.flows)
   const unestimatedScenarioIds = listUnestimatedScenarios(estimates, scenarios, legacy.flows)
   const missingEffortScenarioIds = listMissingEffortScenarios(efforts, scenarios, legacy.flows)
@@ -172,6 +185,9 @@ export function buildModel(root: string, locale: Locale = 'ja'): Model {
     legacyTables: draft.legacyTables,
     scenarios,
     pages: web.pages,
+    screens,
+    transitions,
+    styleTokens: readStyleTokens(reader),
     endpoints: backend.endpoints,
     works: backend.works,
     rules: backend.rules,

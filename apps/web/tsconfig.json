@@ -23,6 +23,7 @@
     "legacy",
     "estimate",
     "effort",
+    "transition",
     "vite.config.ts"
   ]
 }

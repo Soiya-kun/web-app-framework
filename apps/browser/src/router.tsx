@@ -20,6 +20,9 @@ import { LegacyTablePage } from './page/legacyTablePage'
 import { MeetingListPage } from './page/meetingListPage'
 import { MeetingPage } from './page/meetingPage'
 import { ScenarioPage } from './page/scenarioPage'
+import { ScreenListPage } from './page/screenListPage'
+import { ScreenPage } from './page/screenPage'
+import { ScreenRulePage } from './page/screenRulePage'
 import { StatementPage } from './page/statementPage'
 import { TablePage } from './page/tablePage'
 import { WorkPage } from './page/workPage'
@@ -52,6 +55,9 @@ function RootLayout() {
           <Link to="/legacy" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
             {text.label('legacy')}
           </Link>
+          <Link to="/screens" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
+            {text.label('screen')}
+          </Link>
           <Link to="/estimates" className="text-muted hover:text-ink [&.active]:font-bold [&.active]:text-ink">
             {text.label('estimate')}
           </Link>
@@ -82,6 +88,9 @@ const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: '/meeting/$meetingId', component: MeetingPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/legacy', component: LegacyListPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/estimates', component: EstimateListPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/screens', component: ScreenListPage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/screens/rule', component: ScreenRulePage }),
+  createRoute({ getParentRoute: () => rootRoute, path: '/screen/$screenId', component: ScreenPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/estimate/$estimateId', component: EstimatePage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/legacy/$legacyId', component: LegacyPage }),
   createRoute({ getParentRoute: () => rootRoute, path: '/legacy/table/$tableId', component: LegacyTablePage }),

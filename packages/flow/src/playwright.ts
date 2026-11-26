@@ -36,7 +36,8 @@ async function waitUntil(check: () => Promise<void>, timeout: number): Promise<v
 }
 
 export function preparePlaywrightScreen(option: PlaywrightScreenOption): Screen {
-  return prepareScope(option, async () => option.page.locator('body'))
+  // 操作の範囲は画面の中（main）。画面の上のナビゲーションは go だけが使う（同じ名前のリンクと取り違えない）。
+  return prepareScope(option, async () => ((await option.page.locator('main').count()) > 0 ? option.page.locator('main') : option.page.locator('body')))
 }
 
 function prepareScope(option: PlaywrightScreenOption, readScope: () => Promise<Locator>): Screen {

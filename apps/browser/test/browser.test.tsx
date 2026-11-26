@@ -202,6 +202,49 @@ describe('キャンバス', () => {
     expect(screen.getByRole('heading', { name: '現行の月次の請求' })).toBeVisible()
   })
 
+  test('画面一覧（IPA 画面編の表記）に、画面ID・分類・階層・機能を出し、画面遷移のテストから画面遷移の図を描く', async () => {
+    const { user } = await launchBrowser('/screens')
+
+    const screens = screen.getByRole('table', { name: '画面一覧' })
+    expect(within(screens).getByRole('row', { name: /invoiceDetail/ })).toHaveTextContent('情報表示請求一覧 › 請求詳細')
+    expect(within(screens).getByRole('row', { name: /paymentCreate/ })).toHaveTextContent('入金を記録するregisterPayment/payments/new')
+    const whole = screen.getByRole('figure', { name: '全体の画面遷移' })
+    expect(within(whole).getAllByText('《開始点》')).toHaveLength(5)
+    expect(whole).toHaveTextContent('[請求の締め]')
+    expect(whole).toHaveTextContent('[締めの取消]')
+    expect(screen.getByRole('figure', { name: '請求の画面遷移' })).toHaveTextContent('[〈請求締め日〉]')
+
+    await user.click(within(whole).getByRole('link', { name: /入金登録/ }))
+    expect(screen.getByRole('heading', { name: '入金登録' })).toBeVisible()
+  })
+
+  test('画面のページに、画面レイアウト・画面入出力項目一覧・画面アクション明細を出す', async () => {
+    await launchBrowser('/screen/paymentCreate')
+
+    const layout = screen.getByRole('figure', { name: '入金登録の画面レイアウト' })
+    expect(layout).toHaveTextContent('/payments/new')
+    expect(layout).toHaveTextContent('05振込依頼人名')
+    const items = screen.getByRole('table', { name: '入金登録の画面入出力項目一覧' })
+    expect(within(items).getByRole('row', { name: /入金額/ })).toHaveTextContent('04入金額テキストボックス○数値入金額が空か、1 から 999,999,999 の整数でない')
+    expect(within(items).getByRole('row', { name: /入金方法/ })).toHaveTextContent('リストボックス○選択振込')
+    const actions = screen.getByRole('table', { name: '入金登録の画面アクション明細' })
+    expect(within(actions).getByRole('row', { name: /記録/ })).toHaveTextContent('「記録」を押す入金の記録02 入金日')
+    expect(within(actions).getByRole('row', { name: /記録/ })).toHaveTextContent('テーブル（入金・振込依頼人名）')
+    expect(screen.getByRole('figure', { name: '入金登録の画面遷移' })).toHaveTextContent('[入金登録]')
+  })
+
+  test('画面遷移・レイアウト共通ルールに、ナビゲーションからの画面の木・画面を操作する役割・配色・エラー表示を出す', async () => {
+    await launchBrowser('/screens/rule')
+
+    const structure = screen.getByRole('region', { name: '全体構造とナビゲーション' })
+    expect(structure).toHaveTextContent('請求一覧（invoiceList）請求詳細（invoiceDetail）')
+    const users = screen.getByRole('table', { name: 'ユーザの定義' })
+    expect(within(users).getByRole('row', { name: /経理担当/ })).toHaveTextContent('入金を記録する')
+    expect(within(users).queryByRole('row', { name: /PM/ })).toBeNull()
+    expect(screen.getByRole('region', { name: '配色' })).toHaveTextContent('--color-primary#1f4fd1')
+    expect(within(screen.getByRole('table', { name: 'エラー表示方法、エラーメッセージ' })).getByRole('row', { name: /請求の締め/ })).toHaveTextContent('請求締め日が、前回の請求締め日以前')
+  })
+
   test('キャンバスのシナリオのカードに、そのシナリオと拡張に付いた課題を出す', async () => {
     const { user } = await launchBrowser('/')
     const frame = screen.getByRole('region', { name: '月次の請求' })

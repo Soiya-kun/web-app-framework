@@ -227,15 +227,110 @@ export type ScenarioNode = SourcePlace & {
 
 export type PageActionNode = { readonly button: string; readonly endpointIds: readonly string[] }
 
+/** 画面の部品（画面レイアウト・画面入出力項目一覧・画面アクション明細のもと）。JSX に書いた順に並べる。 */
+export type ScreenElementNode = {
+  /** 識別ID（画面の中の番号。01, 02, …）。 */
+  readonly number: string
+  readonly kind: 'heading' | 'textInput' | 'selectInput' | 'button' | 'link' | 'table' | 'status' | 'alert'
+  /** 表示用のラベル（ボタン・リンクは文言、表は見出し、知らせは文）。 */
+  readonly label: string
+  /** 入力欄の項目のキー（FormField の field）。 */
+  readonly field: string | null
+  readonly inputMode: string | null
+  readonly placeholder: string | null
+  /** 初期表示（defaultValue）。 */
+  readonly initial: string | null
+  /** 表の列（見出しと揃え）。 */
+  readonly columns: readonly { readonly label: string; readonly align: 'left' | 'right' }[]
+  /** リンク先の道筋と、表の中のリンクかどうか。 */
+  readonly to: string | null
+  readonly inTable: boolean
+  /** ボタンが呼ぶ API の入口と、同じフォームの入力欄の識別ID。 */
+  readonly endpointIds: readonly string[]
+  readonly formItems: readonly string[]
+}
+
 export type PageNode = SourcePlace & {
   /** 道筋（/payments/new など）。 */
   readonly id: string
   readonly title: string
   readonly component: string
+  /** 画面ID（部品の名前から Page を除いたもの。paymentCreate）と、見出しのキー。 */
+  readonly screenId: string
+  readonly headingKey: string | null
+  /** 画面の説明（部品の関数の説明コメント）。 */
+  readonly summary: string
+  readonly elements: readonly ScreenElementNode[]
   readonly queryEndpointIds: readonly string[]
   readonly actions: readonly PageActionNode[]
   readonly links: readonly { readonly to: string; readonly inTable: boolean }[]
 }
+
+/** 画面から画面への遷移（from が画面ID、event は [押したボタン] や [たどったリンク]）。 */
+export type TransitionEdgeNode = { readonly from: string; readonly to: string; readonly event: string }
+
+/** 画面遷移のテスト（apps/web/transition の describeTransition）。経路ごとに、開始の画面と遷移を持つ。 */
+export type TransitionNode = SourcePlace & {
+  readonly id: string
+  readonly title: string
+  readonly traces: readonly { readonly title: string; readonly startIds: readonly string[]; readonly edges: readonly TransitionEdgeNode[] }[]
+}
+
+/** 画面入出力項目一覧の1行。 */
+export type ScreenItemNode = {
+  readonly number: string
+  readonly label: string
+  readonly kind: ScreenElementNode['kind'] | 'column'
+  /** 入力できる項目か（出力だけの項目は false）。 */
+  readonly input: boolean
+  readonly dataType: 'text' | 'number' | 'date' | 'choice' | null
+  /** 入力制約（その画面を開くシナリオの拡張の条件のうち、項目の名前を含むもの）。 */
+  readonly constraints: readonly string[]
+  readonly initial: string | null
+  /** 出力仕様（右揃えの列など）。 */
+  readonly output: string | null
+  readonly note: string
+}
+
+/** 画面アクション明細の1行。 */
+export type ScreenActionNode = {
+  readonly number: string
+  readonly kind: 'button' | 'link'
+  readonly name: string
+  /** イベント名（「記録」を押す・〈請求締め日〉のリンクをたどる）。 */
+  readonly event: string
+  /** アクションの処理概要（通る処理の題）と、処理詳細（処理の手順）。 */
+  readonly summary: readonly string[]
+  readonly steps: readonly string[]
+  /** 入力（同じフォームの入力欄の「識別ID 見出し」と、処理が読むテーブル）と出力（処理が書くテーブル）。 */
+  readonly inputs: readonly string[]
+  readonly inputTables: readonly string[]
+  readonly outputTables: readonly string[]
+  /** 遷移先の画面ID（画面遷移のテストとリンク先から）。 */
+  readonly destinationIds: readonly string[]
+}
+
+/** IPA「機能要件の合意形成ガイド 画面編」に沿って、画面ごとに出す設計書のもと。 */
+export type ScreenNode = SourcePlace & {
+  /** 画面ID（paymentCreate）と道筋。 */
+  readonly id: string
+  readonly path: string
+  readonly title: string
+  readonly summary: string
+  /** 分類（入力フォーム・一覧表示・情報表示）。 */
+  readonly kind: 'form' | 'list' | 'detail'
+  /** 階層（ナビゲーションの画面から、リンク・画面遷移でたどった順の画面ID。最後がこの画面）。 */
+  readonly hierarchy: readonly string[]
+  /** 関連する機能（その画面を開くシナリオ）。 */
+  readonly scenarioIds: readonly string[]
+  readonly navigation: boolean
+  readonly elements: readonly ScreenElementNode[]
+  readonly items: readonly ScreenItemNode[]
+  readonly actions: readonly ScreenActionNode[]
+}
+
+/** 画面の見た目の決まり（apps/web/src/style.css の @theme）。 */
+export type StyleTokenNode = { readonly name: string; readonly value: string }
 
 export type EndpointNode = SourcePlace & {
   /** POST /api/payments のような形。 */
@@ -335,6 +430,10 @@ export type Model = {
   readonly legacyTables: readonly LegacyTableNode[]
   readonly scenarios: readonly ScenarioNode[]
   readonly pages: readonly PageNode[]
+  /** IPA 画面編の設計書のもと（画面・画面遷移のテスト・見た目の決まり）。 */
+  readonly screens: readonly ScreenNode[]
+  readonly transitions: readonly TransitionNode[]
+  readonly styleTokens: readonly StyleTokenNode[]
   readonly endpoints: readonly EndpointNode[]
   readonly works: readonly WorkNode[]
   readonly rules: readonly RuleNode[]

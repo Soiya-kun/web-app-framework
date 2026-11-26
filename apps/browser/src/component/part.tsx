@@ -79,7 +79,7 @@ export function Table({ caption, children }: { readonly caption: string; readonl
 
 export function HeaderCell({ children }: { readonly children: ReactNode }) {
   return (
-    <th scope="col" className="border-b border-line px-2 py-1.5 text-left font-medium text-muted">
+    <th scope="col" className="whitespace-nowrap border-b border-line px-2 py-1.5 text-left font-medium text-muted">
       {children}
     </th>
   )

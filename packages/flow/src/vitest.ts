@@ -1,4 +1,4 @@
-// シナリオのケースと業務フローを、vitest のテストとして登録する。
+// シナリオのケース・業務フロー・画面遷移を、vitest のテストとして登録する。
 // テストの名前は単語帳から日本語にする（registerPayment →「入金を記録する」）。中身のないケースは todo（未着手）にする。
 import { renderNounPhrase, translateStep } from '@app/vocabulary'
 import { describe, test, vi } from 'vitest'
@@ -41,6 +41,21 @@ export function describeScenario<Input, ExtensionName extends string>(
       varyEach: (rows, title, run) => test.each(rows)(`バリエーション: ${title}`, run),
       extendEach: (extension, rows, title, run) => test.each(rows)(`拡張「${conditionOf(extension)}」: ${title}`, run),
     })
+  })
+}
+
+/** 画面遷移のテストの経路。1つの経路は、画面を開いて、押す・たどるたびに遷移先の画面（expectHeading）を確かめる。 */
+export type TransitionPaths = {
+  trace(title: string, run: CaseRun): void
+}
+
+/**
+ * 画面遷移のテストを書く（apps/web/transition/<名前>.test.tsx）。名前は単語帳の名詞句（invoiceTransition →「請求の画面遷移」）。
+ * 静的解析が、経路の操作と確かめた見出しから、画面遷移の図を作る。
+ */
+export function describeTransition(name: string, body: (paths: TransitionPaths) => void): void {
+  describe(`画面遷移: ${renderNounPhrase(name, 'ja')}`, () => {
+    body({ trace: (title, run) => test(title, run) })
   })
 }
 
