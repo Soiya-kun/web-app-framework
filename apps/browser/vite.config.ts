@@ -60,6 +60,8 @@ function generateModel(): Plugin {
 export default defineConfig({
   base: './',
   plugins: [generateModel(), react(), tailwindcss()],
+  // 画面（pnpm dev:web・pnpm dev:mock の 5173 番）と並べて開けるように、番号を分ける。モックの開発パネルは、ここへリンクする。
+  server: { port: 5199 },
   test: {
     environment: 'jsdom',
     setupFiles: ['./test/setup.ts'],

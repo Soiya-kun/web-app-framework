@@ -9,6 +9,7 @@ import { useText, useLabelFormat } from '../text'
 import { Branch, type BranchChild } from './branch'
 import { BranchToggle, Card, Fold, StepLines } from './card'
 import { emptyList, toggleBranch, useCanvasState, useCanvasStore } from './canvasStore'
+import { MockLink } from '../component/mockLink'
 
 /** カードの右に開いた子（開いた順）と、開閉の切り替え。 */
 function useBranches(path: string) {
@@ -324,7 +325,10 @@ export function ScenarioCard({ path, step }: { readonly path: string; readonly s
           </BranchToggle>
         ))}
       </div>
-      <DetailLink to="/scenario/$scenarioId" params={{ scenarioId: scenario.id }} />
+      <div className="flex flex-wrap items-center gap-3">
+        <DetailLink to="/scenario/$scenarioId" params={{ scenarioId: scenario.id }} />
+        {step.kind === 'operate' ? <MockLink flowId={path.split(':')[0] ?? ''} number={step.number} /> : null}
+      </div>
     </Card>
   )
   const branches: BranchChild[] = opened.flatMap((child) => {

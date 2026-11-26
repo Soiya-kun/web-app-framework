@@ -11,7 +11,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./test/setup.ts'],
-    // 画面のテストは、シナリオのケース（scenario）と業務フローの E2E（flow）にだけ書く。
-    include: ['scenario/**/*.test.tsx', 'flow/**/*.test.tsx', 'transition/**/*.test.tsx'],
+    // 画面のテストは、シナリオのケース（scenario）・業務フローの E2E（flow）・画面遷移（transition）にだけ書く。mock は開発パネルの部品のテスト。
+    include: ['scenario/**/*.test.tsx', 'flow/**/*.test.tsx', 'transition/**/*.test.tsx', 'mock/**/*.test.tsx'],
   },
 })

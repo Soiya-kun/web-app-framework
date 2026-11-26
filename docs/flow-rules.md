@@ -232,7 +232,7 @@ describeTransition('invoiceTransition', (paths) => {
 | `case-place` | ケースはシナリオの隣の `.test.tsx` に、`describeScenario` だけで書く |
 | `case-main` | 主成功シナリオのケースは1つ |
 | `case-extension` | 拡張のケースは、シナリオにある拡張を指す |
-| `test-place` | `apps/web` の画面のテストは、`scenario`・`flow`・`transition` にだけ置く（`e2e` は、同じ業務フローを実ブラウザで流すだけ） |
+| `test-place` | `apps/web` の画面のテストは、`scenario`・`flow`・`transition` にだけ置く（`e2e` は同じ業務フローを実ブラウザで流すだけ、`mock` は同じ業務フローをモックの開発パネルで流す道具のテスト） |
 | `transition` | 画面遷移のテストは `apps/web/transition` に `describeTransition(名前, …)` で書き、名前はファイルの名前と同じ |
 | `transition-step` | 画面遷移の経路では、開く（`go`。ナビゲーションの見出しのキー）・押す・たどるのあとに、`expectHeading` で、`PageTitle` の見出しがある画面を確かめる |
 | `role` | 役割は `apps/web/role` に `defineRole(名前, { side })` で書く。名前は変数と同じ・単語帳の名詞、立場は `vendor`・`business`・`external` |

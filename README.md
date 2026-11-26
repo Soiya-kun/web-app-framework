@@ -35,8 +35,9 @@ Node.js（`.node-version`）と pnpm（`package.json` の `packageManager`）を
 | `pnpm translate` | 処理の訳（日本語・英語）を作り直す |
 | `pnpm sql:ledger` | SQL の台帳を作り直す（DB の名前の単語帳の検査も行う） |
 | `pnpm flow:check` | 業務フローの書き方の規則を確かめる |
-| `pnpm dev:browser` | コードのブラウザを開く（ソースを保存するたびにモデルを作り直す） |
+| `pnpm dev:browser` | コードのブラウザを開く（http://localhost:5199。ソースを保存するたびにモデルを作り直す）。業務フローの段の「モックで開く」で、モックの画面をその段の手前まで流して開く |
 | `pnpm dev:api` / `pnpm dev:web` | 手元で API サーバー（環境変数 `DATABASE_URL` が要る）と画面を動かす |
+| `pnpm dev:mock [業務フローの名前]` | Docker も DB も使わずに、画面をモック（メモリの DB。http://localhost:5173）で動かす（例 `pnpm dev:mock paymentManagement`）。DB には選んだ業務フローの事前条件の行が入る。画面の右の開発パネルで業務フローを選び直し、段を「ここまで進める」（前の段を画面で自動で流す）・「見せる」（操作する欄を光らせてゆっくり流す）・「入れるだけ」（最後のボタンは押さない）。いまの画面を開くシナリオ・処理・見積の項目・議事録を出し、コードのブラウザへリンクする。最初のページと Ctrl+K で画面の一覧（領域ごと・テストのない画面・見た印とメモ）を開く |
 | `pnpm --filter @app/infra synth` | AWS の CloudFormation のテンプレートを作る（`-c stage=dev` などで環境を選ぶ） |
 
 CI（`.github/workflows/check.yml`）は、main への push と Pull Request ごとに、`pnpm check`・DB の契約テスト・実ブラウザの E2E を流す。

@@ -12766,6 +12766,52 @@ export const conceptList: readonly Concept[] = [
     "description": ""
   },
   {
+    "id": "mock",
+    "kind": "system",
+    "category": "noun",
+    "tokens": [
+      "mock"
+    ],
+    "en": {
+      "base": "mock",
+      "label": "Mock",
+      "plural": "mocks",
+      "third": null,
+      "past": null,
+      "participle": null,
+      "gerund": null,
+      "able": null,
+      "unPast": null,
+      "noun": null
+    },
+    "ja": {
+      "form": "モック",
+      "attach": "direct",
+      "verbClass": null,
+      "noun": null,
+      "label": "モック",
+      "dictionary": null,
+      "te": null,
+      "past": null,
+      "potential": null,
+      "politePast": null,
+      "negative": null,
+      "perfective": null,
+      "perfectiveLabel": null,
+      "negativePerfective": null,
+      "negativePerfectiveLabel": null,
+      "adjectiveClass": null,
+      "attributive": null,
+      "predicative": null,
+      "nounPattern": null,
+      "stepPattern": null,
+      "titlePattern": null
+    },
+    "role": false,
+    "avoid": [],
+    "description": "メモリの DB で画面を動かす開発の道具（pnpm dev:mock）"
+  },
+  {
     "id": "note",
     "kind": "system",
     "category": "noun",
