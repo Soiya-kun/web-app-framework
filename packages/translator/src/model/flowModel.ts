@@ -779,14 +779,19 @@ function readFlowNodes(context: StepContext, reader: SourceReader, definitions: 
 }
 
 /**
- * apps/web の画面のテストは、scenario（シナリオのケース）と flow（業務フローの E2E）、e2e（同じ業務フローを実ブラウザで流す）、
+ * apps/web の画面のテストは、scenario（シナリオのケース）と flow（業務フローの E2E）、transition（画面遷移）、e2e（同じ業務フローを実ブラウザで流す）、
  * mock（同じ業務フローをモックの開発パネルで流す道具のテスト）にだけ置く。
  */
 function checkTestPlaces(reader: SourceReader, problems: ModelProblem[]): void {
   const toolRoots = ['apps/web/e2e/', 'apps/web/mock/']
   for (const file of reader.list('apps/web', (path) => /\.test\.tsx?$/.test(path))) {
-    if (!file.startsWith(`${scenarioRoot}/`) && !file.startsWith(`${flowRoot}/`) && !toolRoots.some((root) => file.startsWith(root))) {
-      problems.push({ file, line: 1, rule: 'test-place', message: '画面のテストは apps/web/scenario のシナリオのケースか、apps/web/flow の業務フローに書く（apps/web/e2e・apps/web/mock は同じ業務フローを実ブラウザ・モックで流す道具）' })
+    if (!file.startsWith(`${scenarioRoot}/`) && !file.startsWith(`${flowRoot}/`) && !file.startsWith('apps/web/transition/') && !toolRoots.some((root) => file.startsWith(root))) {
+      problems.push({
+        file,
+        line: 1,
+        rule: 'test-place',
+        message: '画面のテストは apps/web/scenario のシナリオのケースか、apps/web/flow の業務フロー、apps/web/transition の画面遷移に書く（apps/web/e2e・apps/web/mock は同じ業務フローを実ブラウザ・モックで流す道具）',
+      })
     }
   }
 }

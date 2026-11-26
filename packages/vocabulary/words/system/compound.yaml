@@ -35,3 +35,34 @@
 - { id: effortRate, en: { tokens: effort rate, label: Day Rate }, ja: { form: 人日単価 } }
 - { id: missingEffort, en: { tokens: missing effort, label: Scenarios Without Effort }, ja: { form: 工数のないシナリオ } }
 - { id: effortDay, en: { tokens: effort day, label: Person-Days }, ja: { form: 人日 } }
+- { id: screenList, en: { tokens: screen list, label: Screen List }, ja: { form: 画面一覧 } }
+- { id: screenLayout, en: { tokens: screen layout, label: Screen Layout }, ja: { form: 画面レイアウト } }
+- { id: screenItem, en: { tokens: screen item, label: Screen Input/Output Items }, ja: { form: 画面入出力項目一覧 } }
+- { id: screenAction, en: { tokens: screen action, label: Screen Action Details }, ja: { form: 画面アクション明細 } }
+- { id: commonRule, en: { tokens: common rule, label: Common Rules for Transition and Layout }, ja: { form: 画面遷移・レイアウト共通ルール } }
+- { id: screenName, en: { tokens: screen name, label: Screen Name }, ja: { form: 画面名 } }
+- { id: featureName, en: { tokens: feature name, label: Feature Name }, ja: { form: 機能名 } }
+- { id: displayLabel, en: { tokens: display label, label: Display Label }, ja: { form: 表示用のラベル } }
+- { id: partKind, en: { tokens: part kind, label: Part Type }, ja: { form: 部品の種類 } }
+- { id: dataType, en: { tokens: data type, label: Data Type }, ja: { form: データ型 } }
+- { id: inputConstraint, en: { tokens: input constraint, label: Input Constraint }, ja: { form: 入力制約 } }
+- { id: initialDisplay, en: { tokens: initial display, label: Initial Display }, ja: { form: 初期表示 } }
+- { id: outputSpecification, en: { tokens: output specification, label: Output Specification }, ja: { form: 出力仕様 } }
+- { id: actionName, en: { tokens: action name, label: Action Name }, ja: { form: アクション名 } }
+- { id: eventName, en: { tokens: event name, label: Event Name }, ja: { form: イベント名 } }
+- { id: actionSummary, en: { tokens: action summary, label: Action Summary }, ja: { form: アクションの処理概要 } }
+- { id: actionDetail, en: { tokens: action detail, label: Action Detail }, ja: { form: アクションの処理詳細 } }
+- { id: destinationScreen, en: { tokens: destination screen, label: Destination Screen }, ja: { form: 遷移先画面名称（ID） } }
+- { id: textBox, en: { tokens: text box, label: Text Box }, ja: { form: テキストボックス } }
+- { id: listBox, en: { tokens: list box, label: List Box }, ja: { form: リストボックス } }
+- { id: inputForm, en: { tokens: input form, label: Input Form }, ja: { form: 入力フォーム } }
+- { id: listDisplay, en: { tokens: list display, label: List Display }, ja: { form: 一覧表示 } }
+- { id: detailDisplay, en: { tokens: detail display, label: Detail Display }, ja: { form: 情報表示 } }
+- { id: textType, en: { tokens: text type, label: String }, ja: { form: 文字列 } }
+- { id: numberType, en: { tokens: number type, label: Numeric }, ja: { form: 数値 } }
+- { id: rightAlignment, en: { tokens: right alignment, label: Right-Aligned }, ja: { form: 右揃え } }
+- { id: userDefinition, en: { tokens: user definition, label: User Definitions }, ja: { form: ユーザの定義 } }
+- { id: navigationStructure, en: { tokens: navigation structure, label: Overall Structure and Navigation }, ja: { form: 全体構造とナビゲーション } }
+- { id: errorDisplay, en: { tokens: error display, label: Error Display and Messages }, ja: { form: エラー表示方法、エラーメッセージ } }
+- { id: partNumber, en: { tokens: part number, label: Element ID }, ja: { form: 識別ID } }
+- { id: entryPoint, en: { tokens: entry point, label: Start Point }, ja: { form: 開始点 } }

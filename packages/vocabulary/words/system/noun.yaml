@@ -226,3 +226,20 @@
 - { id: policy, ja: { form: 方針 }, description: domain のファイルの名前で使う。業務の判断（〜してよいか、どれにするか）を置く（closingPolicy）。 }
 - { id: knowledge, ja: { form: 知識 }, description: domain のファイルの名前で使う。業務の計算や選び方の知識を置く（invoiceTaxKnowledge）。 }
 - { id: health, ja: { form: 稼働状況 }, description: API の /api/health で使う。ロードバランサーが API サーバーの稼働を確かめる。 }
+# 設計書（IPA「機能要件の合意形成ガイド 画面編」の成果物）の見出しの言葉。
+- { id: classification, ja: { form: 分類 } }
+- { id: hierarchy, ja: { form: 階層 } }
+- { id: feature, en: { plural: features }, ja: { form: 機能 } }
+- { id: constraint, en: { plural: constraints }, ja: { form: 制約 } }
+- { id: output, ja: { form: 出力, attach: direct } }
+- { id: specification, ja: { form: 仕様 } }
+- { id: supplement, ja: { form: 補足 } }
+- { id: destination, ja: { form: 遷移先 } }
+- { id: heading, ja: { form: 見出しの部品 } }
+- { id: bibliography, ja: { form: 書誌情報 } }
+- { id: palette, ja: { form: 配色 } }
+- { id: typography, ja: { form: 文字フォント・サイズ } }
+- { id: structure, ja: { form: 構造 } }
+- { id: whole, ja: { form: 全体 } }
+- { id: edge, en: { plural: edges }, ja: { form: 遷移矢線 } }
+- { id: token, en: { plural: tokens }, ja: { form: 見た目の決まり } }

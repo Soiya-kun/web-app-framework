@@ -1,7 +1,7 @@
 // 画面を読む。道筋（router）→ 画面の部品 → ボタン → mutation → API を呼ぶ関数 → API の入口。
 import ts from 'typescript'
 import { collectCalls, collectIdentifiers, isExported, lineOf, readProperty, readString, unwrap, type ParsedSource, type SourceReader } from './source'
-import type { PageActionNode, PageNode } from './types'
+import type { PageActionNode, PageNode, ScreenElementNode } from './types'
 import type { ActionKey, LabelKey, Text } from '@app/vocabulary/text'
 import { prepareLanguage, type Language } from '../language'
 
@@ -110,13 +110,60 @@ function buttonNameOf(text: Text, node: ts.Node): string | undefined {
   return undefined
 }
 
-function readPage(text: Text, reader: SourceReader, file: string, component: string, apiFunctions: ReadonlyMap<string, string[]>) {
+/** 部品の中の text.label('…') の見出し。 */
+function labelIn(text: Text, node: ts.Node | undefined): string | undefined {
+  if (node === undefined) {
+    return undefined
+  }
+  for (const call of [...(ts.isCallExpression(node) ? [node] : []), ...collectCalls(node)]) {
+    if (ts.isPropertyAccessExpression(call.expression) && ts.isIdentifier(call.expression.expression) && call.expression.expression.text === 'text') {
+      const key = readString(call.arguments[0])
+      if (key !== undefined && call.expression.name.text === 'label') {
+        return text.label(key as LabelKey)
+      }
+    }
+  }
+  return undefined
+}
+
+/** 部品の中の text.message('…') の文。 */
+function messagesIn(text: Text, node: ts.Node): string[] {
+  return collectCalls(node).flatMap((call) => {
+    const isMessage =
+      ts.isPropertyAccessExpression(call.expression) && ts.isIdentifier(call.expression.expression) && call.expression.expression.text === 'text' && call.expression.name.text === 'message'
+    const key = isMessage ? readString(call.arguments[0]) : undefined
+    return key === undefined ? [] : [text.message(key as Parameters<Text['message']>[0], {})]
+  })
+}
+
+/** 関数の直前の説明コメント（/** … *\/）。 */
+function summaryOf(parsed: ParsedSource, node: ts.Node): string {
+  const text = parsed.source.getFullText()
+  const comment = (ts.getLeadingCommentRanges(text, node.getFullStart()) ?? []).filter((range) => text.slice(range.pos, range.pos + 3) === '/**').at(-1)
+  return comment === undefined
+    ? ''
+    : text
+        .slice(comment.pos + 3, comment.end - 2)
+        .split('\n')
+        .map((line) => line.replace(/^\s*\*\s?/, '').trim())
+        .filter((line) => line !== '')
+        .join(' ')
+}
+
+/** JSX の属性の文字列（defaultValue="transfer" など）。 */
+function attributeText(node: ts.JsxElement | ts.JsxSelfClosingElement, name: string): string | null {
+  const expression = attributeExpression(attributeOf(node, name))
+  return expression !== undefined && (ts.isStringLiteral(expression) || ts.isNoSubstitutionTemplateLiteral(expression)) ? expression.text : null
+}
+
+function readPage(language: Language, reader: SourceReader, file: string, component: string, apiFunctions: ReadonlyMap<string, string[]>) {
+  const { text } = language
   const parsed = reader.read(file)
   const componentNode = parsed.source.statements.find(
     (statement): statement is ts.FunctionDeclaration => ts.isFunctionDeclaration(statement) && statement.name?.text === component,
   )
   if (componentNode?.body === undefined) {
-    return { queryEndpointIds: [], actions: [], links: [], line: 1 }
+    return { queryEndpointIds: [], actions: [], links: [], line: 1, headingKey: null, summary: '', elements: [] }
   }
   // mutation の変数 → 呼ぶ API の入口。
   const mutations = new Map<string, string[]>()
@@ -155,22 +202,67 @@ function readPage(text: Text, reader: SourceReader, file: string, component: str
   }
   const actions: PageActionNode[] = []
   const links: { to: string; inTable: boolean }[] = []
+  // 画面の部品（JSX に書いた順）。formOf は、部品を囲む form（同じフォームの入力欄とボタンを結ぶ）。
+  const elements: (Omit<ScreenElementNode, 'number' | 'formItems'> & { readonly form: ts.Node | undefined })[] = []
+  let headingKey: string | null = null
+  const blank = { field: null, inputMode: null, placeholder: null, initial: null, columns: [], to: null, inTable: false, endpointIds: [] }
   const visitJsx = (node: ts.Node, ancestors: readonly (ts.JsxElement | ts.JsxSelfClosingElement)[]): void => {
     const tag = tagNameOf(node)
     if ((ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) && tag !== undefined) {
+      const form = [...ancestors].reverse().find((ancestor) => tagNameOf(ancestor) === 'form')
+      const inTable = ancestors.some((ancestor) => ['Table', 'table', 'tr', 'Cell'].includes(tagNameOf(ancestor) ?? ''))
+      if (tag === 'PageTitle') {
+        const key = collectCalls(node).map((call) => (ts.isPropertyAccessExpression(call.expression) && call.expression.name.text === 'label' ? readString(call.arguments[0]) : undefined)).find((candidate) => candidate !== undefined)
+        headingKey = headingKey ?? key ?? null
+        elements.push({ ...blank, kind: 'heading', label: labelIn(text, node) ?? '', form })
+      }
+      if (tag === 'FormField') {
+        const input = [node, ...collectJsx(node)].find((candidate) => ['TextInput', 'SelectInput'].includes(tagNameOf(candidate) ?? ''))
+        const inputElement = input !== undefined && (ts.isJsxElement(input) || ts.isJsxSelfClosingElement(input)) ? input : undefined
+        elements.push({
+          ...blank,
+          kind: tagNameOf(inputElement ?? node) === 'SelectInput' ? 'selectInput' : 'textInput',
+          label: labelIn(text, attributeExpression(attributeOf(node, 'label'))) ?? '',
+          field: attributeText(node, 'field'),
+          inputMode: inputElement === undefined ? null : attributeText(inputElement, 'inputMode'),
+          placeholder: inputElement === undefined ? null : attributeText(inputElement, 'placeholder'),
+          initial: inputElement === undefined ? null : attributeText(inputElement, 'defaultValue'),
+          form,
+        })
+      }
       if (tag === 'Button' || tag === 'button') {
         const button = buttonNameOf(text, node)
         const onClick = attributeExpression(attributeOf(node, 'onClick'))
-        const form = [...ancestors].reverse().find((ancestor) => tagNameOf(ancestor) === 'form')
         const handler = onClick ?? (form === undefined ? undefined : attributeExpression(attributeOf(form, 'onSubmit')))
         if (button !== undefined) {
           actions.push({ button, endpointIds: mutationsIn(handler) })
+          // onClick のボタンはフォームを送らないので、フォームの入力欄を入力にしない。
+          elements.push({ ...blank, kind: 'button', label: button, endpointIds: mutationsIn(handler), inTable, form: onClick === undefined ? form : undefined })
         }
       }
       if (tag === 'Link') {
         const to = readString(attributeExpression(attributeOf(node, 'to')) as ts.Expression | undefined)
         if (to !== undefined) {
-          links.push({ to, inTable: ancestors.some((ancestor) => ['Table', 'table', 'tr', 'Cell'].includes(tagNameOf(ancestor) ?? '')) })
+          links.push({ to, inTable })
+          // 文言が値（invoice.closingDate）なら〈請求締め日〉にする。
+          const valueNode = ts.isJsxElement(node) ? node.children.find((child): child is ts.JsxExpression => ts.isJsxExpression(child))?.expression : undefined
+          const valueName = valueNode !== undefined && ts.isPropertyAccessExpression(valueNode) ? valueNode.name.text : undefined
+          const label = labelIn(text, node) ?? (valueName === undefined ? '' : `〈${language.noun(valueName)}〉`)
+          elements.push({ ...blank, kind: 'link', label, to, inTable, form })
+        }
+      }
+      if (tag === 'Table') {
+        const columns = collectJsx(node)
+          .filter((candidate) => tagNameOf(candidate) === 'HeaderCell')
+          .map((cell) => ({
+            label: labelIn(text, cell) ?? '',
+            align: (ts.isJsxElement(cell) || ts.isJsxSelfClosingElement(cell)) && attributeText(cell, 'align') === 'right' ? ('right' as const) : ('left' as const),
+          }))
+        elements.push({ ...blank, kind: 'table', label: labelIn(text, attributeExpression(attributeOf(node, 'caption'))) ?? '', columns, form })
+      }
+      if (tag === 'StatusMessage' || tag === 'AlertMessage') {
+        for (const message of messagesIn(text, node)) {
+          elements.push({ ...blank, kind: tag === 'StatusMessage' ? 'status' : 'alert', label: message, form })
         }
       }
       const nextAncestors = [...ancestors, node]
@@ -180,7 +272,39 @@ function readPage(text: Text, reader: SourceReader, file: string, component: str
     ts.forEachChild(node, (child) => visitJsx(child, ancestors))
   }
   visitJsx(componentNode.body, [])
-  return { queryEndpointIds: [...new Set(queries)], actions, links, line: lineOf(parsed, componentNode) }
+  // 部品と、それが書かれた画面の中の関数（行の部品など）も読む。
+  for (const node of functions.values()) {
+    visitJsx(node, [])
+  }
+  const numbered = elements.map((element, index) => ({ ...element, number: String(index + 1).padStart(2, '0') }))
+  return {
+    queryEndpointIds: [...new Set(queries)],
+    actions,
+    links,
+    line: lineOf(parsed, componentNode),
+    headingKey: headingKey as string | null,
+    summary: summaryOf(parsed, componentNode),
+    elements: numbered.map(({ form, ...element }): ScreenElementNode => ({
+      ...element,
+      formItems:
+        element.kind === 'button' && form !== undefined
+          ? numbered.filter((other) => other.form === form && (other.kind === 'textInput' || other.kind === 'selectInput')).map((other) => other.number)
+          : [],
+    })),
+  }
+}
+
+/** 部品の中の JSX の要素（自分を除く）。 */
+function collectJsx(node: ts.Node): (ts.JsxElement | ts.JsxSelfClosingElement)[] {
+  const found: (ts.JsxElement | ts.JsxSelfClosingElement)[] = []
+  const visit = (child: ts.Node): void => {
+    if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
+      found.push(child)
+    }
+    ts.forEachChild(child, visit)
+  }
+  ts.forEachChild(node, visit)
+  return found
 }
 
 export function readWebModel(reader: SourceReader, language: Language = prepareLanguage('ja')): WebModel {
@@ -215,12 +339,16 @@ export function readWebModel(reader: SourceReader, language: Language = prepareL
         continue
       }
       const pageFile = router.imports.get(component.text)?.file
-      const page = pageFile === null || pageFile === undefined ? null : readPage(text, reader, pageFile, component.text, apiFunctions)
+      const page = pageFile === null || pageFile === undefined ? null : readPage(language, reader, pageFile, component.text, apiFunctions)
       const loaderEndpoints = loader === undefined ? [] : apiEndpointsIn(router, loader, apiFunctions)
       pages.push({
         id: path,
         title: navigationTitles.get(path) ?? language.noun(component.text.replace(/Page$/, '').replace(/^./, (letter) => letter.toLowerCase())),
         component: component.text,
+        screenId: component.text.replace(/Page$/, '').replace(/^./, (letter) => letter.toLowerCase()),
+        headingKey: page?.headingKey ?? null,
+        summary: page?.summary ?? '',
+        elements: page?.elements ?? [],
         queryEndpointIds: [...new Set([...loaderEndpoints, ...(page?.queryEndpointIds ?? [])])],
         actions: page?.actions ?? [],
         links: page?.links ?? [],

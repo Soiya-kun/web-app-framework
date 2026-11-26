@@ -210,10 +210,11 @@ function readWorks(language: Language, reader: SourceReader, rules: readonly Rul
         })
         const repositoryCalls: RepositoryCallNode[] = calls.flatMap((call) => {
           const callee = call.expression
-          if (!ts.isPropertyAccessExpression(callee) || !ts.isPropertyAccessExpression(callee.expression)) {
+          // repositories.salesRepository.createSales(…) と、引数で受け取った salesRepository.createSales(…) の両方を読む。
+          if (!ts.isPropertyAccessExpression(callee) || !(ts.isPropertyAccessExpression(callee.expression) || ts.isIdentifier(callee.expression))) {
             return []
           }
-          const repository = callee.expression.name.text
+          const repository = ts.isIdentifier(callee.expression) ? callee.expression.text : callee.expression.name.text
           if (!repository.endsWith('Repository')) {
             return []
           }

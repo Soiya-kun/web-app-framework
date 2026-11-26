@@ -130,6 +130,70 @@ describe('このリポジトリのモデル', () => {
     expect([model.progress.manualEffort, model.progress.auditEffort]).toEqual([66, 7.5])
   })
 
+  test('画面遷移のテストの経路から、開始点と画面から画面への遷移（[イベント]）を求める', () => {
+    const invoice = model.transitions.find((transition) => transition.id === 'invoiceTransition')
+    expect(invoice?.title).toBe('請求の画面遷移')
+    expect(invoice?.traces.map((trace) => [trace.startIds, trace.edges.map((edge) => [edge.from, edge.event, edge.to])])).toEqual([
+      [
+        ['invoiceList'],
+        [
+          ['invoiceList', '[請求の締め]', 'invoiceClose'],
+          ['invoiceClose', '[締め処理]', 'invoiceDetail'],
+        ],
+      ],
+      [
+        ['invoiceList'],
+        [
+          ['invoiceList', '[〈請求締め日〉]', 'invoiceDetail'],
+          ['invoiceDetail', '[締めの取消]', 'invoiceList'],
+        ],
+      ],
+      [['invoiceClose'], []],
+    ])
+  })
+
+  test('画面の部品・シナリオ・処理・SQL から、画面一覧・画面入出力項目一覧・画面アクション明細のもとを作る', () => {
+    expect(model.screens.map((screen) => [screen.id, screen.kind, screen.hierarchy, screen.navigation])).toEqual([
+      ['salesCreate', 'form', ['salesCreate'], true],
+      ['invoiceList', 'list', ['invoiceList'], true],
+      ['invoiceClose', 'form', ['invoiceClose'], true],
+      ['invoiceDetail', 'detail', ['invoiceList', 'invoiceDetail'], false],
+      ['paymentList', 'list', ['paymentList'], true],
+      ['paymentCreate', 'form', ['paymentCreate'], true],
+    ])
+    const payment = model.screens.find((screen) => screen.id === 'paymentCreate')
+    expect(payment?.scenarioIds).toEqual(['registerPayment'])
+    // 入力欄のデータ型は部品と入力の形から、入力制約は画面を使うシナリオの拡張の条件から、初期表示は見出しにして求める。
+    expect(payment?.items.filter((item) => item.input).map((item) => [item.number, item.label, item.dataType, item.constraints, item.initial])).toEqual([
+      ['02', '入金日', 'date', ['入金日が実在する日付でない'], null],
+      ['03', '入金方法', 'choice', [], '振込'],
+      ['04', '入金額', 'number', ['入金額が空か、1 から 999,999,999 の整数でない'], null],
+      ['05', '振込依頼人名', 'text', ['振込依頼人名が空か、100 文字を超える'], null],
+      ['06', '顧客', 'choice', [], null],
+    ])
+    // ボタンは API の入口から処理・SQL へたどり、処理の手順と、読む・書くテーブルを出す。
+    expect(payment?.actions).toEqual([
+      expect.objectContaining({
+        number: '07',
+        name: '記録',
+        event: '「記録」を押す',
+        summary: ['入金の記録'],
+        inputs: ['02 入金日', '03 入金方法', '04 入金額', '05 振込依頼人名', '06 顧客'],
+        inputTables: ['顧客', '振込依頼人名'],
+        outputTables: ['入金', '振込依頼人名'],
+      }),
+    ])
+    expect(payment?.actions[0]?.steps).toContain('入金を登録する')
+    // リンクの遷移先はリンク先の道筋と画面遷移のテストから、表の列は右寄せかどうかを出す。
+    const invoiceList = model.screens.find((screen) => screen.id === 'invoiceList')
+    expect(invoiceList?.actions.map((action) => [action.event, action.destinationIds])).toEqual([
+      ['「請求の締め」のリンクをたどる', ['invoiceClose']],
+      ['〈請求締め日〉のリンクをたどる', ['invoiceDetail']],
+    ])
+    expect(invoiceList?.items.find((item) => item.label === '今回請求額')).toMatchObject({ kind: 'column', output: 'right' })
+    expect(model.styleTokens).toContainEqual({ name: 'color-primary', value: '#1f4fd1' })
+  })
+
   test('英語のモデルは、同じつながりを英語の見出し・手順で持つ（人が書いた拡張の条件は書いたまま）', () => {
     const englishModel = buildModel(repositoryRoot, 'en')
     const scenario = englishModel.scenarios.find((candidate) => candidate.id === 'registerPayment')
@@ -206,6 +270,11 @@ describe('書き方の規則の検査', () => {
     `import { defineEffort } from '@app/flow'\nimport { createSales } from '../scenario/sales/createSales'\nexport const effort = defineEffort([\n  { target: createSales, audit: 0.5, manual: 3 },\n  { target: createSales, audit: 1, manual: 2 },\n  { target: createSales, audit: 1 },\n  { target: 'createSales', audit: 1, manual: 2 },\n])\n`,
   )
 
+  put(
+    'apps/web/transition/salesFlow.test.tsx',
+    `import { describeTransition } from '@app/flow/vitest'\ndescribeTransition('salesTransition', (paths) => {\n  paths.trace('開いて押す', async () => {\n    const app = await launchApp({})\n    await app.screen.go('salesCreate')\n    await app.screen.expectHeading('salesCreate')\n    await app.screen.press('create')\n  })\n})\n`,
+  )
+
   put('.claude/skills/review/SKILL.md', '---\nname: review\ndescription: レビューする\n---\n')
   put('apps/web/CLAUDE.md', '# 決まり\n')
   put('.cursorrules', '決まり\n')
@@ -251,6 +320,10 @@ describe('書き方の規則の検査', () => {
   test('工数: 対象は import した値、監査と人手の人日は 0 以上の数、1つの対象に1つ', () => {
     expect(rules('apps/web/effort/effort.ts')).toEqual(['effort', 'effort', 'effort'])
     expect(model.efforts.map((effort) => [effort.target.id, effort.manual, effort.itemIndex])).toEqual([['createSales', 3, 0]])
+  })
+
+  test('画面遷移: 名前はファイルの名前、開く画面はナビゲーションのキー、開く・押す・たどるのあとは見出しのある画面を expectHeading で確かめる（apps/web/transition に置ける）', () => {
+    expect(rules('apps/web/transition/salesFlow.test.tsx')).toEqual(['transition', 'transition-step', 'transition-step', 'transition-step'])
   })
 
   test('AI への指示: Skill は議事録を作る minutes の1つだけで、ほかに AI に向けた指示のファイルを置かない', () => {

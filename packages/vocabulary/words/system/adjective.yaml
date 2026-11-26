@@ -50,3 +50,4 @@
 - { id: lazy, ja: { stem: 遅延, class: no } }
 - { id: active, ja: { stem: 選択中, class: no } }
 - { id: visible, ja: { stem: 表示中, class: no } }
+- { id: common, ja: { stem: 共通, class: no } }
